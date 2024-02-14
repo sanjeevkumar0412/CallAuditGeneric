@@ -9,8 +9,7 @@ audio_fi = "audio_1.mp3"
 def GetWhisperJson():
     split_audio_file = chunk_large_audio_file(audio_fi)
     print("Execution TIme>>>>. ",second_check,"Split Audio File >>>>.",split_audio_file)
-    datacreation = jsonify({'data': split_audio_file})
-    data = datacreation.data
+    data = split_audio_file['data']
     return data
 
 if __name__ == '__main__':

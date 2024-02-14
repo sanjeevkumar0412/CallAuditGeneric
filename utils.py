@@ -22,53 +22,11 @@ ffmpeg_path = 'C:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin'
 os.environ['PATH'] = f'{ffmpeg_path};{os.environ["PATH"]}'
 
 model = whisper.load_model("base")
-
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 # whisper.DecodingOptions
 import time
 second_check=time.localtime().tm_sec
-def chunk_audio(audio):
-    for i in range(0, len(audio), chunk_length_ms):
-        chunk = audio[i:i+chunk_length_ms]
-        result = model.transcribe(chunk)
-        chunks.append(chunk)   
-    return chunks
-#print("chunk_audio >>>>>>>>.",chunk_audio(audio_fi))
-
-import speech_recognition as sr
-from pydub import AudioSegment
-
-# Function to split audio into chunks
-def split_audio_into_chunks(audio_file_path, chunk_length_ms):
-    audio = AudioSegment.from_file(audio_file_path)
-    return [audio[i:i+chunk_length_ms] for i in range(0, len(audio), chunk_length_ms)]
-
-# Function to transcribe audio chunk
-def transcribe_chunk(chunk):
-    recognizer = sr.Recognizer()
-    with sr.AudioData(chunk.raw_data, chunk.frame_rate, chunk.sample_width) as audio_data:
-        try:
-            text = recognizer.recognize_google(audio_data)
-        except sr.UnknownValueError:
-            text = "[Unrecognized]"
-        except sr.RequestError as e:
-            text = "[Error: {}]".format(e)
-    return text
-
-# Example usage:
-audio_file_path = audio
-# chunk_length_ms = 5000  # 5 seconds
-# chunks = split_audio_into_chunks(audio_file_path, chunk_length_ms)
-
-
-
-transcriptions = []
-for chunk in chunks:
-    transcription = transcribe_chunk(chunk)
-    transcriptions.append(transcription)
-
-# print(transcriptions)
 
 def whisper_method(audio):
     trans = model.transcribe(audio)
@@ -82,15 +40,7 @@ def open_ai(audio):
     trans = client.audio.translations.create(model="whisper-1", file=audio_file,response_format="text")
     return trans
 # print("Execution TIme ",second_check,"OpenAI >>>>.",open_ai(audio_fi))
-#
-# def split_audio(path):
-#     sound = AudioSegment.from_file(path)
-#     chunks = split_on_silence(sound,
-#     min_silence_len=1500,
-#     silence_thresh=sound.dBFS - 14,
-#     keep_silence=1500,
-#     )
-# import json
+
 def chunk_large_audio_file(path):
     sound = AudioSegment.from_file(path)
     chunks = split_on_silence(sound,
@@ -98,7 +48,7 @@ def chunk_large_audio_file(path):
         silence_thresh = sound.dBFS-14,
         keep_silence=1500,
     )
-    # split_audio(path)
+
     folder_name = path.split('.')[0]
 
     if not os.path.isdir(folder_name):
@@ -123,9 +73,6 @@ def chunk_large_audio_file(path):
     with open(folder_name+"_audio_file", "w") as f:
         f.write(whole_text)
         # json_data = json.load(f)
-    return whole_text
+    return {'data':whole_text}
 
-# print("Execution TIme ",second_check,"Split File >>>>.",chunk_large_audio_file(audio_fi))
-
-
-
+print("Execution TIme ",second_check,"Split File >>>>.",chunk_large_audio_file(audio_fi))
