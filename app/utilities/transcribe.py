@@ -107,9 +107,7 @@ def retries_model(output_file,failed_file):
         else:
             print(f"Giving up on {failed_file} after {retries} attempts")   
 
-def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):
-        retries =3
-        unsuccessful_files =[]
+def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):       
         model = whisper.load_model("tiny")
         try: 
             txt_file = chunk_directory+'/'+filename+'.txt'
@@ -125,35 +123,7 @@ def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):
             # merge_files_wishper(chunk_directory,chunks,filename)
         except Exception as e:
                     print(f"Error transcribing {filename}: {e}")
-                    unsuccessful_files.append(chunk_file)                    
-                    for attempt in range(retries):
-                        try:
-                            print('File Name: ',chunk_file)
-                            time.sleep(2**attempt)             
-                            result = model.transcribe(chunk_file)
-                            with open(f"{txt_file}","a") as f:
-                                f.write(result["text"])
-                            print('Retries of file: ',chunk_file)
-                            break  
-                        except Exception as e:
-                            print(f"Failed to transcribe {chunk_file} even after {attempt+1} attempt(s): {e}")
-                    else:
-                        print(f"Giving up on {filename} after {retries} attempts") 
-
-        for file_name in unsuccessful_files:
-                        for attempt in range(retries):
-                            try:
-                                print('File Name: ',file_name)
-                                time.sleep(2**attempt)             
-                                result = model.transcribe(file_name)
-                                with open(f"{txt_file}","a") as f:
-                                    f.write(result["text"])
-                                print('Retries of file: ',file_name)
-                                break  
-                            except Exception as e:
-                                print(f"Failed to transcribe {filename} even after {attempt+1} attempt(s): {e}")
-                        else:
-                            print(f"Giving up on {filename} after {retries} attempts")           
+                    retries_model(txt_file,chunk_file)                   
         
    
 def transcribe_by_subprocess(chunks_files,chunk_directory,chunks,filename):   
