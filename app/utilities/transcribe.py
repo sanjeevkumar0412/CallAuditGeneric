@@ -4,6 +4,7 @@ import subprocess
 import shutil
 import os
 from datetime import datetime
+import time
 
 
 def delete_file(output_file,file_name):    
@@ -89,19 +90,71 @@ def merge_files_wishper(output_file,chunks_files,filename):
                 print(f"Merged {file}")  
     delete_files_wishper(output_file,chunks_files)
 
+def retries_model(output_file,failed_file):
+        retries =3
+        model = whisper.load_model("tiny")
+        for attempt in range(retries):
+            try:
+                print('file name: ',failed_file)
+                time.sleep(2**attempt)             
+                result = model.transcribe(failed_file)
+                with open(f"{output_file}","a") as f:
+                    f.write(result["text"])
+                print('Failed file Status: ',failed_file)
+                break  
+            except Exception as e:
+                print(f"Failed to transcribe {failed_file} even after {attempt+1} attempt(s): {e}")
+        else:
+            print(f"Giving up on {failed_file} after {retries} attempts")   
+
 def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):
-   model = whisper.load_model("tiny")
-   txt_file = chunk_directory+'/'+filename+'.txt'
-   for i in range(len(chunks_files)):   
-        chunk_file = f"{chunk_directory}/chunk_{i}.wav"
-        result = model.transcribe(chunk_file)
-        # file_path = os.path.join(chunk_directory, f"chunk_{i}")
-        # with open(f"{file_path}.txt","w") as f:
-        with open(f"{txt_file}","a") as f:
-            f.write(result["text"]) 
-        print("Processing stdout....:  ",filename)  
-   delete_files_wishper(chunk_directory,chunks)
-#    merge_files_wishper(chunk_directory,chunks,filename)
+        retries =3
+        unsuccessful_files =[]
+        model = whisper.load_model("tiny")
+        try: 
+            txt_file = chunk_directory+'/'+filename+'.txt'
+            for i in range(len(chunks_files)):   
+                    chunk_file = f"{chunk_directory}/chunk_{i}.wav"
+                    result = model.transcribe(chunk_file)
+                    # file_path = os.path.join(chunk_directory, f"chunk_{i}") 
+                    # with open(f"{file_path}.txt","w") as f:
+                    with open(f"{txt_file}","a") as f:
+                        f.write(result["text"]) 
+                    print("Processing stdout....:  ",filename)  
+            delete_files_wishper(chunk_directory,chunks)
+            # merge_files_wishper(chunk_directory,chunks,filename)
+        except Exception as e:
+                    print(f"Error transcribing {filename}: {e}")
+                    unsuccessful_files.append(chunk_file)                    
+                    for attempt in range(retries):
+                        try:
+                            print('File Name: ',chunk_file)
+                            time.sleep(2**attempt)             
+                            result = model.transcribe(chunk_file)
+                            with open(f"{txt_file}","a") as f:
+                                f.write(result["text"])
+                            print('Retries of file: ',chunk_file)
+                            break  
+                        except Exception as e:
+                            print(f"Failed to transcribe {chunk_file} even after {attempt+1} attempt(s): {e}")
+                    else:
+                        print(f"Giving up on {filename} after {retries} attempts") 
+
+        for file_name in unsuccessful_files:
+                        for attempt in range(retries):
+                            try:
+                                print('File Name: ',file_name)
+                                time.sleep(2**attempt)             
+                                result = model.transcribe(file_name)
+                                with open(f"{txt_file}","a") as f:
+                                    f.write(result["text"])
+                                print('Retries of file: ',file_name)
+                                break  
+                            except Exception as e:
+                                print(f"Failed to transcribe {filename} even after {attempt+1} attempt(s): {e}")
+                        else:
+                            print(f"Giving up on {filename} after {retries} attempts")           
+        
    
 def transcribe_by_subprocess(chunks_files,chunk_directory,chunks,filename):   
    for i in range(len(chunks_files)):   
