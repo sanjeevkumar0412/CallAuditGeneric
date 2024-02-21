@@ -33,22 +33,22 @@ def get_all_configurations(clent_id):
         if connection:
             connection.close()
 
-def add_update_recording_details(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+def add_recording_details(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
         cursor = connection.cursor()
-        stored_procedure_name = 'AddUpdateRecordingDetails'
+        stored_procedure_name = 'AddRecordingDetails'
         parameters = {'ClientId': clent_id,'Client': clent_id}
         query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
-        """
-            CREATE PROCEDURE [dbo].[AddUpdateRecordingDetails]
+        """        
+            CREATE PROCEDURE [dbo].[AddRecordingDetails]
               @FileId  nvarchar(30)
               @ClientId  nvarchar(30)
               @UserName  nvarchar(30)
               @FileTypeId  nvarchar(30)
               @FileName  nvarchar(30)
               @FilePath  nvarchar(30)
-              @UploadDate nvarchar(30)
+              @UploadDate datetime
               @Status_Id  nvarchar(30)
               @IsActive  bit
               @IsDeleted  bit              
@@ -74,7 +74,44 @@ def add_update_recording_details(clent_id,data): #data is in object form like {'
         if connection:
             connection.close()
 
-def add_update_call_summary(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+def update_recording_details(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+    try:   
+        connection = pyodbc.connect(connection_string)
+        cursor = connection.cursor()
+        stored_procedure_name = 'UpdateRecordingDetails'
+        parameters = {'ClientId': clent_id,'Client': clent_id}
+        query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+        """        
+            CREATE PROCEDURE [dbo].[UpdateRecordingDetails]
+              @FileId  nvarchar(30)
+              @ClientId  nvarchar(30)
+              @UserName  nvarchar(30)
+              @FileTypeId  nvarchar(30)
+              @FileName  nvarchar(30)
+              @FilePath  nvarchar(30)
+              @UploadDate datetime
+              @Status_Id  nvarchar(30)
+              @IsActive  bit
+              @IsDeleted  bit              
+            AS
+            UPDATE RecordingDetails 
+              SET 
+               FilePath =@FilePath,UploadDate =@UploadDate,Status_Id = @Status_Id
+               WHERE FileId =@FileId
+            GO;
+        EXEC AddUpdateRecordingDetails @ClientId = 'QuickApps';
+        """
+        cursor.execute(query, parameters)
+        connection.commit()        
+    except Exception as e:
+        print(f"Error in get_all_configurations: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def add_call_summary(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
         cursor = connection.cursor()
@@ -87,7 +124,7 @@ def add_update_call_summary(clent_id,data): #data is in object form like {'Clien
               @ClientId  nvarchar(30)
               @ClientName  nvarchar(30)
               @SummaryDescription  nvarchar(30)
-              @SummaryDateTime  nvarchar(30)             
+              @SummaryDateTime  datetime             
               @Status_Id  nvarchar(30)
               @IsActive  bit
               @IsDeleted  bit              
@@ -111,6 +148,44 @@ def add_update_call_summary(clent_id,data): #data is in object form like {'Clien
         if connection:
             connection.close()
 
+def update_call_summary(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+    try:   
+        connection = pyodbc.connect(connection_string)
+        cursor = connection.cursor()
+        stored_procedure_name = 'AddUpdateCallSummary'
+        parameters = {'ClientId': clent_id,'Client': clent_id}
+        query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+        """
+            CREATE PROCEDURE [dbo].[AddUpdateCallSummary]
+              @SummaryId  nvarchar(30)
+              @ClientId  nvarchar(30)
+              @ClientName  nvarchar(30)
+              @SummaryDescription  nvarchar(30)
+              @SummaryDateTime  datetime             
+              @Status_Id  nvarchar(30)
+              @IsActive  bit
+              @IsDeleted  bit              
+            AS
+            UPDATE CallSummary  
+            SET  
+              SummaryDescription = @SummaryDescription,
+              SummaryDateTime = @SummaryDateTime,              
+              Status_Id = @Status_Id
+              WHERE SummaryId = @SummaryId
+            GO;
+        EXEC AddUpdateCallSummary @ClientId = 'QuickApps';
+        """
+        cursor.execute(query, parameters)
+        connection.commit()        
+    except Exception as e:
+        print(f"Error in get_all_configurations: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
 def add_errors_logs(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
@@ -126,7 +201,7 @@ def add_errors_logs(clent_id,data): #data is in object form like {'ClientId': cl
               @ErrorType  nvarchar(30)
               @ErrorDetails  nvarchar(30)             
               @JobId  nvarchar(30)
-              @ErrorDate  nvarchar(30)
+              @ErrorDate  datetime
               @IsActive  bit
               @IsDeleted  bit              
             AS
@@ -150,7 +225,7 @@ def add_errors_logs(clent_id,data): #data is in object form like {'ClientId': cl
         if connection:
             connection.close()
 
-def add_update_sentiment_analysis(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+def add_sentiment_analysis(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
         cursor = connection.cursor()
@@ -158,14 +233,14 @@ def add_update_sentiment_analysis(clent_id,data): #data is in object form like {
         parameters = {'ClientId': clent_id,'Client': clent_id}
         query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
         """
-            CREATE PROCEDURE [dbo].[SentimentAnalysis]
+            CREATE PROCEDURE [dbo].[SentimentAnalysis_Insert]
               @AnalysisId  nvarchar(30)
               @ClientId  nvarchar(30)
               @ClientName  nvarchar(30)
               @TranscriptId  nvarchar(30)
               @SentimentScore  nvarchar(30)             
               @SentimentStatus  nvarchar(30)
-              @AnalysisDateTime  nvarchar(30)
+              @AnalysisDateTime  datetime
               @IsActive  bit
               @IsDeleted  bit              
             AS
@@ -188,7 +263,7 @@ def add_update_sentiment_analysis(clent_id,data): #data is in object form like {
         if connection:
             connection.close()
 
-def add_update_audio_transcripts(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+def update_sentiment_analysis(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
         cursor = connection.cursor()
@@ -196,7 +271,43 @@ def add_update_audio_transcripts(clent_id,data): #data is in object form like {'
         parameters = {'ClientId': clent_id,'Client': clent_id}
         query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
         """
-            CREATE PROCEDURE [dbo].[AudioTranscripts]
+            CREATE PROCEDURE [dbo].[SentimentAnalysis_Update]
+              @AnalysisId  nvarchar(30)
+              @ClientId  nvarchar(30)
+              @ClientName  nvarchar(30)
+              @TranscriptId  nvarchar(30)
+              @SentimentScore  nvarchar(30)             
+              @SentimentStatus  nvarchar(30)
+              @AnalysisDateTime  datetime
+              @IsActive  bit
+              @IsDeleted  bit              
+            AS
+            UPDATE SentimentAnalysis SET 
+              SentimentScore = @SentimentScore,
+              SentimentStatus= @SentimentStatus,              
+              AnalysisDateTime= @AnalysisDateTime)
+              WHERE AnalysisId=@AnalysisId
+            GO;       
+        """
+        cursor.execute(query, parameters)
+        connection.commit()        
+    except Exception as e:
+        print(f"Error in get_all_configurations: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+def add_audio_transcripts(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+    try:   
+        connection = pyodbc.connect(connection_string)
+        cursor = connection.cursor()
+        stored_procedure_name = 'ErrorLogs'
+        parameters = {'ClientId': clent_id,'Client': clent_id}
+        query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+        """
+            CREATE PROCEDURE [dbo].[AudioTranscripts_Insert]
               @TranscriptId   nvarchar(30)
               @ClientId  nvarchar(30)
               @ClientName  nvarchar(30)
@@ -205,7 +316,7 @@ def add_update_audio_transcripts(clent_id,data): #data is in object form like {'
               @FileStatus  nvarchar(30)
               @TranscriptText  nvarchar(30)
               @TranscriptionFilePath  nvarchar(30)
-              @TranscriptionDate  nvarchar(30) 
+              @TranscriptionDate  datetime 
               @IsActive  bit
               @IsDeleted  bit              
             AS
@@ -230,6 +341,46 @@ def add_update_audio_transcripts(clent_id,data): #data is in object form like {'
         if connection:
             connection.close()
 
+def update_audio_transcripts(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+    try:   
+        connection = pyodbc.connect(connection_string)
+        cursor = connection.cursor()
+        stored_procedure_name = 'ErrorLogs'
+        parameters = {'ClientId': clent_id,'Client': clent_id}
+        query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+        """
+            CREATE PROCEDURE [dbo].[AudioTranscripts_Update]
+              @TranscriptId   nvarchar(30)
+              @ClientId  nvarchar(30)
+              @ClientName  nvarchar(30)
+              @FileId  nvarchar(30)
+              @FileName  nvarchar(30)             
+              @FileStatus  nvarchar(30)
+              @TranscriptText  nvarchar(30)
+              @TranscriptionFilePath  nvarchar(30)
+              @TranscriptionDate  datetime 
+              @IsActive  bit
+              @IsDeleted  bit              
+            AS
+            UPDATE AudioTranscripts SET
+              FileStatus= @FileStatus,              
+              TranscriptText = @TranscriptText,
+              TranscriptionFilePath= @TranscriptionFilePath,
+              TranscriptionDate= @TranscriptionDate)
+              WHERE TranscriptId  = @TranscriptId
+            GO;       
+        """
+        cursor.execute(query, parameters)
+        connection.commit()        
+    except Exception as e:
+        print(f"Error in get_all_configurations: {e}")
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
 def add_update_transcripts_job(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
     try:   
         connection = pyodbc.connect(connection_string)
@@ -243,11 +394,11 @@ def add_update_transcripts_job(clent_id,data): #data is in object form like {'Cl
               @ClientId  nvarchar(30)
               @ClientName  nvarchar(30)
               @JobTypeId  nvarchar(30)
-              @JobStarttime  nvarchar(30)             
+              @JobStarttime  datetime             
               @JobStatus  nvarchar(30)
-              @JobEndTime  nvarchar(30)
+              @JobEndTime  datetime
               @IsError  nvarchar(30)
-              @TranscriptionDate  nvarchar(30) 
+              @TranscriptionDate  datetime 
               @IsActive  bit
               @IsDeleted  bit              
             AS
