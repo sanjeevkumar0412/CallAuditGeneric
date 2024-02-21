@@ -5,6 +5,9 @@ import shutil
 import os
 from datetime import datetime
 import time
+from openai import OpenAI
+
+client = OpenAI(api_key="sk-x")
 
 
 def delete_file(output_file,file_name):    
@@ -95,17 +98,59 @@ def retries_model(output_file,failed_file):
         model = whisper.load_model("tiny")
         for attempt in range(retries):
             try:
-                print('file name: ',failed_file)
+                print('fialed file process start : ',failed_file)
                 time.sleep(2**attempt)             
                 result = model.transcribe(failed_file)
                 with open(f"{output_file}","a") as f:
                     f.write(result["text"])
                 print('Failed file Status: ',failed_file)
+                os.remove(failed_file) 
                 break  
             except Exception as e:
                 print(f"Failed to transcribe {failed_file} even after {attempt+1} attempt(s): {e}")
         else:
             print(f"Giving up on {failed_file} after {retries} attempts")   
+
+def transcribe_open_ai(output_file,dir_url,name):
+    print(' Open Ai Audio File Path',output_file)
+    audio_file= open(output_file, "rb") 
+    result = client.audio.transcriptions.create(
+                            model="whisper-1", 
+                            file=audio_file,
+                            # response_format='text'
+                            )
+    txt_file = os.path.join(dir_url, name)
+    print('result["text"]',result["text"])
+    with open(f"{txt_file}.txt","w") as f:
+        # f.write(result)
+        f.write(result["text"])
+
+
+def transcribe_by_open_ai(chunks_files,chunk_directory,chunks,filename):   
+        try: 
+            txt_file = chunk_directory+'/'+filename+'.txt'
+            for i in range(len(chunks_files)):   
+                    chunk_file = f"{chunk_directory}/chunk_{i}.wav"
+                    print(' Open Ai Chunk Audio File Path',chunk_file)
+                    audio_file= open(chunk_file, "rb") 
+                    result = client.audio.transcriptions.create(
+                                model="whisper-1", 
+                                file=audio_file,
+                                # response_format='text'
+                                )
+                    # file_path = os.path.join(chunk_directory, f"chunk_{i}") 
+                    # with open(f"{file_path}.txt","w") as f:
+                    print('result["text"]',result["text"])
+                    with open(f"{txt_file}","a") as f:
+                        # f.write(result) 
+                        f.write(result["text"]) 
+                    print("Processing stdout123....:  ",filename)
+                    # os.remove(chunk_file)  
+            delete_files_wishper(chunk_directory,chunks)
+            # merge_files_wishper(chunk_directory,chunks,filename)
+        except Exception as e:
+                    print(f"Error transcribing {filename}: {e}")
+                    retries_model(txt_file,chunk_file) 
 
 def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):       
         model = whisper.load_model("tiny")
@@ -118,7 +163,8 @@ def transcribe_by_whisper(chunks_files,chunk_directory,chunks,filename):
                     # with open(f"{file_path}.txt","w") as f:
                     with open(f"{txt_file}","a") as f:
                         f.write(result["text"]) 
-                    print("Processing stdout....:  ",filename)  
+                    print("Processing stdout....:  ",filename)
+                    # os.remove(chunk_file)  
             delete_files_wishper(chunk_directory,chunks)
             # merge_files_wishper(chunk_directory,chunks,filename)
         except Exception as e:

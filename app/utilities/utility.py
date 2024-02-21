@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import shutil
 import os
 from datetime import datetime
-from app.utilities.transcribe import transcribe,transcribe_by_whisper
+from app.utilities.transcribe import transcribe,transcribe_by_whisper,transcribe_by_open_ai,transcribe_open_ai
 
 load_dotenv()
 
@@ -20,7 +20,7 @@ def get_all_files(path):
        files_arr.append(file_name)
     return  files_arr
 
-def split_audio_chunk_files(audio_file, chunk_file_directory,f_name):
+def split_audio_chunk_files(audio_file, chunk_file_directory,f_name,is_open_ai_model=False):
      print('create_chunk_subprocess_file chunk file url :- ',audio_file)
      print('create_chunk_subprocess_file chunk file Folder :- ',chunk_file_directory)
      input_audio = AudioSegment.from_file(audio_file) 
@@ -32,12 +32,17 @@ def split_audio_chunk_files(audio_file, chunk_file_directory,f_name):
      for i, chunk in enumerate(chunks):
         print("Chunk Split Start...", str(datetime.now()))
         chunk.export(f"{chunk_file_directory}/chunk_{i}.wav", bitrate='128k',format="mp3")
-     transcribe_by_whisper(chunks,chunk_file_directory,chunks,f_name)
+     if is_open_ai_model:
+         print('Model Open AI is Working...')  
+         transcribe_by_open_ai(chunks,chunk_file_directory,chunks,f_name)
+     else:
+           print('Model Whishper is Working...')
+           transcribe_by_whisper(chunks,chunk_file_directory,chunks,f_name)  
     # transcribe_by_subprocess(chunks,chunkFileDirectory,chunks,fName)
 
-def create_folder_structure(files_arr,source_file_path,destination_path):
-   #   destination_folder =  os.getenv('destination_folder')
-   #   source_file_path = os.getenv('source_file_path')
+def create_folder_structure(files_arr,source_file_path,destination_path,is_open_ai_model=False):
+   #   destination_folder =  os.getenv('destination_folder'),
+   #   source_file_path = os.getenv('source_file_path'),
    #   destination_folder = os.environ['destination_folder']
    #   source_file_path = os.environ['sourceFilePath'] 
      print('source_file_path path:- ',source_file_path)
@@ -61,12 +66,17 @@ def create_folder_structure(files_arr,source_file_path,destination_path):
              print('audio_file_path Audio File Path audio_file_path : -' , audio_file_path)
              if file_size_mb > 5 :
                 print('file size :- ',file_size_mb)                       
-                split_audio_chunk_files(audio_file_path,dir_folder_url,name_file)
+                split_audio_chunk_files(audio_file_path,dir_folder_url,name_file,is_open_ai_model)
              else :            
                 print('file size is small from 10m mbs :- ',file_size_mb)
                 print('audioFilePath:- ',audio_file_path)
                 print('dirFolderUrl:- ',dir_folder_url)
                 print('nameFile:- ',name_file)
-                transcribe(audio_file_path,dir_folder_url,name_file)
+                if is_open_ai_model :
+                   print('Model Open AI is Working for small files...')
+                   transcribe_open_ai(audio_file_path,dir_folder_url,name_file)
+                else:
+                  print('Model Whishper is Working for small file...')
+                  transcribe(audio_file_path,dir_folder_url,name_file)
          except Exception as e:   
                   print(f'caught {type(e)}: e',e)
