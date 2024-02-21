@@ -40,7 +40,7 @@ def split_audio_chunk_files(audio_file, chunk_file_directory,f_name,is_open_ai_m
            transcribe_by_whisper(chunks,chunk_file_directory,chunks,f_name)  
     # transcribe_by_subprocess(chunks,chunkFileDirectory,chunks,fName)
 
-def create_folder_structure(files_arr,source_file_path,destination_path,is_open_ai_model=False):
+def create_folder_structure(files_arr,source_file_path,destination_path,subscription_model=''):
    #   destination_folder =  os.getenv('destination_folder'),
    #   source_file_path = os.getenv('source_file_path'),
    #   destination_folder = os.environ['destination_folder']
@@ -72,7 +72,7 @@ def create_folder_structure(files_arr,source_file_path,destination_path,is_open_
                 print('audioFilePath:- ',audio_file_path)
                 print('dirFolderUrl:- ',dir_folder_url)
                 print('nameFile:- ',name_file)
-                if is_open_ai_model :
+                if subscription_model == 'premium' :
                    print('Model Open AI is Working for small files...')
                    transcribe_open_ai(audio_file_path,dir_folder_url,name_file)
                 else:

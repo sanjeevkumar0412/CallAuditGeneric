@@ -20,6 +20,6 @@ if __name__ == '__main__':
       #   source_file_path = os.getenv('source_file_path')
         source_file_path ="D:/Cogent_Audio_Repo/"
         destination_folder = "D:/Cogent_AI_Audio_Repo/" 
-        build_transcribe_model(str(source_file_path), str(destination_folder))
+        build_transcribe_model(str(source_file_path), str(destination_folder),'premium')
      except Exception as e:   
         print(f'caught {type(e)}: e',e)
