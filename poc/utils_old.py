@@ -16,7 +16,7 @@ import whisper
 import warnings
 warnings.simplefilter("ignore")
 from openai import OpenAI
-os.environ["OPENAI_API_KEY"] = ""
+# os.environ["OPENAI_API_KEY"] = ""
 client = OpenAI()
 ffmpeg_path = 'C:/ffmpeg/ffmpeg-master-latest-win64-gpl/bin'
 os.environ['PATH'] = f'{ffmpeg_path};{os.environ["PATH"]}'

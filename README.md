@@ -11,3 +11,4 @@ Installation from the requirements file
 pip install -r requirements.txt
 
 pip install python-dotenv
+pip install pyodbc

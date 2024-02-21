@@ -3,5 +3,5 @@ dbconfig = {
     "port":"3306",
     "username":"root",
     "password":"",
-    "database":"test"
+    "database":"test",
 }
