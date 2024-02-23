@@ -8,13 +8,15 @@ from datetime import datetime
 import time
 from openai import OpenAI
 import speech_recognition as sr
-
+from app.utilities.utility import GlobalUtility
 
 # place keys here
 client = OpenAI()
-class OpenAIModel:      
-    def __init__(self, model):
-        self.model = model
+class OpenAIModel: 
+    # global_utility =  GlobalUtility()       
+    def __init__(self):
+        # self.model = model
+        self.global_utility =  GlobalUtility()
 
     def open_ai_transcribe_small_audio(self,output_file,dir_url,name):
         print(' Open Ai Audio File Path',output_file)
@@ -45,35 +47,59 @@ class OpenAIModel:
                         final_text = response.choices[0].text.strip()
                         print("Final transcribed text:")
                         print(final_text)                     
-                delete_files_wishper(chunk_directory,chunks)
+                self.global_utility.delete_files_wishper(chunk_directory,chunks)
                 # merge_files_wishper(chunk_directory,chunks,filename)
             except Exception as e:
                         print(f"Error transcribing {filename}: {e}")
-                        retries_model(txt_file,chunk_file) 
+                        self.retries_model(txt_file,chunk_file) 
 
-    def open_ai_transcribe_large_audio(self,chunks_files,chunk_directory,chunks,filename):   
+    def open_ai_transcribe_large_audio(self,chunk_file,model = "whisper-1"):   
             try: 
-                txt_file = chunk_directory+'/'+filename+'.txt'
-                for i in range(len(chunks_files)):   
-                        chunk_file = f"{chunk_directory}/chunk_{i}.wav"
-                        print(' Open Ai Chunk Audio File Path',chunk_file)
-                        audio_file= open(chunk_file, "rb") 
-                        transcript = client.audio.transcriptions.create(
+                # txt_file = chunk_directory+'/'+filename+'.txt'
+                # for i in range(len(chunks_files)):   
+                # chunk_file = f"{chunk_directory}/chunk_{i}.wav"
+                print(' Open Ai Chunk Audio File Path',chunk_file)
+                audio_file= open(chunk_file, "rb") 
+                transcript = client.audio.transcriptions.create(
+                            model=model, 
+                            file=audio_file,
+                            response_format='text'                                                           
+                            )
+                return transcript
+                        # file_path = os.path.join(chunk_directory, f"chunk_{i}") 
+                        # with open(f"{file_path}.txt","w") as f:
+                        # print(transcript["text"])
+                        # print('result["text"]',result["text"])
+                        # with open(f"{txt_file}","a") as f:
+                        #     # f.write(result) 
+                        #     f.write(transcript["text"]) 
+                        # print("Processing stdout123....:  ",filename)
+                        # os.remove(chunk_file)  
+                self.global_utility.delete_files_wishper(chunk_directory,chunks)
+                # merge_files_wishper(chunk_directory,chunks,filename)
+            except Exception as e:
+                        print(f"Error transcribing : {e}")
+                        # print(f"Error transcribing {filename}: {e}")
+                        # self.retries_model(txt_file,chunk_file) 
+
+    def retries_model(self,output_file,failed_file):           
+            retries =3           
+            for attempt in range(retries):
+                try:
+                    print('fialed file process start : ',failed_file)
+                    time.sleep(2**attempt)
+                    audio_file= open(failed_file, "rb") 
+                    transcript = client.audio.transcriptions.create(
                                     model="whisper-1", 
                                     file=audio_file,
                                     response_format='text'                                                           
                                     )
-                        # file_path = os.path.join(chunk_directory, f"chunk_{i}") 
-                        # with open(f"{file_path}.txt","w") as f:
-                        print(transcript["text"])
-                        # print('result["text"]',result["text"])
-                        with open(f"{txt_file}","a") as f:
-                            # f.write(result) 
-                            f.write(transcript["text"]) 
-                        print("Processing stdout123....:  ",filename)
-                        # os.remove(chunk_file)  
-                delete_files_wishper(chunk_directory,chunks)
-                # merge_files_wishper(chunk_directory,chunks,filename)
-            except Exception as e:
-                        print(f"Error transcribing {filename}: {e}")
-                        retries_model(txt_file,chunk_file) 
+                    with open(f"{output_file}","a") as f:
+                        f.write(transcript["text"])
+                    print('Failed file Status: ',failed_file)
+                    os.remove(failed_file) 
+                    break  
+                except Exception as e:
+                    print(f"Failed to transcribe {failed_file} even after {attempt+1} attempt(s): {e}")
+            else:
+                print(f"Giving up on {failed_file} after {retries} attempts")  

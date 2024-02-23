@@ -16,3 +16,6 @@ Sql Server Connector installation - pip install pyodbc
 Loguru Installation - pip install loguru
 
 cd .venv\Scripts activate
+
+Loguru Logger-
+https://loguru.readthedocs.io/en/stable/api/logger.html
