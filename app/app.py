@@ -130,6 +130,8 @@ def get_record():
     print("11111111TTTTT",table_name)
     data = db_instance.get_all_record(table_name)
     print(22222222222,data)
+    if data ==None:
+        data={"Error":"Invalid table/Data not available for this "+ table_name}
     return data
 
 #single client details
@@ -137,15 +139,20 @@ def get_record():
 @app.route('/get_record_by_id', methods=['GET'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
-    itm_id = request.args.get('id')
-    data = db_instance.get_single_record(table_name,itm_id)
+    id = request.args.get('id')
+    data = db_instance.get_single_record(table_name,id)
+    print("BYYYYYYYYYYYYID>>", data)
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ table_name}
     return data
 
 @app.route('/delete_record_by_id')
 def delete_recordby_id():
     table_name = request.args.get('table_name')
     itm_id = request.args.get('id')
-    data=db_instance.delete_single_record(table_name,itm_id)
+    data = db_instance.delete_single_record(table_name,itm_id)
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ table_name}
     return {'data': data}
 
 
