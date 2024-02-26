@@ -1,0 +1,47 @@
+8 *** Logging Enable *** 2024-02-22 10:06:36,935 *** Debug logger
+9 *** Logging Enable *** 2024-02-22 10:06:36,935 *** Info logger
+10 *** Logging Enable *** 2024-02-22 10:06:36,935 *** Warning  logger
+11 *** Logging Enable *** 2024-02-22 10:06:36,935 *** Error logger
+12 *** Logging Enable *** 2024-02-22 10:06:36,935 *** Critical error logger
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** PRAGMA main.table_info("logs")
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** [raw sql] ()
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** PRAGMA temp.table_info("logs")
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** [raw sql] ()
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** 
+CREATE TABLE logs (
+	id INTEGER NOT NULL, 
+	level VARCHAR(10), 
+	message VARCHAR, 
+	created_at DATETIME, 
+	PRIMARY KEY (id)
+)
+
+
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** [no key 0.00009s] ()
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,920 *** COMMIT
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,935 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,935 *** INSERT INTO logs (level, message, created_at) VALUES (?, ?, ?)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,935 *** [generated in 0.00016s] ('DEBUG', 'This is a debug message', None)
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,939 *** COMMIT
+67 *** my_logger *** 2024-02-22 10:06:39,920 *** This is a debug message
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,939 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,939 *** INSERT INTO logs (level, message, created_at) VALUES (?, ?, ?)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,939 *** [cached since 0.009899s ago] ('INFO', 'This is an info message', None)
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,939 *** COMMIT
+68 *** my_logger *** 2024-02-22 10:06:39,939 *** This is an info message
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** INSERT INTO logs (level, message, created_at) VALUES (?, ?, ?)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** [cached since 0.01872s ago] ('WARNING', 'This is a warning message', None)
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** COMMIT
+69 *** my_logger *** 2024-02-22 10:06:39,955 *** This is a warning message
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** INSERT INTO logs (level, message, created_at) VALUES (?, ?, ?)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,955 *** [cached since 0.02841s ago] ('ERROR', 'This is an error message', None)
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,971 *** COMMIT
+70 *** my_logger *** 2024-02-22 10:06:39,955 *** This is an error message
+2690 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,971 *** BEGIN (implicit)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,971 *** INSERT INTO logs (level, message, created_at) VALUES (?, ?, ?)
+1846 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,971 *** [cached since 0.03828s ago] ('CRITICAL', 'This is a critical message', None)
+2696 *** sqlalchemy.engine.Engine *** 2024-02-22 10:06:39,971 *** COMMIT
+71 *** my_logger *** 2024-02-22 10:06:39,971 *** This is a critical message

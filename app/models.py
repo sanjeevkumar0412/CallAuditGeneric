@@ -98,6 +98,6 @@ class FileTypesInfo(db.Model):
         return f"<FileTypesInfo(typeid={self.typeid}, clientid='{self.clientid}', fileformat='{self.fileformat}',is_active='{self.is_active},is_deleted='{self.is_deleted}" \
 
 
-with app.app_context():
-    # Create database tables
-    db.create_all()
+# with app.app_context():
+#     # Create database tables
+#     db.create_all()
