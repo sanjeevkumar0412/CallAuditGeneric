@@ -85,43 +85,50 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
-db = SQLAlchemy(app)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
+# db = SQLAlchemy(app)
 
 # Reflect the database tables
 # Base = automap_base()
 # Base.prepare(db.engine, reflect=True)
 
 # Access the models dynamically
-with app.app_context():
-    Base = automap_base()
-    Base.prepare(db.engine, reflect=True)
-    Client = Base.classes.client
+# with app.app_context():
+#     Base = automap_base()
+#     Base.prepare(db.engine, reflect=True)
+#     Client = Base.classes.client
 
 # Route to handle GET request for retrieving user data
+from db_connection import DbConnection
+
+db_instance = DbConnection.get_instance()
+db_instance.connect_to_database()
+
 @app.route('/postclient', methods=['GET'])
 def add_client():
+    pass
     # with app.app_context():
-    params = Client(clientid='11211', clientname='Cogent381',
-    clientemail = 'jd1@example821.com', billinginformation = 'done731',
-    subscriptionid = 101010, modeltype = 'Eco123',
-    paymentstatus = '1not receive2411', is_active = False,
-    is_deleted = True)
-    db.session.add(params)
-    db.session.commit()
-    return "Success"
+    # params = Client(clientid='11211', clientname='Cogent381',
+    # clientemail = 'jd1@example821.com', billinginformation = 'done731',
+    # subscriptionid = 101010, modeltype = 'Eco123',
+    # paymentstatus = '1not receive2411', is_active = False,
+    # is_deleted = True)
+    # db.session.add(params)
+    # db.session.commit()
+    # return "Success"
 
 #Retreive all client details
-from db_utils import get_all_record, get_single_record, delete_single_record
+from db_utils import DBRecord
+# from db_utils import get_all_record, get_single_record, delete_single_record
 # from db_utils import *
-
+db_instance = DBRecord.get_instance()
 
 @app.route('/get_all_data', methods=['GET'])
 def get_record():
-    # with app.app_context():
+    # with app.app_context():    
     table_name = request.args.get('table_name')
     print("11111111TTTTT",table_name)
-    data = get_all_record(table_name)
+    data = db_instance.get_all_record(table_name)
     print(22222222222,data)
     return data
 
@@ -130,15 +137,15 @@ def get_record():
 @app.route('/get_record_by_id', methods=['GET'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
-    id = request.args.get('id')
-    data = get_single_record(table_name,id)
+    itm_id = request.args.get('id')
+    data = db_instance.get_single_record(table_name,itm_id)
     return data
 
 @app.route('/delete_record_by_id')
 def delete_recordby_id():
     table_name = request.args.get('table_name')
-    id = request.args.get('id')
-    data=delete_single_record(table_name,id)
+    itm_id = request.args.get('id')
+    data=db_instance.delete_single_record(table_name,itm_id)
     return {'data': data}
 
 
