@@ -7,10 +7,9 @@ from db_connection import DbConnection
 
 # Fetch for All Record
 class DBRecord:
-    _instance = None  
-    table_list = Base.classes.keys() 
-    print(table_list)
-    
+    _instance = None    
+    table_list = Base.classes.keys()         
+            
     def __init__(self):
          self.db_instance = DbConnection.get_instance()
         # raise RuntimeError('Error on DBRecord Call get_instance() instead')
@@ -33,6 +32,7 @@ class DBRecord:
                 table_class = Base.classes[table_name]
                 column_names=TableBase.metadata.tables[table_name].columns.keys()
                 data = db.session.query(table_class).all()
+                print('Query Data -------------------',data)
                 # print(111111111,data)
                 result = []
                 for client in data:
@@ -40,8 +40,9 @@ class DBRecord:
                     result.append(column_values)
                 return {'data': result}
         except Exception as e:
-            self.db_instance.close_database_connection()
-            print(".........Error in get_all_record...........",e)
+             print(".........Error in get_all_record...........",e)
+             DbConnection.close_database_connection()
+           
 
 # Fetch Single Record based on id
 
