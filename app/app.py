@@ -10,7 +10,7 @@
 # # db = SQLAlchemy(app)
 #
 # # Set your OpenAI API key
-# #openai.api_key = "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"
+# #openai.api_key = ""
 # #-----------------
 # # param= db.Client()
 # from logging import *
@@ -26,8 +26,8 @@
 # # logger.error("Error logger")
 # # logger.critical("Critical error logger")
 #
-# OpenAI.api_key = "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"
-# os.environ["OPENAI_API_KEY"] = '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'
+# OpenAI.api_key = ""
+# os.environ["OPENAI_API_KEY"] = ''
 #
 # # Initialize Flask app
 # app = Flask(__name__)
