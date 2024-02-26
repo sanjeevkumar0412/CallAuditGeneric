@@ -39,7 +39,8 @@ class StartTranscribe:
                         file_size = os.path.getsize(audio_file_path)                        
                         file_size_mb = file_size / (1024 * 1024)
                         if file_size_mb > 5:
-                            print('file size :- ',file_size)                       
+                            print('file size :- ',file_size)  
+                            # threading.Thread(target=self.process_recordings(audio_file_path,dir_folder_url,name_file)).start()                  
                             chunks = self.global_utility.split_audio_chunk_files(audio_file_path,dir_folder_url)
                             chunks_files = chunks[0]
                             chunk_chunk_files_path = chunks[1]
@@ -61,4 +62,16 @@ class StartTranscribe:
         except Exception as e:   
             self.logger.error(f'Error while creating build_transcribe_model {e}')
 
-   
+    # def process_recordings(self,audio_file_path,dir_folder_url,name_file):      
+    #     chunks = self.global_utility.split_audio_chunk_files(audio_file_path,dir_folder_url)
+    #     chunks_files = chunks[0]
+    #     chunk_chunk_files_path = chunks[1]
+    #     txt_file = os.path.join(dir_folder_url, name_file)+'.txt'
+    #     for i in range(len(chunks_files)):
+    #         chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
+    #         print(' Open Ai Chunk Audio File Path',chunk_file) 
+    #         # transcript = self.controller.build_chunk_files_transcribe_audio(self,chunks[0],chunks[1],subscription_model)
+    #         transcript = self.controller.build_transcribe_audio(chunk_file,subscription_model)
+    #         threading.Thread(target= transcript, args=(chunk_file,)).start()
+    #         is_text_file_written = self.global_utility.wrire_txt_file(txt_file,transcript)
+      

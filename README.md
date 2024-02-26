@@ -19,3 +19,6 @@ cd .venv\Scripts activate
 
 Loguru Logger-
 https://loguru.readthedocs.io/en/stable/api/logger.html
+
+Dependency injection
+pip install loguru dependency-injector
