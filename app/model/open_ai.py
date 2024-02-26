@@ -12,11 +12,10 @@ from app.utilities.utility import GlobalUtility
 
 # place keys here
 client = OpenAI()
-class OpenAIModel: 
-    # global_utility =  GlobalUtility()       
+class OpenAIModel:        
     def __init__(self):
         # self.model = model
-        self.global_utility =  GlobalUtility()
+        self.global_utility =  GlobalUtility.get_instance()
 
     def open_ai_transcribe_small_audio(self,output_file,dir_url,name):
         print(' Open Ai Audio File Path',output_file)

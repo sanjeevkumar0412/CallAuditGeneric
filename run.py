@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from app.model.transcribe_model import TranscribeModel
+from app.model.start_transcribe import StartTranscribe
 from loguru import logger
 
 load_dotenv()
@@ -17,7 +17,7 @@ load_dotenv()
 # build_transcribe_model(source_file_path, destination_folder)
 if __name__ == '__main__':
      try:
-        transcribe_model = TranscribeModel()
+        transcribe_model = StartTranscribe()
       #   destination_folder =  os.getenv('destination_folder')
       #   source_file_path = os.getenv('source_file_path')
         source_file_path ="D:/Cogent_Audio_Repo/"
@@ -25,7 +25,7 @@ if __name__ == '__main__':
         is_source_path_exist = os.path.exists(source_file_path)
         is_destination_path_exist = os.path.exists(destination_folder) 
         if is_source_path_exist and is_destination_path_exist:
-         transcribe_model.build_transcribe_model(str(source_file_path), str(destination_folder),'Small') #Premium, Normal, Small
+         transcribe_model.start_transcribe_process(str(source_file_path), str(destination_folder),'Small') #Premium, Normal, Small
         else:
           logger.error('folder path does not exist')
      except Exception as e:   

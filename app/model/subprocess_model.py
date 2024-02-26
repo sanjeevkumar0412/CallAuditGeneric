@@ -10,11 +10,10 @@ from openai import OpenAI
 import speech_recognition as sr
 from app.utilities.utility import GlobalUtility
 
-class SubProcessModel: 
-    global_utility =  GlobalUtility()   
+class SubProcessModel:      
     def __init__(self):
         # self.model = model
-        self.global_utility =  GlobalUtility()
+        self.global_utility =  GlobalUtility.get_instance()
 
     def transcribe_by_subprocess(self,chunks_files,chunk_directory,chunks,filename):   
         for i in range(len(chunks_files)):   

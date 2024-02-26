@@ -6,17 +6,26 @@ import shutil
 import os
 from datetime import datetime
 from app.utilities.transcribe import TranscribeAudio
-
+from app.services.logger import Logger
 
 
 load_dotenv()
-class GlobalUtility:  
+class GlobalUtility: 
+   _instance = None 
 # place keys here
-   
-   def __init__(self):        
-      #   self.model = model
-        self.transcribe_audio = TranscribeAudio()
 
+   def __init__(self):  
+        self.logger = Logger.get_instance()
+
+   def __init__(self):
+        raise RuntimeError('Error on BaseClass Call get_instance() instead')
+
+   @classmethod
+   def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance
+   
    def get_all_files(self,path):
       files_arr = []
       arr_all_files  = os.listdir(path)
@@ -28,12 +37,16 @@ class GlobalUtility:
          files_arr.append(file_name)
       return  files_arr
 
-   def delete_file(self,output_file,file_name):    
-        file = f"{output_file}/{file_name}"
-        os.remove(file)
-        for elm_file in os.listdir('.'):
-            if elm_file.startswith("file_name") and elm_file.endswith(".txt"):
-                os.remove(elm_file)
+   def delete_file(self,output_file,file_name): 
+        try:   
+            file = f"{output_file}/{file_name}"
+            os.remove(file)
+            for elm_file in os.listdir('.'):
+                if elm_file.startswith("file_name") and elm_file.endswith(".txt"):
+                    os.remove(elm_file)
+        except Exception as e:   
+                self.logger.error(e)
+   
 
    def delete_files_wishper(self,output_file,chunks_files):
          print('delete_files_wishper console output_file:-  ',output_file)

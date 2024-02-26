@@ -1,26 +1,29 @@
 import os
 from app.utilities.utility import GlobalUtility
 from app.controllers.controllers import Controller
-class TranscribeModel: 
-    global_utility =  GlobalUtility()
+from app.services.logger import Logger
+import threading
+
+class StartTranscribe:   
     controller = Controller()       
     def __init__(self):
         # self.model = model
-        self.global_utility =  GlobalUtility()
+        self.global_utility =  GlobalUtility.get_instance()
         self.controller = Controller() 
+        self.logger = Logger.get_instance()
 
-    def build_transcribe_model(self,source_file_path,destination_path,subscription_model):
+    def start_transcribe_process(self,source_file_path,destination_path,subscription_model):
         try:
             print('source_file_path console :- ',source_file_path)
             print('destination_path console :- ',destination_path)
             file_collection = self.global_utility.get_all_files(source_file_path)
             # model details, subscription
-            self.start_process_model(file_collection,source_file_path,destination_path,subscription_model)
+            self.start_dir_process(file_collection,source_file_path,destination_path,subscription_model)
             # create_folder_structure(file_collection,source_file_path,destination_path,subscription_model)
         except Exception as e:   
             print('Error while creating build_transcribe_model',e)
     
-    def start_process_model(self,file_collection,source_file_path,destination_path,subscription_model):
+    def start_dir_process(self,file_collection,source_file_path,destination_path,subscription_model):
         try:
             for file in file_collection:
                 file_url = source_file_path+"/"+file;
@@ -51,7 +54,11 @@ class TranscribeModel:
                             txt_file = dir_folder_url+'.txt'
                             transcript = self.controller.build_transcribe_audio(self,chunk_file,chunks[1],subscription_model)
                             is_text_file_written =self.global_utility.wrire_txt_file(txt_file,transcript)
+                    else:
+                        self.logger.error(f"{file} is not copied  in the destination folder {dir_folder_url}")
+                else:
+                     self.logger.error(f"Folder is not created for the file {file}")
         except Exception as e:   
-            print('Error while creating build_transcribe_model',e)
+            self.logger.error(f'Error while creating build_transcribe_model {e}')
 
    

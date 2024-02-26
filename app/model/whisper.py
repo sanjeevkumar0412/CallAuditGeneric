@@ -11,10 +11,10 @@ import speech_recognition as sr
 from app.utilities.utility import GlobalUtility
 
 class WhisperModel: 
-    # global_utility =  GlobalUtility()       
+       
     def __init__(self):
         # self.model = model
-        self.global_utility =  GlobalUtility()
+        self.global_utility =  GlobalUtility.get_instance()
 
     def whisper_transcribe_small_audio(self,file_path,model_name ="tiny"):
         model = whisper.load_model(model_name)
