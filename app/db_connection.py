@@ -36,8 +36,7 @@ class DbConnection:
             print("Database connection closed")
             db.session.close()
             engine_obj = db.get_engine(app)
-            print("Database connection",engine_obj)
-            print("engine_obj.dispose() ^^^^^^^^^^^^^^^^^",engine_obj.dispose() )          
+            engine_obj.dispose()
         except Exception as e:
             print(f"Error closing the database connection: {e}")
 

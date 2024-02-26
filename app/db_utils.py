@@ -7,9 +7,11 @@ from db_connection import DbConnection
 
 # Fetch for All Record
 class DBRecord:
-    _instance = None    
-    table_list = Base.classes.keys()         
-            
+    _instance = None  
+    table_list = Base.classes.keys() 
+    print(table_list)
+
+    
     def __init__(self):
          self.db_instance = DbConnection.get_instance()
         # raise RuntimeError('Error on DBRecord Call get_instance() instead')
@@ -22,39 +24,32 @@ class DBRecord:
     
     def get_all_record(self,table_name):
         try:
-            # db.session.close_all()
-            # db.session.close()
-            # flash('Loadin data for all records')
-            # db.session.close()
-            # engine_obj = db.get_engine(app)
-            # engine_obj.dispose()
             with app.app_context():              
                 table_class = Base.classes[table_name]
                 column_names=TableBase.metadata.tables[table_name].columns.keys()
                 data = db.session.query(table_class).all()
-                print('Query Data -------------------',data)
-                # print(111111111,data)
+                # print(111111111111111111888888888,data)
                 result = []
                 for client in data:
                     column_values = {column: getattr(client, column) for column in column_names}
                     result.append(column_values)
                 return {'data': result}
         except Exception as e:
-             print(".........Error in get_all_record...........",e)
-             DbConnection.close_database_connection()
-           
+            DbConnection.close_database_connection()
+            print(".........Error in get_all_record...........",e)
 
 # Fetch Single Record based on id
 
-    def get_single_record(table_name, id):
+    def get_single_record(self,table_name, id):
         with app.app_context():
             table_class = Base.classes[table_name]
             print("Base",table_class)
             data_check  = db.session.query(table_class).all()
-            if len(data_check) > 0:
+            print("data_check>>>>>>>>>",data_check)
+            if len(data_check) > 0 or data_check !=None:
                 column_by_id = db.session.query(table_class).get(id)
                 # column_by_id = db.session.query(table_class).filter_by(clientid=id).first()
-                if column_by_id ==None:
+                if column_by_id == None:
                     data ={"message":"Record not found for this ID:: "+ str(id)}
                 else:
                     column_names = TableBase.metadata.tables[table_name].columns.keys()
