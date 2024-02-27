@@ -16,24 +16,20 @@ class Logger(object):
         return cls._instance
 
     def debug(self, message):
-        # self._logs += f"[DEBUG] {message}\n"
+        
         logger.error(f"Debug message : {message}")
 
-    def info(self, message):
-        # self._logs += f"[INFO] {message}\n"
+    def info(self, message):        
         logger.error(f"Logger Info : {message}")
 
-    def warning(self, message):
-        # self._logs += f"[WARNING] {message}\n"
+    def warning(self, message):        
         logger.error(f"Warning message  : {message}")
 
-    def error(self, function_name,message):
-        # self._logs += f"[ERROR] {message}\n"
+    def error(self, function_name,message):        
         logger.error(f"Error in {function_name} : {message}")
 
-    def get_logs(self,message):
-        print(self._logs)
-        # logger.log(f"Log message : {message}")
+    def get_logs(self,message):       
+        logger.log(f"Log message : {message}")
     
     def log_exceptions(self,function):
         def wrapper(*args, **kwargs):
