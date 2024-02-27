@@ -8,14 +8,22 @@ from datetime import datetime
 import time
 from openai import OpenAI
 import speech_recognition as sr
-
+from app.services.logger import Logger
 
 class TranscribeAudio:  
 # place keys here
-    def __init__(self):
-        self.client = OpenAI()
-        # self.model = model     
+    _instance = None
 
+    def __init__(self):        
+        self.logger = Logger.get_instance()
+       
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance
+    
     def transcribe(self,output_file,dir_url,name):
         model = whisper.load_model("tiny")
         result = model.transcribe(output_file)

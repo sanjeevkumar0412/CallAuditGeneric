@@ -1,8 +1,8 @@
 from dependency_injector import containers, providers, dependencies
 from loguru import logger
-from app.db_layer.Base_Class import BaseClass
 
-class DataBaseClass(class_name):
+
+class DataBaseClass:
 
     _instance = None
     _logs = ""
