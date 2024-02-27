@@ -1,5 +1,6 @@
 # from dependency_injector import containers, providers, dependencies
 from loguru import logger
+from pathlib import Path
 
 class Logger(object):
 
@@ -14,20 +15,23 @@ class Logger(object):
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-
-    def debug(self, message):
-        
+    @staticmethod
+    def debug(self, message:str):        
         logger.error(f"Debug message : {message}")
 
+    @staticmethod
     def info(self, message):        
         logger.error(f"Logger Info : {message}")
 
+    @staticmethod
     def warning(self, message):        
         logger.error(f"Warning message  : {message}")
 
+    @staticmethod
     def error(self, function_name,message):        
         logger.error(f"Error in {function_name} : {message}")
 
+    @staticmethod
     def get_logs(self,message):       
         logger.log(f"Log message : {message}")
     
@@ -44,3 +48,27 @@ class Logger(object):
                         return a / b
                 """            
         return wrapper
+    
+    def custom_catch(self, *args, **kwargs):
+        try:
+            return super().catch(*args, **kwargs)
+            """
+                # Replace the default logger with the custom logger
+                self.logger.remove()
+                self.logger.add(self.logger.custom_catch(), format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
+                # Test the custom logger
+                self.logger.info("This is an information message")
+                self.logger.error("This is an error message")
+            """
+        except Exception as e:           
+            logger.error(f"An error occurred: {e}")            
+            self.exception(f"An error occurred: {e}")
+
+    def create_log_file(self,file_name, rotation="100 MB", level="INFO"):
+        """  
+        Args:
+            filename (str): Name of the log file to create.
+            rotation (str, optional): Rotation size (e.g., "10 MB", "500 KB"). Defaults to "100 MB".
+            level (str, optional): Log level. Defaults to "INFO".
+        """
+        logger.add(file_name, level=level, rotation=rotation)

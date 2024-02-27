@@ -6,8 +6,7 @@ import threading
 
 class StartTranscribe:   
     controller = Controller()       
-    def __init__(self):
-        # self.model = model
+    def __init__(self):      
         self.global_utility =  GlobalUtility.get_instance()
         self.controller = Controller() 
         self.logger = Logger.get_instance()
@@ -16,10 +15,8 @@ class StartTranscribe:
         try:
             print('source_file_path console :- ',source_file_path)
             print('destination_path console :- ',destination_path)
-            file_collection = self.global_utility.get_all_files(source_file_path)
-            # model details, subscription
-            self.start_dir_process(file_collection,source_file_path,destination_path,subscription_model)
-            # create_folder_structure(file_collection,source_file_path,destination_path,subscription_model)
+            file_collection = self.global_utility.get_all_files(source_file_path)          
+            self.start_dir_process(file_collection,source_file_path,destination_path,subscription_model)            
         except Exception as e:   
             print('Error while creating build_transcribe_model',e)
     

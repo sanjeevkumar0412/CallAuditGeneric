@@ -40,7 +40,7 @@ class Controller:
                 transcript = self.open_ai_model.open_ai_transcribe_audio(self,chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12")            
             elif subscriptions_model == "Small":
-                transcript = self.whisper_model.whisper_transcribe_small_audio(chunks_files,"tiny")
+                transcript = self.whisper_model.whisper_transcribe_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!66")            
             elif subscriptions_model == "Normal":
                 transcript = self.open_ai_model.open_ai_model.open_ai_transcribe_small_audio(self,chunks_files,"tiny")
