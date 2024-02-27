@@ -179,3 +179,9 @@ class GlobalUtility:
          except Exception as e:
               print(f'caught {type(e)}: e',e)
               return False
+    
+   def get_file_extension(self,file):
+         try:
+              return os.path.splitext(file)
+         except Exception as e:
+              self.logger.error('get_file_extension',e)       

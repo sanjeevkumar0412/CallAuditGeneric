@@ -31,40 +31,44 @@ class StartTranscribe:
             transcribe_files =[]
             for file in file_collection:
                 file_url = source_file_path+"/"+file;
-                name_file =file_url.split('/')[-1].split('.')[0]
-                dir_folder_url = os.path.join(destination_path, name_file)
-                print('Audio File name for folder creation : ',name_file) 
-            # model details, subscription
-                is_folder_created =self.global_utility.create_folder_structure(file,dir_folder_url,destination_path)
-                if is_folder_created:
-                    is_copied_files = self.global_utility.copy_file(file_url,dir_folder_url)
-                    if is_copied_files:
-                        audio_file_path = os.path.join(dir_folder_url, file)
-                        file_size = os.path.getsize(audio_file_path)                        
-                        file_size_mb = file_size / (1024 * 1024)                        
-                        if file_size_mb > 5:
-                            print('file size :- ',file_size)
-                            self.start_process_recordings_large_file(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)  
-                            # threading.Thread(target=self.process_recordings(audio_file_path,dir_folder_url,name_file)).start()                  
-                            # chunks = self.global_utility.split_audio_chunk_files(audio_file_path,dir_folder_url)
-                            # chunks_files = chunks[0]
-                            # chunk_chunk_files_path = chunks[1]
-                            # txt_file = os.path.join(dir_folder_url, name_file)+'.txt'
-                            # for i in range(len(chunks_files)):
-                            #     chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
-                            #     print(' Open Ai Chunk Audio File Path',chunk_file) 
-                            #     # transcript = self.controller.build_chunk_files_transcribe_audio(self,chunks[0],chunks[1],subscription_model)
-                            #     transcript = self.controller.build_transcribe_audio(chunk_file,subscription_model)
-                            #     is_text_file_written = self.global_utility.wrire_txt_file(txt_file,transcript)
+                file_name, extension = self.global_utility.get_file_extension(file)
+                if extension == ".wav" or extension == ".mp3": 
+                    name_file =file_url.split('/')[-1].split('.')[0]
+                    dir_folder_url = os.path.join(destination_path, name_file)
+                    print('Audio File name for folder creation : ',name_file) 
+                # model details, subscription
+                    is_folder_created =self.global_utility.create_folder_structure(file,dir_folder_url,destination_path)
+                    if is_folder_created:
+                        is_copied_files = self.global_utility.copy_file(file_url,dir_folder_url)
+                        if is_copied_files:
+                            audio_file_path = os.path.join(dir_folder_url, file)
+                            file_size = os.path.getsize(audio_file_path)                        
+                            file_size_mb = file_size / (1024 * 1024)                        
+                            if file_size_mb > 5:
+                                print('file size :- ',file_size)
+                                self.start_process_recordings_large_file(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)  
+                                # threading.Thread(target=self.process_recordings(audio_file_path,dir_folder_url,name_file)).start()                  
+                                # chunks = self.global_utility.split_audio_chunk_files(audio_file_path,dir_folder_url)
+                                # chunks_files = chunks[0]
+                                # chunk_chunk_files_path = chunks[1]
+                                # txt_file = os.path.join(dir_folder_url, name_file)+'.txt'
+                                # for i in range(len(chunks_files)):
+                                #     chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
+                                #     print(' Open Ai Chunk Audio File Path',chunk_file) 
+                                #     # transcript = self.controller.build_chunk_files_transcribe_audio(self,chunks[0],chunks[1],subscription_model)
+                                #     transcript = self.controller.build_transcribe_audio(chunk_file,subscription_model)
+                                #     is_text_file_written = self.global_utility.wrire_txt_file(txt_file,transcript)
+                            else:
+                                self.start_process_recordings(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)
+                                # txt_file = dir_folder_url+'.txt'
+                                # transcript = self.controller.build_transcribe_audio(self,chunk_file,chunks[1],subscription_model)
+                                # is_text_file_written =self.global_utility.wrire_txt_file(txt_file,transcript)
                         else:
-                            self.start_process_recordings(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)
-                            # txt_file = dir_folder_url+'.txt'
-                            # transcript = self.controller.build_transcribe_audio(self,chunk_file,chunks[1],subscription_model)
-                            # is_text_file_written =self.global_utility.wrire_txt_file(txt_file,transcript)
+                            self.logger.error('start_recording_transcribe_process',f"{file} is not copied  in the destination folder {dir_folder_url}")
                     else:
-                        self.logger.error('start_recording_transcribe_process',f"{file} is not copied  in the destination folder {dir_folder_url}")
-                else:
-                     self.logger.error('start_recording_transcribe_process',f"Folder is not created for the file {file}")
+                        self.logger.error('start_recording_transcribe_process',f"Folder is not created for the file {file}")
+                else:   
+                      self.logger.error('start_recording_transcribe_process',f"{file} is not supported.")       
             print("All Transcribe files: ", transcribe_files)
         except Exception as e:   
             self.logger.error('start_recording_transcribe_process',f'Error while creating build_transcribe_model {e}')
