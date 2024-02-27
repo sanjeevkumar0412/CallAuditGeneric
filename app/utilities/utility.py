@@ -1,11 +1,8 @@
-import whisper 
 from pydub import AudioSegment
-import subprocess
 from dotenv import load_dotenv
 import shutil
 import os
 from datetime import datetime
-from app.utilities.transcribe import TranscribeAudio
 from app.services.logger import Logger
 
 
