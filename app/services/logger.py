@@ -16,16 +16,35 @@ class Logger(object):
         return cls._instance
 
     def debug(self, message):
-        self._logs += f"[DEBUG] {message}\n"
+        # self._logs += f"[DEBUG] {message}\n"
+        logger.error(f"Debug message : {message}")
 
     def info(self, message):
-        self._logs += f"[INFO] {message}\n"
+        # self._logs += f"[INFO] {message}\n"
+        logger.error(f"Logger Info : {message}")
 
     def warning(self, message):
-        self._logs += f"[WARNING] {message}\n"
+        # self._logs += f"[WARNING] {message}\n"
+        logger.error(f"Warning message  : {message}")
 
-    def error(self, message):
-        self._logs += f"[ERROR] {message}\n"
+    def error(self, function_name,message):
+        # self._logs += f"[ERROR] {message}\n"
+        logger.error(f"Error in {function_name} : {message}")
 
-    def get_logs(self):
+    def get_logs(self,message):
         print(self._logs)
+        # logger.log(f"Log message : {message}")
+    
+    def log_exceptions(self,function):
+        def wrapper(*args, **kwargs):
+            try:
+                return function(*args, **kwargs)
+            except Exception as e:
+                logger.exception(f"An error occurred in {function.__name__}: {e}")   
+                """
+                # Example usage Decorator  :
+                    @log_exceptions
+                    def divide(a, b):
+                        return a / b
+                """            
+        return wrapper
