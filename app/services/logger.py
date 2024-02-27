@@ -15,17 +15,17 @@ class Logger(object):
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
+    
     @staticmethod
     def debug(self, message:str):        
-        logger.error(f"Debug message : {message}")
-
-    @staticmethod
+        logger.debug(f"Debug message : {message}")
+    
     def info(self, message):        
-        logger.error(f"Logger Info : {message}")
+        logger.info(f"Logger Info : {message}")
 
     @staticmethod
     def warning(self, message):        
-        logger.error(f"Warning message  : {message}")
+        logger.warning(f"Warning message  : {message}")
 
     @staticmethod
     def error(self, function_name,message):        
@@ -57,7 +57,7 @@ class Logger(object):
                 self.logger.remove()
                 self.logger.add(self.logger.custom_catch(), format="{time:YYYY-MM-DD HH:mm:ss} | {level} | {message}")
                 # Test the custom logger
-                self.logger.info("This is an information message")
+                logger.info("This is an information message")
                 self.logger.error("This is an error message")
             """
         except Exception as e:           

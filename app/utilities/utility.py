@@ -45,7 +45,7 @@ class GlobalUtility:
                 if elm_file.startswith("file_name") and elm_file.endswith(".txt"):
                     os.remove(elm_file)
         except Exception as e:   
-                self.logger.error(e)
+                self.logger.error('delete_file',e)
    
 
    def delete_files_wishper(self,output_file,chunks_files):

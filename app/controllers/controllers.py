@@ -17,16 +17,16 @@ class Controller:
         transcript = None
         try:
             if subscriptions_model == "Premium":
-                transcript = self.open_ai_model.open_ai_transcribe_large_audio(self,chunks_files)
+                transcript = self.open_ai_model.open_ai_transcribe_large_audio(chunks_files)
                 self.logger.info("Get the logger information from here!12")            
             elif subscriptions_model == "Small":
-                transcript = self.whisper_model.whisper_transcribe_large_audio(self,chunks_files,"tiny")
+                transcript = self.whisper_model.whisper_transcribe_large_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!66")            
             elif subscriptions_model == "Normal":
-                transcript = self.open_ai_model.open_ai_transcribe_large_audio(self,chunks_files,"tiny")
+                transcript = self.open_ai_model.open_ai_transcribe_large_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12qw")
             else:            
-                transcript = self.open_ai_model.open_ai_transcribe_large_audio(self,chunks_files,"tiny")
+                transcript = self.open_ai_model.open_ai_transcribe_large_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12qwsdfdf") 
             return  transcript 
         except Exception as e:
@@ -37,16 +37,16 @@ class Controller:
         transcript = ''
         try:        
             if subscriptions_model == "Premium":
-                transcript = self.open_ai_model.open_ai_transcribe_audio(self,chunks_files,"tiny")
+                transcript = self.open_ai_model.open_ai_transcribe_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12")            
             elif subscriptions_model == "Small":
                 transcript = self.whisper_model.whisper_transcribe_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!66")            
             elif subscriptions_model == "Normal":
-                transcript = self.open_ai_model.open_ai_model.open_ai_transcribe_small_audio(self,chunks_files,"tiny")
+                transcript = self.open_ai_model.open_ai_model.open_ai_transcribe_small_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12qw")
             else:            
-                transcript = self.open_ai_model.open_ai_transcribe_audio(self,chunks_files,"tiny")
+                transcript = self.open_ai_model.open_ai_transcribe_audio(chunks_files,"tiny")
                 self.logger.info("Get the logger information from here!12qwsdfdf")   
             return transcript
         except Exception as e:
@@ -54,11 +54,11 @@ class Controller:
               self.build_chunk_files_transcribe_audio(chunks_files,subscriptions_model)
 
     def get_open_ai_transcribe_large_audio(self,chunks_files,chunk_directory,chunks,filename):
-        transcript = self.open_ai_model.open_ai_transcribe_large_audio(self,chunks_files,chunk_directory,chunks,filename)
+        transcript = self.open_ai_model.open_ai_transcribe_large_audio(chunks_files,chunk_directory,chunks,filename)
         self.logger.info("Get the logger information from here!")
         return transcript
     
     def get_open_ai_transcribe_large_audio(self,chunks_files,chunk_directory,chunks,filename):
-        transcript = self.open_ai_model.open_ai_transcribe_audio(self,chunks_files,chunk_directory,chunks,filename)
+        transcript = self.open_ai_model.open_ai_transcribe_audio(chunks_files,chunk_directory,chunks,filename)
         self.logger.info("Get the logger information from here!")
         return transcript
