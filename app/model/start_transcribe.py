@@ -5,7 +5,8 @@ from app.services.logger import Logger
 import threading
 
 class StartTranscribe:   
-    controller = Controller()       
+    controller = Controller() 
+
     def __init__(self):      
         self.global_utility =  GlobalUtility.get_instance()
         self.controller = Controller() 
@@ -16,13 +17,36 @@ class StartTranscribe:
     #     if cls._instance is None:
     #         cls._instance = cls.__new__(cls)
     #     return cls._instance
+    def validate_oauth_token(self,token):
+        print("validate_oauth_token",token)
 
-    def start_transcribe_process(self,source_file_path,destination_path,subscription_model):
+    def validate_folder(self,source_file_path,destination_folder):
+        # Your main program logic goes here
         try:
-            print('source_file_path console :- ',source_file_path)
-            print('destination_path console :- ',destination_path)
-            file_collection = self.global_utility.get_all_files(source_file_path)          
-            self.start_recording_transcribe_process(file_collection,source_file_path,destination_path,subscription_model)            
+            # transcribe_model = StartTranscribe()      
+            # source_file_path ="D:/Cogent_Audio_Repo/"
+            # destination_folder = "D:/Cogent_AI_Audio_Repo/"
+            is_source_path_exist = os.path.exists(source_file_path)
+            is_destination_path_exist = os.path.exists(destination_folder) 
+            if is_source_path_exist and is_destination_path_exist:
+                return True
+            else:
+                 return False
+        except Exception as e:   
+            print(f'caught {type(e)}: e',e)
+
+    def start_transcribe_process(self):
+        try:
+            # print('source_file_path console :- ',source_file_path)
+            # print('destination_path console :- ',destination_path)
+            source_file_path ="D:/Cogent_Audio_Repo/"
+            destination_path = "D:/Cogent_AI_Audio_Repo/"
+            is_validate_path = self.validate_folder(source_file_path,destination_path)
+            if is_validate_path: 
+                file_collection = self.global_utility.get_all_files(source_file_path)          
+                self.start_recording_transcribe_process(file_collection,source_file_path,destination_path,'Small')  #Premium, Normal, Small 
+            else:
+                  self.logger.error('folder path does not exist')        
         except Exception as e:   
             print('Error while creating build_transcribe_model',e)
     
