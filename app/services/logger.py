@@ -27,7 +27,7 @@ class Logger(object):
     def warning(self, message):        
         logger.warning(f"Warning message  : {message}")
 
-    @staticmethod
+    
     def error(self, function_name,message):        
         logger.error(f"Error in {function_name} : {message}")
 
