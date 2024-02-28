@@ -3,12 +3,13 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 from app.db_configuration import Base,db,app,TableBase
+from app.services.logger import Logger
 class DbConnection:  
 
     _instance = None   
 
     def __init__(self):
-        raise RuntimeError('Error on BaseClass Call get_instance() instead')
+       self.logger = Logger.get_instance()
 
     @classmethod
     def get_instance(cls):
@@ -25,12 +26,12 @@ class DbConnection:
             with app.app_context():
                 Base = automap_base()
                 Base.prepare(db.engine, reflect=True)
-                Client = Base.classes.client           
+                # Client = Base.classes.client           
         except Exception as e:
-            print(f"Error connecting to the database: {e}")
+            self.logger.error("connect_to_database", e)
             raise
 
-    def close_database_connection():
+    def close_database_connection(self):
         try:
         # Close the database connection
             print("Database connection closed")
@@ -38,5 +39,5 @@ class DbConnection:
             engine_obj = db.get_engine(app)
             engine_obj.dispose()
         except Exception as e:
-            print(f"Error closing the database connection: {e}")
+            self.logger.error("close_database_connection",e)
 

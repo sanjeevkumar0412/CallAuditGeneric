@@ -4,6 +4,7 @@ from app.controllers.controllers import Controller
 from app.services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
+from app.db_connection import DbConnection
 import threading
 
 load_dotenv()
@@ -14,17 +15,22 @@ class StartTranscribe:
         self.controller = Controller() 
         self.logger = Logger.get_instance()
         self.db_instance = DBRecord.get_instance()
+        self.db_connection = DbConnection.get_instance()
     
     def validate_oauth_token(self):
-        print("validate_oauth_token")
-        user_name = os.getenv('USER_NAME')
-        password = os.getenv('PWD')
-        self.logger.info(f'user name :- {user_name}')
-        self.logger.info(f'password :- {password}')        
-        client_table_data= self.db_instance.get_all_record('Usersmanagement')
-        self.logger.info(f'client_table_data :- {client_table_data}')
-        self.logger.info(f'client_table_data :- {client_table_data}')
-
+        try:
+            print("validate_oauth_token")
+            user_name = os.getenv('USER_NAME')
+            password = os.getenv('PWD')
+            self.logger.info(f'user name :- {user_name}')
+            self.logger.info(f'password :- {password}') 
+            self.db_connection.connect_to_database()     
+            client_table_data= self.db_instance.get_all_record('UsersManagement')
+            self.logger.info(f'client_table_data :- {client_table_data}')
+            self.logger.info(f'client_table_data :- {client_table_data}')
+        except Exception as e:
+                    self.logger.error('validate_oauth_token',e)
+                    
     def validate_folder(self,source_file_path,destination_folder):      
         try:  
             self.validate_oauth_token()         
