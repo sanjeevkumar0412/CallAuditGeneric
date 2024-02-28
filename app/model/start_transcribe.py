@@ -3,23 +3,26 @@ from app.utilities.utility import GlobalUtility
 from app.controllers.controllers import Controller
 from app.services.logger import Logger
 from dotenv import load_dotenv
+from app.db_utils import DBRecord
 import threading
 
 load_dotenv()
 class StartTranscribe:   
-    # controller = Controller() 
-
+   
     def __init__(self):      
         self.global_utility =  GlobalUtility.get_instance()
         self.controller = Controller() 
         self.logger = Logger.get_instance()
+        self.db_instance = DBRecord.get_instance()
     
-    def validate_oauth_token(self,token):
-        print("validate_oauth_token",token)
+    def validate_oauth_token(self):
+        print("validate_oauth_token")
+        client_table_data= self.db_instance.get_all_record('Usersmanagement')
+        print('client_table_data',client_table_data)
 
-    def validate_folder(self,source_file_path,destination_folder):
-      
-        try:           
+    def validate_folder(self,source_file_path,destination_folder):      
+        try:  
+            self.validate_oauth_token()         
             is_source_path_exist = os.path.exists(source_file_path)
             is_destination_path_exist = os.path.exists(destination_folder) 
             if is_source_path_exist and is_destination_path_exist:

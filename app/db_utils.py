@@ -1,7 +1,7 @@
-from db_configuration import Base,db,app,TableBase
+from app.db_configuration import Base,db,app,TableBase
 from sqlalchemy.ext.automap import automap_base
 from flask import flash
-from db_connection import DbConnection
+from app.db_connection import DbConnection
 
 # from flask import flash
 
@@ -13,8 +13,7 @@ class DBRecord:
 
     
     def __init__(self):
-         self.db_instance = DbConnection.get_instance()
-        # raise RuntimeError('Error on DBRecord Call get_instance() instead')
+         self.db_instance = DbConnection.get_instance()      
 
     @classmethod
     def get_instance(cls):

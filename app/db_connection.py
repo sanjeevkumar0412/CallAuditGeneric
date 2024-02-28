@@ -2,7 +2,7 @@ from flask import Flask,jsonify,request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
-from db_configuration import Base,db,app,TableBase
+from app.db_configuration import Base,db,app,TableBase
 class DbConnection:  
 
     _instance = None   
