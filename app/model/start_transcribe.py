@@ -4,6 +4,7 @@ from app.controllers.controllers import Controller
 from app.services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
+from app.db_connection import DbConnection
 import threading
 
 load_dotenv()
@@ -14,12 +15,22 @@ class StartTranscribe:
         self.controller = Controller() 
         self.logger = Logger.get_instance()
         self.db_instance = DBRecord.get_instance()
+        self.db_connection = DbConnection.get_instance()
     
     def validate_oauth_token(self):
-        print("validate_oauth_token")
-        client_table_data= self.db_instance.get_all_record('Usersmanagement')
-        print('client_table_data',client_table_data)
-
+        try:
+            print("validate_oauth_token")
+            user_name = os.getenv('USER_NAME')
+            password = os.getenv('PWD')
+            self.logger.info(f'user name :- {user_name}')
+            self.logger.info(f'password :- {password}') 
+            self.db_connection.connect_to_database()     
+            client_table_data= self.db_instance.get_all_record('UsersManagement')
+            self.logger.info(f'client_table_data :- {client_table_data}')
+            self.logger.info(f'client_table_data :- {client_table_data}')
+        except Exception as e:
+                    self.logger.error('validate_oauth_token',e)
+                    
     def validate_folder(self,source_file_path,destination_folder):      
         try:  
             self.validate_oauth_token()         
@@ -30,7 +41,7 @@ class StartTranscribe:
             else:
                  return False
         except Exception as e:   
-            print(f'caught {type(e)}: e',e)
+            self.logger.error('validate_folder',e)
 
     def start_transcribe_process(self):
         try:           
@@ -41,9 +52,9 @@ class StartTranscribe:
                 file_collection = self.global_utility.get_all_files(source_file_path)          
                 self.start_recording_transcribe_process(file_collection,source_file_path,destination_path,'Small')  #Premium, Normal, Small 
             else:
-                  self.logger.error('folder path does not exist')        
+                  self.logger.error('start_transcribe_process','folder path does not exist')        
         except Exception as e:   
-            print('Error while creating build_transcribe_model',e)
+            self.logger.error('start_transcribe_process',e)
     
     def start_recording_transcribe_process(self,file_collection,source_file_path,destination_path,subscription_model):
         try:
@@ -74,7 +85,7 @@ class StartTranscribe:
                         self.logger.error('start_recording_transcribe_process',f"Folder is not created for the file {file}")
                 else:   
                       self.logger.error('start_recording_transcribe_process',f"{file} is not supported.")       
-            print("All Transcribe files: ", transcribe_files)
+            self.logger.info("All Transcribe files: ", transcribe_files)
         except Exception as e:   
             self.logger.error('start_recording_transcribe_process',f'Error while creating build_transcribe_model {e}')
     
