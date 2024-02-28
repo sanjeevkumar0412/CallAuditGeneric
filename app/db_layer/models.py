@@ -67,7 +67,6 @@ class UsersManagement(db.Model):
         return f"<UsersManagement(userid={self.userid}, clientid='{self.clientid}', username='{self.username}',password='{self.password}',useremail='{self.useremail},userrole='{self.userrole}" \
                f",isactive='{self.isactive}',isdeleted='{self.isdeleted}')>"
 
-
 class Configuration(db.Model):
     configid= db.Column(db.Integer, primary_key=True)
     clientid = db.Column(db.Integer, db.ForeignKey('client.clientid'), nullable=False)
