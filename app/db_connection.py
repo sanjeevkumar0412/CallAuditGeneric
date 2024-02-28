@@ -2,11 +2,11 @@ from flask import Flask,jsonify,request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
-from app.db_configuration import Base,db,app,TableBase
-from app.services.logger import Logger
-class DbConnection:  
+# from db_configuration import Base,db,app,TableBase
+from services.logger import Logger
+class DbConnection:
 
-    _instance = None   
+    _instance = None
 
     def __init__(self):
        self.logger = Logger.get_instance()
@@ -20,13 +20,16 @@ class DbConnection:
     def connect_to_database(self):
         try: 
         # Connect to the database
+        #     import sqlalchemy
+        #     engine = sqlalchemy.create_engine('sqlite:///D:/Cogent/Cogent-AI/app/Cogent-AI.db')
+        #     conn = engine.connect()
             app = Flask(__name__)
-            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
+            app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///D:/Cogent/AI_Repo/Cogent-AI/app/Cogent-AI.db'
             db = SQLAlchemy(app)
             with app.app_context():
                 Base = automap_base()
                 Base.prepare(db.engine, reflect=True)
-                # Client = Base.classes.client           
+        #         Client = Base.classes.client
         except Exception as e:
             self.logger.error("connect_to_database", e)
             raise

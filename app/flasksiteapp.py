@@ -85,7 +85,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 
 app = Flask(__name__)
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///D:/Cogent/AI_Repo/Cogent-AI/app/Cogent-AI.db'
 # db = SQLAlchemy(app)
 
 # Reflect the database tables
@@ -99,10 +99,11 @@ app = Flask(__name__)
 #     Client = Base.classes.client
 
 # Route to handle GET request for retrieving user data
-from db_connection import DbConnection
-
-db_instance = DbConnection.get_instance()
-db_instance.connect_to_database()
+# import app
+# from db_connection import DbConnection
+#
+# db_instance = DbConnection.get_instance()
+# db_instance.connect_to_database()
 
 @app.route('/postclient', methods=['GET'])
 def add_client():
@@ -118,10 +119,12 @@ def add_client():
     # return "Success"
 
 #Retreive all client details
+#####Fetch for this connection#########
+
 from db_utils import DBRecord
-# from db_utils import get_all_record, get_single_record, delete_single_record
-# from db_utils import *
 db_instance = DBRecord.get_instance()
+
+############----------End##############
 
 @app.route('/get_all_data', methods=['GET'])
 def get_record():
@@ -155,6 +158,17 @@ def delete_recordby_id():
         data={"Error":"Invalid table/Data not available for this "+ table_name}
     return {'data': data}
 
-
+@app.route('/get_record_by_column_name', methods=['GET'])
+def get_recordby_column_name():
+    table_name = request.args.get('table_name')
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    print("cccccccccccccccc",column_value)
+    # id = request.args.get('id')
+    data = db_instance.get_data_by_column_name(table_name,column_value)
+    print("BYYYYYYYYYYYYID>>column", data)
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ table_name}
+    return data
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True,port=5361)

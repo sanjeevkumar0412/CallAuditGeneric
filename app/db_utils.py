@@ -1,29 +1,33 @@
-from app.db_configuration import Base,db,app,TableBase
+from app import db_configuration
+from app.db_connection import DbConnection
+from db_configuration import Base,db,app,TableBase
 from sqlalchemy.ext.automap import automap_base
 from flask import flash
-from app.db_connection import DbConnection
+# from app import db_connection
+from sqlalchemy.orm import scoped_session, sessionmaker, declarative_base
 
+# Base = declarative_base()
 # from flask import flash
 
 # Fetch for All Record
 class DBRecord:
-    _instance = None  
-    table_list = Base.classes.keys() 
-    print(table_list)
+    _instance = None
+    table_list = Base.classes.keys()
+    print(">>>>>>>>",table_list)
 
-    
+
     def __init__(self):
-         self.db_instance = DbConnection.get_instance()      
+         self.db_instance = DbConnection.get_instance()
 
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-    
+
     def get_all_record(self,table_name):
         try:
-            with app.app_context():              
+            with app.app_context():
                 table_class = Base.classes[table_name]
                 column_names=TableBase.metadata.tables[table_name].columns.keys()
                 data = db.session.query(table_class).all()
@@ -61,7 +65,7 @@ class DBRecord:
     # print("55555555555",get_single_record("client))
     #Delete Record from id
 
-    def delete_single_record(table_name,id):
+    def delete_single_record(self,table_name,id):
         with app.app_context():
             table_class = Base.classes[table_name]
             data_check  = db.session.query(table_class).all()
@@ -76,4 +80,15 @@ class DBRecord:
             else:
                 data ={"message":"Record not available !"}
 
+        return data
+
+    def get_data_by_column_name(self,table_name,column_value):
+        with app.app_context():
+            table_class = Base.classes[table_name]
+            data_check  = db.session.query(table_class).all()
+            if len(data_check) > 0:
+                column_name = db.session.query(table_class).filter_by(username=column_value.strip()).first()
+                column_class_names = TableBase.metadata.tables[table_name].columns.keys()
+                data = {column: getattr(column_name, column) for column in column_class_names}
+                # data = {"data": data}
         return data

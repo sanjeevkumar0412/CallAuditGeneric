@@ -1,9 +1,11 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
-db = SQLAlchemy(app)
+# app = Flask(__name__)
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
+# db = SQLAlchemy(app)
 
+db = SQLAlchemy()
+# db = SQLAlchemy()
 # db.session.entry(param)
 # db.session.commit()
 # Define your models
@@ -139,6 +141,6 @@ class TranscribeTracker(db.Model):
                f",enddate='{self.enddate}',status='{self.status}',sequencenumber='{self.sequencenumber}',filesize='{self.filesize}',iscompleted='{self.iscompleted}',isactive='{self.isactive}',isdeleted='{self.isdeleted}')>"
 
 
-with app.app_context():
-    # Create database tables
-    db.create_all()
+# with app.app_context():
+#     # Create database tables
+#     db.create_all()

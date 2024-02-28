@@ -6,6 +6,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import (Column, Index, Date, DateTime, Numeric, BigInteger, String, ForeignKey, Boolean)
 
 app = Flask(__name__)
+# app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
 db = SQLAlchemy(app)
 
