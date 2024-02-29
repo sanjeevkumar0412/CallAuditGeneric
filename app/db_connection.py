@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.ext.declarative import declarative_base
 # from db_configuration import Base,db,app,TableBase
-from services.logger import Logger
+from app.services.logger import Logger
 class DbConnection:
 
     _instance = None
