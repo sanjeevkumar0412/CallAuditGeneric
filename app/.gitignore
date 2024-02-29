@@ -7,3 +7,5 @@ temp/
 venv/
 myenv/
 *.env
+*.xml
+*.iml
