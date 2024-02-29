@@ -1,4 +1,3 @@
-from app import db_configuration
 from app.db_connection import DbConnection
 from app.db_configuration import Base,db,app,TableBase
 from sqlalchemy.ext.automap import automap_base

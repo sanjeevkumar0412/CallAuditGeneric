@@ -34,7 +34,7 @@ class StartTranscribe:
             self.logger.info(f'user name :- {user_name}')
             self.logger.info(f'password :- {password}')
             # self.db_connection.connect_to_database()
-            client_table_data= self.db_instance.get_all_record('UsersManagement')
+            client_table_data= self.db_instance.get_data_by_column_name('UsersManagement',user_name)
             self.logger.info(f'client_table_data :- {client_table_data}')
             self.logger.info(f'client_table_data :- {client_table_data}')
         except Exception as e:
