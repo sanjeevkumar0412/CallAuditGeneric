@@ -4,7 +4,7 @@ import os
 from datetime import datetime
 import time
 from openai import OpenAI
-import speech_recognition as sr
+
 from app.utilities.utility import GlobalUtility
 from app.services.logger import Logger
 

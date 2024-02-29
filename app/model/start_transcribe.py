@@ -1,7 +1,7 @@
 import os
 from app.utilities.utility import GlobalUtility
 from app.controllers.controllers import Controller
-from app.services.logger import Logger
+from services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
 from app.db_connection import DbConnection
@@ -17,6 +17,8 @@ db_instance = DBRecord.get_instance()
 # print("<<<<<<<<<<<< Get Start Trans>>..,",data)
 
 load_dotenv()
+client_table_data = db_instance.get_all_record('UsersManagement')
+print('client_table_data',client_table_data)
 class StartTranscribe:
 
     def __init__(self):
