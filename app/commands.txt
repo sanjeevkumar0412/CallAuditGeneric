@@ -1,0 +1,6 @@
+
+ignore the idea files and folders
+git rm -r --cached .idea
+
+ignore the pyc files
+git rm --cached *.pyc
