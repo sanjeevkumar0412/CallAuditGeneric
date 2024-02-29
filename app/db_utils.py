@@ -1,6 +1,6 @@
 from app import db_configuration
 from app.db_connection import DbConnection
-from db_configuration import Base,db,app,TableBase
+from app.db_configuration import Base,db,app,TableBase
 from sqlalchemy.ext.automap import automap_base
 from flask import flash
 # from app import db_connection

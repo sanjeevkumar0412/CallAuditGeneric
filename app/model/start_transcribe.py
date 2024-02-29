@@ -1,7 +1,7 @@
 import os
 from app.utilities.utility import GlobalUtility
 from app.controllers.controllers import Controller
-from services.logger import Logger
+from app.services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
 from app.db_connection import DbConnection
