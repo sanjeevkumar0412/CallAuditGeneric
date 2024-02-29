@@ -4,3 +4,13 @@ git rm -r --cached .idea
 
 ignore the pyc files
 git rm --cached *.pyc
+
+Install dependencies python-ldap
+pip install python-ldap
+
+
+Install dependencies python-ldap
+pip install ldap3
+
+Install the PyJWT library
+pip install PyJWT
