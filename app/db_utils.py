@@ -10,7 +10,7 @@ from sqlalchemy.orm import scoped_session, sessionmaker, declarative_base
 
 # Base = declarative_base()
 # from flask import flash
-from ldap3 import Server, Connection, ALL, SIMPLE, NTLM
+from ldap3 import Server, Connection, ALL, SIMPLE, NTLM, core
 
 
 # Fetch for All Record
@@ -109,6 +109,27 @@ class DBRecord:
             return True, "Credentials verified successfully"
         except Exception as e:
             return False, f"Error: {e}"
+    def ldap_authenticate(self, username, password):
+        # Establish connection with the LDAP server
+        SERVER_ADDRESS = 'LDAP://ldap.agreeya.com/DC=agreeya,DC=com'
+        SEARCH_BASE = "DC=agreeya,DC=local"  # Replace with your domain's search base
+        conn = None
+        try:
+            # with Connection(SERVER_ADDRESS, user=username, password=username) as conn:
+            #     if conn.bind():
+            #         print("Authentication successful!")
+            #     else:
+            #         print("Authentication failed!")
+            conn = Connection(SERVER_ADDRESS, user=username, password=username)
+            if conn.bind():
+                print("Authentication successful!")
+            else:
+                print("Authentication failed!")
+        except Exception as e:
+            print("Error connecting to server:", e)
+        finally:
+            conn.unbind()
+
 
     def get_token_based_authenticate(self, username):
         # Establish connection with the LDAP server
