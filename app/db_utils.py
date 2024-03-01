@@ -98,20 +98,23 @@ class DBRecord:
 
     def get_ldap_authenticate(self, username, password):
         # Establish connection with the LDAP server
-        server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
+        # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
+        server_address = 'ldap://10.9.32.17:389'
         server = Server(server_address, get_info=ALL, use_ssl=False)
         try:
             # Bind to the LDAP server with provided credentials
-            conn = Connection(server, user=username, password=password, authentication=NTLM)
+            conn = Connection(server, user=username, password=password, authentication=SIMPLE)
             if not conn.bind():
                 return False, "Invalid credentials"
             # If bind is successful, credentials are valid
             return True, "Credentials verified successfully"
         except Exception as e:
             return False, f"Error: {e}"
+
     def ldap_authenticate(self, username, password):
         # Establish connection with the LDAP server
-        SERVER_ADDRESS = 'LDAP://ldap.agreeya.com/DC=agreeya,DC=com'
+        # SERVER_ADDRESS = 'LDAP://ldap.agreeya.com/DC=agreeya,DC=com'
+        SERVER_ADDRESS = 'ldap://10.9.32.17:389'
         SEARCH_BASE = "DC=agreeya,DC=local"  # Replace with your domain's search base
         conn = None
         try:
@@ -120,7 +123,7 @@ class DBRecord:
             #         print("Authentication successful!")
             #     else:
             #         print("Authentication failed!")
-            conn = Connection(SERVER_ADDRESS, user=username, password=username)
+            conn = Connection(SERVER_ADDRESS, user=username, password=password)
             if conn.bind():
                 print("Authentication successful!")
             else:
@@ -129,7 +132,6 @@ class DBRecord:
             print("Error connecting to server:", e)
         finally:
             conn.unbind()
-
 
     def get_token_based_authenticate(self, username):
         # Establish connection with the LDAP server

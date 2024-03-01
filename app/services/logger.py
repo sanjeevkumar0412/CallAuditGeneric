@@ -8,7 +8,7 @@ class Logger(object):
     _logs = ""
 
     def __init__(self):
-        raise RuntimeError('Error on BaseClass Call get_instance() instead')
+        raise RuntimeError('Error on Logger Call get_instance()')
 
     @classmethod
     def get_instance(cls):

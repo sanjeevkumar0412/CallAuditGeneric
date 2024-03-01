@@ -127,7 +127,7 @@ class GlobalUtility:
          for i, chunk_paths in enumerate(chunk_files):
             print("Chunk Split Start...", str(datetime.now()))
             chunk_paths.export(f"{chunk_file_directory}/chunk_{i}.wav", bitrate='128k',format="mp3")
-         return [chunk_files,chunk_paths]
+         return [chunk_files, chunk_paths]
       except Exception as e:
                print(f'caught {type(e)}: e',e)
                return []
@@ -166,22 +166,21 @@ class GlobalUtility:
             shutil.copy(source_path, destination_path)
             return True
        except Exception as e:
-               print(f'caught {type(e)}: e',e)
+               print(f'caught {type(e)}: e', e)
                return False
    
-   def wrire_txt_file(self,txt_file_path,transcript):
+   def wrire_txt_file(self, txt_file_path, transcript):
          try:
-            with open(f"{txt_file_path}","a") as f:
-                              # f.write(result) 
+            with open(f"{txt_file_path}", "a") as f:
                   f.write(transcript["text"]) 
-                  print("Processing stdout123....:  ",txt_file_path)
+                  self.logger.info(f"Processing stdout123....:  {txt_file_path}")
             return True      
          except Exception as e:
-              print(f'caught {type(e)}: e',e)
+              self.logger.error('wrire_txt_file:- ', e)
               return False
     
    def get_file_extension(self,file):
          try:
               return os.path.splitext(file)
          except Exception as e:
-              self.logger.error('get_file_extension',e)       
+              self.logger.error('get_file_extension', e)

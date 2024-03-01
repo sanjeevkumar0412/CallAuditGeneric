@@ -30,19 +30,11 @@ class StartTranscribe:
     def validate_oauth_token(self):
         try:
             print("validate_oauth_token")
-            user_name = os.getenv('USER_NAME')
-            password = os.getenv('PWD')
-            self.logger.info(f'user name :- {user_name}')
-            self.logger.info(f'password :- {password}')
-            # self.db_connection.connect_to_database()
-            # is_token_valid = self.db_instance.get_token_based_authenticate(user_name)
-            # iscinnected = self.db_instance.get_ldap_authenticate(user_name, password)
-            is_authenticate = self.db_instance.ldap_authenticate(user_name, password)
-            client_table_data= self.db_instance.get_data_by_column_name('UsersManagement', user_name)
+            client_table_data = self.db_instance.get_data_by_column_name('UsersManagement', user_name)
             self.logger.info(f'client_table_data :- {client_table_data}')
             self.logger.info(f'client_table_data :- {client_table_data}')
         except Exception as e:
-                    self.logger.error('validate_oauth_token',e)
+                    self.logger.error('validate_oauth_token', e)
 
     def validate_folder(self,source_file_path,destination_folder):
         try:
@@ -54,33 +46,48 @@ class StartTranscribe:
             else:
                  return False
         except Exception as e:
-            self.logger.error('validate_folder',e)
+            self.logger.error('validate_folder', e)
 
     def start_transcribe_process(self):
         try:
-            source_file_path ="D:/Cogent_Audio_Repo/"
-            destination_path = "D:/Cogent_AI_Audio_Repo/"
-            is_validate_path = self.validate_folder(source_file_path,destination_path)
-            if is_validate_path:
-                file_collection = self.global_utility.get_all_files(source_file_path)
-                self.start_recording_transcribe_process(file_collection,source_file_path,destination_path,'Small')  #Premium, Normal, Small 
+            user_name = os.getenv('USER_NAME')
+            password = os.getenv('PWD')
+            client_id = os.getenv('CLIENT_ID')
+            self.logger.info(f'user name :- {user_name}')
+            self.logger.info(f'password :- {password}')
+            self.logger.info(f'Client_ID :- {client_id}')
+            is_authenticate = True
+            user, client = self.db_instance.get_configurations(client_id)
+            # self.db_connection.connect_to_database()
+            # is_authenticate = self.db_instance.get_ldap_authenticate(user_name, password)
+            # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
+            if is_authenticate:
+                source_file_path = "D:/Cogent_Audio_Repo/"
+                destination_path = "D:/Cogent_AI_Audio_Repo/"
+                is_validate_path = self.validate_folder(source_file_path, destination_path)
+                if is_validate_path:
+                    file_collection = self.global_utility.get_all_files(source_file_path)
+                    self.start_recording_transcribe_process(file_collection, source_file_path, destination_path,'Small')
+                    #Premium, Normal, Small
+                else:
+                      self.logger.error('start_transcribe_process','folder path does not exist')
             else:
-                  self.logger.error('start_transcribe_process','folder path does not exist')
+                self.logger.info('You are authenticate with the proper credentials.please try with other credentials')
         except Exception as e:
             self.logger.error('start_transcribe_process',e)
 
     def start_recording_transcribe_process(self,file_collection,source_file_path,destination_path,subscription_model):
         try:
-            transcribe_files =[]
+            transcribe_files = []
             for file in file_collection:
-                file_url = source_file_path+"/"+file;
+                file_url = source_file_path+"/"+file
                 file_name, extension = self.global_utility.get_file_extension(file)
                 if extension == ".wav" or extension == ".mp3":
-                    name_file =file_url.split('/')[-1].split('.')[0]
+                    name_file = file_url.split('/')[-1].split('.')[0]
                     dir_folder_url = os.path.join(destination_path, name_file)
                     print('Audio File name for folder creation : ',name_file)
                 # model details, subscription
-                    is_folder_created =self.global_utility.create_folder_structure(file,dir_folder_url,destination_path)
+                    is_folder_created = self.global_utility.create_folder_structure(file,dir_folder_url,destination_path)
                     if is_folder_created:
                         is_copied_files = self.global_utility.copy_file(file_url,dir_folder_url)
                         if is_copied_files:
@@ -88,7 +95,7 @@ class StartTranscribe:
                             file_size = os.path.getsize(audio_file_path)
                             file_size_mb = file_size / (1024 * 1024)
                             if file_size_mb > 5:
-                                print('file size :- ',file_size)
+                                print('file size :- ', file_size)
                                 self.start_process_recordings_large_file(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)
                             else:
                                 self.start_process_recordings(audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files)
@@ -102,7 +109,7 @@ class StartTranscribe:
         except Exception as e:
             self.logger.error('start_recording_transcribe_process',f'Error while creating build_transcribe_model {e}')
 
-    def start_process_recordings_large_file(self,audio_file_path,dir_folder_url,name_file,subscription_model,transcribe_files):
+    def start_process_recordings_large_file(self,audio_file_path,dir_folder_url,name_file,subscription_model, transcribe_files):
         try:
             chunks = self.global_utility.split_audio_chunk_files(audio_file_path,dir_folder_url)
             chunks_files = chunks[0]
@@ -111,10 +118,10 @@ class StartTranscribe:
             transcribe_files.append(txt_file)
             for i in range(len(chunks_files)):
                 chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
-                print(' Open Ai Chunk Audio File Path',chunk_file)
-                transcript = self.controller.build_transcribe_audio(chunk_file,subscription_model)
+                self.logger.info(f'Open Ai Chunk Audio File Path:- {chunk_file}')
+                transcript = self.controller.build_transcribe_audio(chunk_file, subscription_model)
                 # threading.Thread(target= transcript, args=(chunk_file,)).start()
-                is_text_file_written = self.global_utility.wrire_txt_file(txt_file,transcript)
+                is_text_file_written = self.global_utility.wrire_txt_file(txt_file, transcript)
         except Exception as e:
             self.logger.error('start_process_recordings_large_file',e)
 
