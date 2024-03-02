@@ -1,17 +1,28 @@
-import os
+import os,json
 os.environ["OPENAI_API_KEY"] = ""
 import openai
 
 class SentimentAnalysis:
-    def get_sentiment(text):
+    _instance = None
+
+    def __init__(self, path):
+        self.path = path
+
+    @classmethod
+    def get_instance(cls):
+        if cls._instance is None:
+            cls._instance = cls.__new__(cls)
+        return cls._instance
+
+    def get_sentiment(self,text):
         prompt = f"The following text expresses a sentiment: '{text}' The sentiment of this text is:"
         response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4",
             messages=[
-                {"role": "system", "content": prompt},
+                {"role": "system", "content": text},
                 {"role": "user", "content": ""}
             ],
-            temperature=0.5,
+            temperature=0,
             max_tokens=1,
             top_p=1,
             frequency_penalty=0,
@@ -29,8 +40,32 @@ class SentimentAnalysis:
         data ={'sentiment':sentiment,'score':score}
         return data
 
+    def transcribe_data_from_database(self):
+        #Databse Query here
+        # table_name = 'AudioRecord'
+        # column_value = 'filename'
+
+        with open(self.path, 'r') as file:# Read text data from the file
+            texts = file.readlines()
+            # print(texts)
+        results = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
+                    "score": self.get_sentiment(text.strip())['score']} for text in texts]
+
+        return results
 
 if __name__ == "__main__":
-    text = input("Enter the text to analyze: ")
-    sentiment = SentimentAnalysis.get_sentiment(text)
-    print(f"The sentiment of the text is {sentiment}")
+    path="D:/Cogent-AI/app/chunk_6.txt"
+
+    # Single Input Entry
+
+    text = input("Please enter input for Sentiment Analysis:")
+    sentiment_instance=SentimentAnalysis.get_instance()
+    sentiment = sentiment_instance.get_sentiment(text)
+    print("Single Sentiment",sentiment)
+
+    # For FIle or DB
+
+    # analyzer = SentimentAnalysis(path)
+    # sentiment_results = analyzer.transcribe_data_from_database()
+    # sentiment_list_data= json.dumps(sentiment_results, indent=1)
+    # print("Result>>>>>>",sentiment_list_data)
