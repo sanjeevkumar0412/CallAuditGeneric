@@ -1,5 +1,5 @@
 import os,json
-os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = "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"
 import openai
 
 class SentimentAnalysis:
@@ -19,7 +19,7 @@ class SentimentAnalysis:
         response = openai.ChatCompletion.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": text},
+                {"role": "system", "content": prompt},
                 {"role": "user", "content": ""}
             ],
             temperature=0,
@@ -58,14 +58,14 @@ if __name__ == "__main__":
 
     # Single Input Entry
 
-    text = input("Please enter input for Sentiment Analysis:")
+    input_text = input("Please enter input for Sentiment Analysis:")
     sentiment_instance=SentimentAnalysis.get_instance()
-    sentiment = sentiment_instance.get_sentiment(text)
+    sentiment = sentiment_instance.get_sentiment(input_text)
     print("Single Sentiment",sentiment)
 
     # For FIle or DB
 
     # analyzer = SentimentAnalysis(path)
     # sentiment_results = analyzer.transcribe_data_from_database()
-    # sentiment_list_data= json.dumps(sentiment_results, indent=1)
+    # sentiment_list_data= json.dumps(sentiment_results, indent=2)
     # print("Result>>>>>>",sentiment_list_data)
