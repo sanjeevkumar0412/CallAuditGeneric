@@ -10,3 +10,4 @@ myenv/
 *.xml
 *.iml
 *.ini
+.env
