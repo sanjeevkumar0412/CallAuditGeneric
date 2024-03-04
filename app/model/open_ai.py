@@ -13,7 +13,7 @@ from app.services.logger import Logger
 class OpenAIModel:
     _instance = None        
     def __init__(self):        
-        self.global_utility =  GlobalUtility.get_instance()
+        self.global_utility = GlobalUtility.get_instance()
         self.logger = Logger.get_instance()
         self.client = OpenAI()
 
@@ -23,10 +23,10 @@ class OpenAIModel:
             cls._instance = cls.__new__(cls)
         return cls._instance
     
-    def open_ai_transcribe_audio(self,transcribe_file,model = "whisper-1"):
+    def open_ai_transcribe_audio(self, transcribe_file, model = "whisper-1"):
         try:
             print(' Open Ai Audio File Path',transcribe_file)
-            audio_file= open(transcribe_file, "rb") 
+            audio_file = open(transcribe_file, "rb")
             transcript = self.client.audio.transcriptions.create(
                                     model=model, 
                                     file=audio_file                         
