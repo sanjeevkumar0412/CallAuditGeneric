@@ -2,6 +2,8 @@ from pydub import AudioSegment
 from dotenv import load_dotenv
 import shutil
 import os
+import jwt
+import secrets
 from datetime import datetime
 from app.services.logger import Logger
 
@@ -184,3 +186,18 @@ class GlobalUtility:
               return os.path.splitext(file)
          except Exception as e:
               self.logger.error('get_file_extension', e)
+
+   def get_secret_key(self,user_name):
+       # Establish connection with the LDAP server
+       secret_key = secrets.token_bytes(32)
+       hex_key = secret_key.hex()
+       print(f"Generated secret key: {hex_key}")
+       SECRET_KEY = hex_key
+
+       # Generate a JWT token with an expiry time of 1 hour
+       payload = {
+           'user_id': user_name,
+           'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+       }
+       token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+       return token

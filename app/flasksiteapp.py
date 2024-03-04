@@ -1,9 +1,11 @@
-# import datetime
-# from openai import OpenAI
-# import os
-# import threading
+import datetime
+from openai import OpenAI
+import os
+import threading
 #
-# from flask import Flask
+from flask import Flask
+
+os.environ["OPENAI_API_KEY"] = <"your_api_key">
 # # from flask_sqlalchemy import SQLAlchemy
 # # app = Flask(__name__)
 # # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
@@ -30,7 +32,7 @@
 # os.environ["OPENAI_API_KEY"] = ''
 #
 # # Initialize Flask app
-# app = Flask(__name__)
+app = Flask(__name__)
 # from models import db, Client
 # params = Client(clientid='1', clientname='Cogent',
 #                        clientemail='jd@example.com', billinginformation='done',
@@ -40,51 +42,52 @@
 #
 # # Function to transcribe audio using OpenAI's Whisper API
 #
-# def transcribe_audio(file_path):
-#     OpenAI.api_key = "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"
-#     client = OpenAI()
-#     print(datetime.datetime.now())
-#
-#     try:
-#         audio_file= open(file_path, "rb")
-#         transcript = client.audio.transcriptions.create(
-#         model="whisper-1",
-#         language="en",
-#         file=audio_file
-#         )
-#         print(datetime.datetime.now())
-#         print(transcript)
-#     except Exception as e:
-#         logger.error("Transcribe Audio whisper",e)
-#         print("Error:", e)
-#
-# # Function to process all MP3 files in the "Recording" folder
-# def process_recordings():
-#     root_folder = "Recording"
-#     for root, dirs, files in os.walk(root_folder):
-#         for file in files:
-#             if file.endswith(".mp3"):
-#                 file_path = os.path.join(root, file)
-#                 threading.Thread(target=transcribe_audio, args=(file_path,)).start()
-#
-# # Route to trigger processing of recordings
-# @app.route('/')
-# def hello():
-#     """Renders a sample page."""
-#     # Run transcription for all MP3 files in separate threads
-#     threading.Thread(target=process_recordings).start()
-#     return "Transcription started for all recordings in the background."
-#
-# if __name__ == '__main__':
-#     # Run Flask app
-#     app.run(threaded=True)  # Enable multithreading
+def transcribe_audio(file_path):
+    openai_api_key = os.environ.get("OPENAI_API_KEY")
+    OpenAI.api_key = openai_api_key
+    client = OpenAI()
+    print(datetime.datetime.now())
+
+    try:
+        audio_file= open(file_path, "rb")
+        transcript = client.audio.transcriptions.create(
+        model="whisper-1",
+        language="en",
+        file=audio_file
+        )
+        print(datetime.datetime.now())
+        print(transcript)
+    except Exception as e:
+        # logger.error("Transcribe Audio whisper",e)
+        print("Error:", e)
+
+# Function to process all MP3 files in the "Recording" folder
+def process_recordings():
+    root_folder = "D:\Cogent_AI_Audio_Repo"
+    for root, dirs, files in os.walk(root_folder):
+        for file in files:
+            if file.endswith(".mp3"):
+                file_path = os.path.join(root, file)
+                threading.Thread(target=transcribe_audio, args=(file_path,)).start()
+
+# Route to trigger processing of recordings
+@app.route('/')
+def hello():
+    """Renders a sample page."""
+    # Run transcription for all MP3 files in separate threads
+    threading.Thread(target=process_recordings).start()
+    return "Transcription started for all recordings in the background."
+
+if __name__ == '__main__':
+    # Run Flask app
+    app.run(threaded=True)  # Enable multithreading
 
 
 from flask import Flask,jsonify,request
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.ext.automap import automap_base
 
-app = Flask(__name__)
+# app = Flask(__name__)
 # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///D:/Cogent/AI_Repo/Cogent-AI/app/Cogent-AI.db'
 # db = SQLAlchemy(app)
 
@@ -105,9 +108,9 @@ app = Flask(__name__)
 # db_instance = DbConnection.get_instance()
 # db_instance.connect_to_database()
 
-@app.route('/postclient', methods=['GET'])
-def add_client():
-    pass
+# @app.route('/postclient', methods=['GET'])
+# def add_client():
+#     pass
     # with app.app_context():
     # params = Client(clientid='11211', clientname='Cogent381',
     # clientemail = 'jd1@example821.com', billinginformation = 'done731',
@@ -121,54 +124,54 @@ def add_client():
 #Retreive all client details
 #####Fetch for this connection#########
 
-from db_utils import DBRecord
-db_instance = DBRecord.get_instance()
+# from db_utils import DBRecord
+# db_instance = DBRecord.get_instance()
 
 ############----------End##############
 
-@app.route('/get_all_data', methods=['GET'])
-def get_record():
-    # with app.app_context():    
-    table_name = request.args.get('table_name')
-    print("11111111TTTTT",table_name)
-    data = db_instance.get_all_record(table_name)
-    print(22222222222,data)
-    if data ==None:
-        data={"Error":"Invalid table/Data not available for this "+ table_name}
-    return data
+# @app.route('/get_all_data', methods=['GET'])
+# def get_record():
+#     # with app.app_context():
+#     table_name = request.args.get('table_name')
+#     print("11111111TTTTT",table_name)
+#     data = db_instance.get_all_record(table_name)
+#     print(22222222222,data)
+#     if data ==None:
+#         data={"Error":"Invalid table/Data not available for this "+ table_name}
+#     return data
 
 #single client details
 
-@app.route('/get_record_by_id', methods=['GET'])
-def get_recordby_id():
-    table_name = request.args.get('table_name')
-    id = request.args.get('id')
-    data = db_instance.get_single_record(table_name,id)
-    print("BYYYYYYYYYYYYID>>", data)
-    if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ table_name}
-    return data
+# @app.route('/get_record_by_id', methods=['GET'])
+# def get_recordby_id():
+#     table_name = request.args.get('table_name')
+#     id = request.args.get('id')
+#     data = db_instance.get_single_record(table_name,id)
+#     print("BYYYYYYYYYYYYID>>", data)
+#     if data == None:
+#         data={"Error":"Invalid table/Data not available for this "+ table_name}
+#     return data
 
-@app.route('/delete_record_by_id')
-def delete_recordby_id():
-    table_name = request.args.get('table_name')
-    itm_id = request.args.get('id')
-    data = db_instance.delete_single_record(table_name,itm_id)
-    if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ table_name}
-    return {'data': data}
+# @app.route('/delete_record_by_id')
+# def delete_recordby_id():
+#     table_name = request.args.get('table_name')
+#     itm_id = request.args.get('id')
+#     data = db_instance.delete_single_record(table_name,itm_id)
+#     if data == None:
+#         data={"Error":"Invalid table/Data not available for this "+ table_name}
+#     return {'data': data}
 
-@app.route('/get_record_by_column_name', methods=['GET'])
-def get_recordby_column_name():
-    table_name = request.args.get('table_name')
-    column_name = request.args.get('column_name')
-    column_value = request.args.get('column_value')
-    print("cccccccccccccccc",column_value)
-    # id = request.args.get('id')
-    data = db_instance.get_data_by_column_name(table_name,column_value)
-    print("BYYYYYYYYYYYYID>>column", data)
-    if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ table_name}
-    return data
-if __name__ == '__main__':
-    app.run(debug=True,port=5361)
+# @app.route('/get_record_by_column_name', methods=['GET'])
+# def get_recordby_column_name():
+#     table_name = request.args.get('table_name')
+#     column_name = request.args.get('column_name')
+#     column_value = request.args.get('column_value')
+#     print("cccccccccccccccc",column_value)
+#     # id = request.args.get('id')
+#     data = db_instance.get_data_by_column_name(table_name,column_value)
+#     print("BYYYYYYYYYYYYID>>column", data)
+#     if data == None:
+#         data={"Error":"Invalid table/Data not available for this "+ table_name}
+#     return data
+# if __name__ == '__main__':
+#     app.run(debug=True,port=5361)

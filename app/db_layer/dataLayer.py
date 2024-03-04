@@ -1,13 +1,39 @@
-from app.configs.config import dbconfig
+from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy.orm import sessionmaker
 import pyodbc
 
+
 class SqlServerDB:
+    _instance = None
     server = 'your_server_name'
     database = 'your_database_name'
     username = 'your_username'
     password = 'your_password'
 
     connection_string = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}'
+
+    # Create engine
+    engine = create_engine(
+        f'mssql+pyodbc://{username}:{password}@{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server')
+
+    # Reflect table from database
+    metadata = MetaData()
+    metadata.reflect(bind=engine)
+
+    # Get table object
+    your_table = metadata.tables['your_table_name']
+
+    # Create session
+    Session = sessionmaker(bind=engine)
+    session = Session()
+
+    # Query data
+    data = session.query(your_table).all()
+
+    # Process retrieved data
+    for row in data:
+        print(row)
+
     def __init__(self):
         raise RuntimeError('Error on BaseClass Call get_instance() instead')
 
@@ -16,14 +42,14 @@ class SqlServerDB:
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-    
-    def get_all_configurations(clent_id): 
-        try:   
+
+    def get_all_configurations(self, clent_id, connection_string):
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'GetAllConfigurations'
             parameters = {'ClientId': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(parameters.keys())}"       
+            query = f"EXEC {stored_procedure_name} @{', '.join(parameters.keys())}"
             """
                 CREATE PROCEDURE [dbo].[GetAllConfigurations]
                 @ClientId nvarchar(30)
@@ -33,7 +59,7 @@ class SqlServerDB:
             EXEC GetAllConfigurations @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -42,13 +68,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def add_recording_details(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_recording_details(self, clent_id, data,
+                              connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'AddRecordingDetails'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """        
                 CREATE PROCEDURE [dbo].[AddRecordingDetails]
                 @FileId  nvarchar(30)
@@ -74,7 +101,7 @@ class SqlServerDB:
             EXEC AddUpdateRecordingDetails @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -83,13 +110,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def update_recording_details(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def update_recording_details(self, clent_id, data,
+                                 connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'UpdateRecordingDetails'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """        
                 CREATE PROCEDURE [dbo].[UpdateRecordingDetails]
                 @FileId  nvarchar(30)
@@ -111,7 +139,7 @@ class SqlServerDB:
             EXEC AddUpdateRecordingDetails @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -120,13 +148,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def add_call_summary(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_call_summary(self, clent_id, data,
+                         connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'AddUpdateCallSummary'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[AddUpdateCallSummary]
                 @SummaryId  nvarchar(30)
@@ -148,7 +177,7 @@ class SqlServerDB:
             EXEC AddUpdateCallSummary @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -157,13 +186,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def update_call_summary(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def update_call_summary(self, clent_id, data,
+                            connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'AddUpdateCallSummary'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[AddUpdateCallSummary]
                 @SummaryId  nvarchar(30)
@@ -185,7 +215,7 @@ class SqlServerDB:
             EXEC AddUpdateCallSummary @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -194,14 +224,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-
-    def add_errors_logs(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_errors_logs(self, clent_id, data,
+                        connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[ErrorLogs]
                 @ErrorId  nvarchar(30)
@@ -225,7 +255,7 @@ class SqlServerDB:
             EXEC ErrorLogs @ClientId = 'QuickApps';
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -234,13 +264,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def add_sentiment_analysis(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_sentiment_analysis(self, clent_id, data,
+                               connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[SentimentAnalysis_Insert]
                 @AnalysisId  nvarchar(30)
@@ -263,7 +294,7 @@ class SqlServerDB:
                 GO;       
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -272,13 +303,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def update_sentiment_analysis(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def update_sentiment_analysis(self, clent_id, data,
+                                  connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[SentimentAnalysis_Update]
                 @AnalysisId  nvarchar(30)
@@ -299,7 +331,7 @@ class SqlServerDB:
                 GO;       
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -308,13 +340,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def add_audio_transcripts(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_audio_transcripts(self, clent_id, data,
+                              connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[AudioTranscripts_Insert]
                 @TranscriptId   nvarchar(30)
@@ -341,7 +374,7 @@ class SqlServerDB:
                 GO;       
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -350,13 +383,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-    def update_audio_transcripts(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def update_audio_transcripts(self, clent_id, data,
+                                 connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[AudioTranscripts_Update]
                 @TranscriptId   nvarchar(30)
@@ -380,7 +414,7 @@ class SqlServerDB:
                 GO;       
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:
@@ -389,14 +423,14 @@ class SqlServerDB:
             if connection:
                 connection.close()
 
-
-    def add_update_transcripts_job(clent_id,data): #data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
-        try:   
+    def add_update_transcripts_job(self, clent_id, data,
+                                   connection_string):  # data is in object form like {'ClientId': clent_id,'ClientId': clent_id}
+        try:
             connection = pyodbc.connect(connection_string)
             cursor = connection.cursor()
             stored_procedure_name = 'ErrorLogs'
-            parameters = {'ClientId': clent_id,'Client': clent_id}
-            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"       
+            parameters = {'ClientId': clent_id, 'Client': clent_id}
+            query = f"EXEC {stored_procedure_name} @{', '.join(data.keys())}"
             """
                 CREATE PROCEDURE [dbo].[AudioTranscripts]
                 @JobId   nvarchar(30)
@@ -422,7 +456,7 @@ class SqlServerDB:
                 GO;       
             """
             cursor.execute(query, parameters)
-            connection.commit()        
+            connection.commit()
         except Exception as e:
             print(f"Error in get_all_configurations: {e}")
         finally:

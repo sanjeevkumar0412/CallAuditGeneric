@@ -2,8 +2,8 @@
 from loguru import logger
 from pathlib import Path
 
-class Logger(object):
 
+class Logger(object):
     _instance = None
     _logs = ""
 
@@ -15,40 +15,40 @@ class Logger(object):
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-    
+
     @staticmethod
-    def debug(self, message:str):        
+    def debug(self, message: str):
         logger.debug(f"Debug message : {message}")
-    
-    def info(self, message):        
+
+    def info(self, message):
         logger.info(f"Logger Info : {message}")
 
     @staticmethod
-    def warning(self, message):        
+    def warning(self, message):
         logger.warning(f"Warning message  : {message}")
 
-    
-    def error(self, function_name,message):        
+    def error(self, function_name, message):
         logger.error(f"Error in {function_name} : {message}")
 
     @staticmethod
-    def get_logs(self,message):       
+    def get_logs(self, message):
         logger.log(f"Log message : {message}")
-    
-    def log_exceptions(self,function):
+
+    def log_exceptions(self, function):
         def wrapper(*args, **kwargs):
             try:
                 return function(*args, **kwargs)
             except Exception as e:
-                logger.exception(f"An error occurred in {function.__name__}: {e}")   
+                logger.exception(f"An error occurred in {function.__name__}: {e}")
                 """
                 # Example usage Decorator  :
                     @log_exceptions
                     def divide(a, b):
                         return a / b
-                """            
+                """
+
         return wrapper
-    
+
     def custom_catch(self, *args, **kwargs):
         try:
             return super().catch(*args, **kwargs)
@@ -60,11 +60,11 @@ class Logger(object):
                 logger.info("This is an information message")
                 self.logger.error("This is an error message")
             """
-        except Exception as e:           
-            logger.error(f"An error occurred: {e}")            
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
             self.exception(f"An error occurred: {e}")
 
-    def create_log_file(self,file_name, rotation="100 MB", level="INFO"):
+    def create_log_file(self, file_name, rotation="100 MB", level="INFO"):
         """  
         Args:
             filename (str): Name of the log file to create.
