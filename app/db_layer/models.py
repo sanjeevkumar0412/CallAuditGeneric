@@ -1,22 +1,34 @@
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Column, Integer, String,DateTime,Boolean,ForeignKey
 from sqlalchemy.orm import relationship
 # db = SQLAlchemy()
 
 Base = declarative_base()
 
-class Client(Base):
+class Base(DeclarativeBase):
+    pass
 
+class Users(Base):
+    __tablename__ = 'Users'
+
+    Id = Column(Integer, primary_key=True,autoincrement=False)
+    Name = Column(String)
+    Email = Column(String)
+
+    def __repr__(self):
+        return f"<Client(Id={self.Id}, Name='{self.Name}', Email='{self.Email}')>"
+
+class Client(Base):
     __tablename__ = 'Client'
 
     Id = Column(Integer, primary_key=True)
     ClientName = Column(String)
-    Email = Column(String,unique=True,nullable=False)
+    ClientEmail = Column(String,unique=True,nullable=False)
     BillingInformation = Column(String)
-    SubscriptionId = Column(Integer, ForeignKey("subscriptions.Id"))
-    # client = relationship("subscriptions", back_populates="client")
-    # subscriptions = relationship('Subscriptions', backref='clients')
+    SubscriptionId = Column(String)
+    # SubscriptionId = Column(Integer, ForeignKey("subscriptions.Id"))
     ModelType = Column(String)
     Created=Column(DateTime, default=datetime.utcnow())
     Modified=Column(DateTime, default=datetime.utcnow())
@@ -24,8 +36,8 @@ class Client(Base):
     IsActive = Column(Boolean)
     IsDeleted = Column(Boolean)
 
-    # def __repr__(self):
-    #     return f"<User(ClientId={self.Id}, clientname='{self.clientname}', clientemail='{self.clientemail}',billinginformation='{self.billinginformation}',subscriptionid='{self.subscriptionid}',modeltype='{self.modeltype}',paymentstatus='{self.paymentstatus}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
+    def __repr__(self):
+        return f"<Client(Id={self.Id}, ClientName='{self.ClientName}', ClientEmail='{self.ClientEmail}',SubscriptionId='{self.SubscriptionId}',ModelType='{self.ModelType}',PaymentStatus='{self.PaymentStatus}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
 
 class BillingInformation(Base):
 

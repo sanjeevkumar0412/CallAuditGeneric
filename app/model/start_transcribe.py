@@ -5,6 +5,9 @@ from services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
 from app.db_connection import DbConnection
+from sqlalchemy.orm import sessionmaker
+from db_layer.models import Client
+from sqlalchemy import select
 # from app.db_layer.models import UsersManagement
 import threading
 
@@ -55,12 +58,14 @@ class StartTranscribe:
             user_name = os.getenv('USER_NAME')
             password = os.getenv('PWD')
             client_id = os.getenv('CLIENT_ID')
+            db_user_name = os.getenv('DB_USER')
+            db_password = os.getenv('DB_PWD')
             self.logger.info(f'user name :- {user_name}')
             self.logger.info(f'password :- {password}')
             self.logger.info(f'Client_ID :- {client_id}')
-            is_authenticate = True
-            # user, client = self.db_instance.get_configurations(client_id)
-            # self.db_connection.connect_to_database()
+            # Create engine
+            #
+            self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
             is_authenticate = self.db_instance.get_ldap_authenticate(user_name, password)
             # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
             if is_authenticate:
