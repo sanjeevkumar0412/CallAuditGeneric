@@ -1,7 +1,10 @@
 import os,json
 os.environ["OPENAI_API_KEY"] = ""
-import openai
-
+from openai import OpenAI
+client = OpenAI(
+    # api_key=os.environ.get("OPENAI_API_KEY_NEW"),
+    api_key=os.environ["OPENAI_API_KEY"],
+)
 class SentimentAnalysis:
     _instance = None
 
@@ -16,8 +19,8 @@ class SentimentAnalysis:
 
     def get_sentiment(self,text):
         prompt = f"The following text expresses a sentiment: '{text}' The sentiment of this text is:"
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": ""}
@@ -29,7 +32,8 @@ class SentimentAnalysis:
             presence_penalty=0,
             stop=["\n"]
         )
-        sentiment = response['choices'][0]['message']['content'].strip()
+        # sentiment = response['choices'][0]['message']['content'].strip()
+        sentiment = response.choices[0].message.content.strip()
 
         if "positive" in sentiment.lower():
             score = 1
