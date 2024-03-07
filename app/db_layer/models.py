@@ -146,15 +146,14 @@ class FileInfo(Base):
     __tablename__ = 'FileInfo'
 
     Id= Column(Integer, primary_key=True)
-    ClientId = Column(Integer, ForeignKey('client.ClientId'), nullable=False)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     FileFormat = Column(String(50), unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=True)
-
-    # def __repr__(self):
-    #     return f"<FileTypesInfo(typeid={self.typeid}, ClientId='{self.ClientId}', fileformat='{self.fileformat}',IsActive='{self.IsActive},IsDeleted='{self.IsDeleted}" \
+    def __repr__(self):
+        return f"<FileInfo(ClientId={self.ClientId}, FileFormat='{self.FileFormat}',Created='{self.Created}',Modified='{self.Modified}')>"
 
 class ClientCallRecording(Base):
 
@@ -174,9 +173,9 @@ class ClientCallRecording(Base):
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=True)
 
-    # def __repr__(self):
-    #     return f"<AudioRecord(userid={self.userid}, ClientId='{self.ClientId}',username='{self.username}',filetype='{self.filetype}',filename='{self.filename},startdate='{self.startdate}" \
-    #            f",enddate='{self.enddate}',status='{self.status}',filesize='{self.filesize}',iscompleted='{self.iscompleted}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
+    def __repr__(self):
+        return f"<ClientCallRecording(ClientId={self.ClientId}, UserName='{self.UserName}',FileTypeId='{self.FileTypeId}',FileName='{self.FileName}',FilePath='{self.FilePath}',StatusId='{self.StatusId}',Created='{self.Created}" \
+               f",Modified='{self.Modified}')>"
 
 
 class ClientCallSummary(Base):
@@ -184,7 +183,7 @@ class ClientCallSummary(Base):
 
     Id = Column(Integer, primary_key=True)
     ClientId = Column(Integer, ForeignKey('client.ClientId'), nullable=False)
-    ClientName = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
+    UserName = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
     SummaryDescription = Column(String(50), unique=False, nullable=False)
     SummaryDateTime = Column(DateTime, default=datetime.utcnow())
     Created = Column(DateTime, default=datetime.utcnow())
@@ -192,17 +191,26 @@ class ClientCallSummary(Base):
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=True)
 
+    def __repr__(self):
+        return f"<ClientCallSummary(ClientId={self.ClientId}, UserName='{self.UserName}',SummaryDescription='{self.SummaryDescription}',SummaryDateTime='{self.SummaryDateTime}', Created='{self.Created}" \
+               f",Modified='{self.Modified}')>"
+
 
 class ErrorLogs(Base):
     __tablename__ = 'ErrorLogs'
 
     Id = Column(Integer, primary_key=True)
     ClientId = Column(Integer, ForeignKey('client.ClientId'), nullable=False)
-    ClientName = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
+    UserName = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
     ErrorType = Column(String(50), unique=False, nullable=False)
     ErrorDetails = Column(DateTime, default=datetime.utcnow())
     ErrorDate = Column(DateTime, default=datetime.utcnow())
+    Created = Column(DateTime, default=datetime.utcnow())
+    Modified = Column(DateTime, default=datetime.utcnow())
 
+    def __repr__(self):
+        return f"<ErrorLogs(ClientId={self.ClientId}, UserName='{self.UserName}',ErrorType='{self.ErrorType}',ErrorDetails='{self.ErrorDetails}',ErrorDate='{self.ErrorDate},Created='{self.Created}" \
+               f",Modified='{self.Modified}')>"
 
 
 class SentimentAnalysis(Base):
@@ -210,15 +218,18 @@ class SentimentAnalysis(Base):
 
     Id = Column(Integer, primary_key=True)
     ClientId = Column(Integer, ForeignKey('client.ClientId'), nullable=False)
-    ClientName = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
-    TranscriptId = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
-    SentimentScore = Column(String(50), unique=False, nullable=False)
-    # SentimentLabelId = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
-    # SentimentStatus  = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
-    # SentimentClientId  = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
-    # SentimentClientName  = Column(Integer, ForeignKey('client.ClientName'), nullable=False)
+    UserName = Column(Integer, ForeignKey('client.UserName'), nullable=False)
+    TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
+    SentimentScore = Column(Integer, nullable=False)
+    SentimentLabel  = Column(String(50), nullable=False)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow())
+    SentimentStatus = Column(String(50), nullable=False)
+    Created = Column(DateTime, default=datetime.utcnow())
+    Modified = Column(DateTime, default=datetime.utcnow())
 
+    def __repr__(self):
+        return f"<SentimentAnalysis(ClientId={self.ClientId}, UserName='{self.UserName}',TranscriptId='{self.TranscriptId}',SentimentScore='{self.SentimentScore}',SentimentLabel='{self.SentimentLabel},AnalysisDateTime='{self.AnalysisDateTime}" \
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}')>"
 
 
 class AudioTranscribe(Base):
@@ -226,23 +237,23 @@ class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
 
     Id = Column(Integer, primary_key=True)
-    ClientId = Column(Integer, ForeignKey('Client.Id'), nullable=False)
-    # UserName = Column(Integer, ForeignKey('Client.Id'), nullable=False)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    # UserName = Column(Integer, ForeignKey('Client.UserName'), nullable=False)
     FileId = Column(Integer, ForeignKey('FileInfo.Id'), nullable=False)
     FileName = Column(String(50), unique=False, nullable=False)
-    FileStatus = Column(Integer, ForeignKey('FileInfo.userid'), nullable=False)
-    SentimentScore = Column(String(50), unique=False, nullable=False)
-    SentimentLabelId = Column(Integer, ForeignKey('FileInfo.userid'), nullable=False)
-    TranscriptText = Column(String(50), unique=False, nullable=False)
-    TranscriptionFilePath = Column(String(50), unique=False, nullable=False)
-    TranscriptionDate = Column(DateTime(timezone=True), unique=False, default=True)
-    StatusId = Column(Integer, ForeignKey('FileInfo.userid'), nullable=False)
+    # FileStatus = Column(Integer, ForeignKey('FileInfo.userid'), nullable=False)
+    TranscribeText = Column(String(50), unique=False, nullable=False)
+    TranscribeFilePath = Column(String(50), unique=False, nullable=False)
+    TranscribeDate = Column(DateTime(timezone=True), unique=False, default=True)
+    Status = Column(Integer, ForeignKey('FileInfo.userid'), nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=True)
 
-    # def __repr__(self):
-    #     return f"<TranscribeTracker(fileid={self.fileid}, audioid='{self.audioid}',username='{self.username}',filetype='{self.filetype}',filename='{self.filename},startdate='{self.startdate}" \
-    #            f",enddate='{self.enddate}',status='{self.status}',sequencenumber='{self.sequencenumber}',filesize='{self.filesize}',iscompleted='{self.iscompleted}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
+    def __repr__(self):
+        return f"<AudioTranscribe(ClientId={self.ClientId}, FileId='{self.FileId}',FileName='{self.FileName}',TranscribeText='{self.TranscribeText}',TranscribeFilePath='{self.TranscribeFilePath},TranscribeDate='{self.TranscribeDate}" \
+               f",Status='{self.Status}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
 
 class TranscribeJob(Base):
 
