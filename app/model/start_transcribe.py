@@ -60,9 +60,13 @@ class StartTranscribe:
             client_id = os.getenv('CLIENT_ID')
             db_user_name = os.getenv('DB_USER')
             db_password = os.getenv('DB_PWD')
+            db_server = os.getenv('DB_SERVER')
+            db_name = os.getenv('DB_NAME')
             self.logger.info(f'user name :- {user_name}')
             self.logger.info(f'password :- {password}')
             self.logger.info(f'Client_ID :- {client_id}')
+            self.logger.info(f'db_server :- {db_server}')
+            self.logger.info(f'db_name :- {db_name}')
             # Create engine
             #
             self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
