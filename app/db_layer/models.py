@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String,DateTime,Boolean,ForeignKey
 from sqlalchemy.orm import relationship
 # db = SQLAlchemy()
 
-Base = declarative_base()
+# Base = declarative_base()
 
 class Base(DeclarativeBase):
     pass
@@ -22,13 +22,13 @@ class Users(Base):
 
 class Client(Base):
     __tablename__ = 'Client'
-    # Id = Column(Integer)
+    Id = Column(Integer)
     ClientId = Column(String, primary_key=True,unique=True,nullable=False)
     ClientName = Column(String,unique=True,nullable=False)
-    ClientEmail = Column(String, String,unique=True,nullable=False)
-    ClientUserName = Column(String, String,unique=True,nullable=False)
+    ClientEmail = Column(String,unique=True,nullable=False)
+    ClientUserName = Column(String,unique=True,nullable=False)
     ClientPassword = Column(String)
-    Created=Column(DateTime, default=datetime.utcnow())
+    Created= Column(DateTime, default=datetime.utcnow())
     Modified=Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean)
     IsDeleted = Column(Boolean)
@@ -37,12 +37,13 @@ class Client(Base):
         return f"<Client(ClientId={self.ClientId}, ClientName='{self.ClientName}', ClientEmail='{self.ClientEmail}',ClientUserName='{self.ClientUserName}',ClientPassword='{self.ClientPassword}',Modified='{self.Modified}',Created='{self.Created}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
 
 class AuthTokenManagement(Base):
-    __tablename__ = 'Client'
+    __tablename__ = 'AuthTokenManagement'
     # Id = Column(Integer)
-    UserName = Column(String, String,nullable=False)
-    ClientId = Column(String, String,unique=True,nullable=False)
-    Token = Column(String, String,nullable=False)
-    SecretKey = Column(String, String,nullable=False)
+    AuthId = Column(String, primary_key=True, unique=True, nullable=False)
+    UserName = Column(String,nullable=False)
+    ClientId = Column(String, unique=True,nullable=False)
+    Token = Column(String, nullable=False)
+    SecretKey = Column(String, nullable=False)
     Created=Column(DateTime, default=datetime.utcnow())
     Modified=Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean)
@@ -123,7 +124,7 @@ class SubscriptionPlan(Base):
 class Configurations(Base):
 
     __tablename__ = 'Configurations'
-
+    ConfigurationId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     ConfigKey = Column(String(50), unique=False, nullable=False)
     ConfigValue = Column(String(50), unique=False, nullable=False)
@@ -138,6 +139,7 @@ class Configurations(Base):
 class JobStatus(Base):
     __tablename__ = 'JobStatus'
 
+    JobId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     StatusName = Column(String(100), unique=False, default=True)
     Created = Column(DateTime, default=datetime.utcnow())
@@ -151,6 +153,7 @@ class FileTypesInfo(Base):
 
     __tablename__ = 'FileTypesInfo'
 
+    FileId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     FileType = Column(String(50), unique=False, nullable=False)
     FilePath = Column(String(50), unique=False, nullable=False)
@@ -166,6 +169,7 @@ class ClientCallRecording(Base):
 
     __tablename__ = 'ClientCallRecording'
 
+    ClientCallId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('client.Id'), nullable=False)
     CallFileName = Column(String(50), unique=False, nullable=False)
     CallFilePath = Column(String(50), unique=False, nullable=False)
@@ -183,6 +187,7 @@ class ClientCallRecording(Base):
 class ClientCallSummary(Base):
     __tablename__ = 'ClientCallSummary'
 
+    ClientCallSummaryId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     SummaryDescription = Column(String(150), unique=False, nullable=False)
     SummaryDateTime = Column(DateTime, default=datetime.utcnow())
@@ -199,6 +204,7 @@ class ClientCallSummary(Base):
 class Logs(Base):
     __tablename__ = 'Logs'
 
+    LogsId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     LogType = Column(String(50), unique=False, nullable=False)
     LogSummary = Column(String(50), unique=False, nullable=False)
@@ -217,6 +223,7 @@ class Logs(Base):
 class SentimentAnalysis(Base):
     __tablename__ = 'SentimentAnalysis'
 
+    SentimentId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
     SentimentScore = Column(String(50), nullable=False)
@@ -237,6 +244,7 @@ class AudioTranscribe(Base):
 
     __tablename__ = 'AudioTranscribe'
 
+    AudioId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     AudioFileName = Column(String(50), unique=False, nullable=False)
     JobStatus = Column(String(50), unique=False, nullable=False)
@@ -259,6 +267,7 @@ class AudioTranscribe(Base):
 class AudioTranscribeTracker(Base):
     __tablename__ = 'AudioTranscribeTracker'
 
+    AudioTrasId = Column(String(50), primary_key=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     AudioId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
     AudioFileName = Column(String(50), unique=False, nullable=False)
