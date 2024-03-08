@@ -1,10 +1,15 @@
 import os
 from app.utilities.utility import GlobalUtility
+from app.utilities.db_utility import DBUtility
 from app.controllers.controllers import Controller
 from services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
 from app.db_connection import DbConnection
+from app.service_layer.logger_utilis import LoggerUtility
+from app.services.database import DataBaseClass
+from app.configs.global_state import GlobalState
+import re
 from sqlalchemy.orm import sessionmaker
 from db_layer.models import Client
 from sqlalchemy import select
@@ -31,7 +36,10 @@ class StartTranscribe:
         self.logger = Logger.get_instance()
         self.db_connection = DbConnection.get_instance()
         self.db_instance = DBRecord.get_instance()
-
+        self.db_utility = DBUtility().get_instance()
+        self.logger_utility = LoggerUtility.get_instance()
+        self.db_class = DataBaseClass().get_instance()
+        self.glogal_state = GlobalState.get_instance()
     def validate_oauth_token(self, user_name):
         try:
             print("validate_oauth_token")
@@ -67,6 +75,16 @@ class StartTranscribe:
             self.logger.info(f'Client_ID :- {client_id}')
             self.logger.info(f'db_server :- {db_server}')
             self.logger.info(f'db_name :- {db_name}')
+            self.logger_utility.info('sdfgdyfgdyfgy')
+            self.db_utility.get_logger_info()
+            configurations = self.db_class.get_all_configurations(db_server,db_name)
+            # audio = self.glogal_state.get_source_folder_path()
+            all_configurations = self.global_utility.get_config_by_key_name(configurations,'Configurations')
+            source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
+            client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
+            file_type_config = self.global_utility.get_config_by_key_name(configurations, 'FileTypesInfo')
+            subscriptions_config = self.global_utility.get_config_by_key_name(configurations, 'Subscriptions')
+
             # Create engine
             #
             self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)

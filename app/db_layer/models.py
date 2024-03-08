@@ -31,8 +31,8 @@ class Client(Base):
     ClientPassword = Column(String)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
-    IsActive = Column(Boolean)
-    IsDeleted = Column(Boolean)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<Client(ClientId={self.ClientId}, ClientName='{self.ClientName}', ClientEmail='{self.ClientEmail}',ClientUserName='{self.ClientUserName}',ClientPassword='{self.ClientPassword}',Modified='{self.Modified}',Created='{self.Created}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
@@ -47,8 +47,8 @@ class AuthTokenManagement(Base):
     SecretKey = Column(String(50),nullable=False)
     Created=Column(DateTime, default=datetime.utcnow())
     Modified=Column(DateTime, default=datetime.utcnow())
-    IsActive = Column(Boolean)
-    IsDeleted = Column(Boolean)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<AuthTokenManagement(UserName={self.UserName}, ClientId='{self.ClientId}', Token='{self.Token}',SecretKey='{self.SecretKey}',Modified='{self.Modified}',Created='{self.Created}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
@@ -68,7 +68,7 @@ class BillingInformation(Base):
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
-    IsDeleted = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<BillingInformation(BillingId={self.BillingId}, ClientId='{self.ClientId}', SubscriptionId='{self.SubscriptionId}',ClientName='{self.ClientName}',SubscriptionStartDate='{self.SubscriptionStartDate}',SubscriptionEndDate='{self.SubscriptionEndDate}',PaymentStatus='{self.PaymentStatus}',Modified='{self.Modified}',Created='{self.Created}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
@@ -84,7 +84,7 @@ class UsersManagement(Base):
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
-    IsDeleted = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<UsersManagement(UserName={self.UserName}, ClientId='{self.ClientId}', UserEmail='{self.UserEmail}',UserPassword='{self.UserPassword}'" \
@@ -100,7 +100,7 @@ class Subscriptions(Base):
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
-    IsDeleted = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<Subscriptions(SubscriptionId={self.SubscriptionId}, ClientId='{self.ClientId}', SubscriptionPlan='{self.SubscriptionPlan}',Modified='{self.Modified}',Created='{self.Created}'" \
@@ -116,7 +116,7 @@ class SubscriptionPlan(Base):
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
-    IsDeleted = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
         return f"<SubscriptionPlan(SubscriptionId={self.SubscriptionId}, ClientId='{self.ClientId}', SubscriptionName='{self.SubscriptionName}',Modified='{self.Modified}',Created='{self.Created}'" \
