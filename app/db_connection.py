@@ -59,7 +59,7 @@ class DbConnection:
             session = Session()
             clients_data= session.query(Client).filter_by(Id=1).all()
             for user in clients_data:
-                print("SubscriptionId:- ",user.SubscriptionId)
+                print("SubscriptionId:- ",user.ClientUserName)
             clients = session.query(Client).all()
             for user in clients:
                 print("ClientName:- ",user.ClientName, "ClientEmail:- ", user.ClientEmail)
