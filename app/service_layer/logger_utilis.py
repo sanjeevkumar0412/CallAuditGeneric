@@ -1,9 +1,8 @@
-# from dependency_injector import containers, providers, dependencies
 from loguru import logger
-from pathlib import Path
 
 
-class Logger:
+
+class LoggerUtility:
     _instance = None
     _logs = ""
 
@@ -68,7 +67,7 @@ class Logger:
             self.exception(f"An error occurred: {e}")
 
     def create_log_file(self, file_name, rotation="100 MB", level="INFO"):
-        """  
+        """
         Args:
             filename (str): Name of the log file to create.
             rotation (str, optional): Rotation size (e.g., "10 MB", "500 KB"). Defaults to "100 MB".

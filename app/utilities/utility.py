@@ -10,11 +10,19 @@ from app.services.logger import Logger
 
 load_dotenv()
 class GlobalUtility: 
-   _instance = None 
+   _instance = None
 # place keys here
 
    def __init__(self):  
         self.logger = Logger.get_instance()
+        self.cofigurations_data = None
+        self. user_management_data = None
+        self.client_data = None
+        self.subscription_plan_data = None
+        self.subscription_data = None
+        self.billing_information_data = None
+        self.job_status_data = None
+        self.file_type_info_data = None
 
    def __init__(self):
         raise RuntimeError('Error on BaseClass Call get_instance() instead')
@@ -24,7 +32,49 @@ class GlobalUtility:
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-   
+
+   def set_configurations_data(self, data):
+       self.cofigurations_data = data
+   def get_cofigurations_data(self):
+       return self.cofigurations_data
+
+   def set_user_management_data(self, data):
+       self.user_management_data = data
+   def get_user_management_data(self):
+       return self.user_management_data
+
+   def set_client_data(self, data):
+       self.client_data = data
+   def get_client_data(self):
+       return self.client_data
+
+   def set_subscription_plan_data(self, data):
+       self.subscription_plan_data = data
+   def get_subscription_plan_data(self):
+       return self.subscription_plan_data
+
+   def set_subscription_data(self, data):
+       self.subscription_data = data
+   def get_subscription_data(self):
+       return self.subscription_data
+
+   def set_billing_information_data(self, data):
+       self.billing_information_data = data
+   def get_billing_information_data(self):
+       return self.billing_information_data
+
+   def set_job_status_data(self, data):
+       self.job_status_data = data
+
+   def get_job_status_data(self):
+       return self.job_status_data
+
+   def set_file_type_info_data(self, data):
+       self.file_type_info_data = data
+
+   def get_file_type_info_data(self):
+       return self.file_type_info_data
+
    def get_all_files(self,path):
       files_arr = []
       arr_all_files  = os.listdir(path)
@@ -201,3 +251,20 @@ class GlobalUtility:
        }
        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
        return token
+
+   def get_config_by_key_name(self,dictionary, target_key):
+       for key, value in dictionary.items():
+           if key == target_key:
+               return value
+       return None
+
+   def get_config_by_value(self,dictionary, target_value):
+       keys = None
+       for dictionary in dictionary:
+           for key, value in dictionary.items():
+               if value == target_value:
+                   for key, value in dictionary.items():
+                       if key == "ConfigValue":
+                           return value
+                   # keys.append(key)
+       return keys
