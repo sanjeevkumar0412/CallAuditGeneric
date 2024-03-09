@@ -44,11 +44,12 @@ class DBRecord:
         try:
             # with app.app_context():
             # raw_sql = 'SELECT * FROM '+'dbo.'+table_name
-            table_exists = table_name.capitalize() in tables_check
+            table_exists = table_name in tables_check
             if table_exists:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
+                print("DDD",result)
             else:
                 result = {"Info": f"Invalid Table name  {table_name} !"}
 
@@ -61,7 +62,7 @@ class DBRecord:
 
     def get_record_by_id(self,table_name, id):
         try:
-            table_exists = table_name.capitalize() in tables_check
+            table_exists = table_name in tables_check
             if table_exists:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
@@ -75,11 +76,11 @@ class DBRecord:
             return {'data': result}
         except Exception as e:
             # DbConnection.close_database_connection()
-            print(".........Error in get_all_record...........", e)
+            print(".........Error in get_record_by_id...........", e)
 
     def get_data_by_column_name(self, table_name, column_name,column_value):
         try:
-            table_exists = table_name.capitalize() in tables_check
+            table_exists = table_name in tables_check
             if table_exists:
                 check_column = inspector.get_columns(table_name)
                 column_exists = any(column['name'] == column_name for column in check_column)
@@ -100,7 +101,7 @@ class DBRecord:
 
     def delete_record_by_id(self, table_name, id):
         try:
-            table_exists = table_name.capitalize() in tables_check
+            table_exists = table_name in tables_check
             if table_exists:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
