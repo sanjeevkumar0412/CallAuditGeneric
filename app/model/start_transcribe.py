@@ -39,6 +39,7 @@ class StartTranscribe:
         self.logger_utility = LoggerUtility()
         self.db_class = DataBaseClass()
         self.glogal_state = GlobalState()
+        self.db_instance = DBRecord()
     def validate_oauth_token(self, user_name):
         try:
             print("validate_oauth_token")
@@ -62,36 +63,38 @@ class StartTranscribe:
 
     def start_transcribe_process(self):
         try:
-            user_name = os.getenv('USER_NAME')
-            password = os.getenv('PWD')
-            client_id = os.getenv('CLIENT_ID')
-            db_user_name = os.getenv('DB_USER')
-            db_password = os.getenv('DB_PWD')
             db_server = os.getenv('DB_SERVER')
             db_name = os.getenv('DB_NAME')
-            self.logger.info(f'user name :- {user_name}')
-            self.logger.info(f'password :- {password}')
-            self.logger.info(f'Client_ID :- {client_id}')
             self.logger.info(f'db_server :- {db_server}')
             self.logger.info(f'db_name :- {db_name}')
-            self.logger_utility.info('sdfgdyfgdyfgy')
-            self.db_utility.get_logger_info()
-            configurations = self.db_class.get_all_configurations(db_server,db_name)
-            audio = self.glogal_state.get_source_folder_path()
-            all_configurations = self.global_utility.get_config_by_key_name(configurations,'Configurations')
-            source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
-            client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
-            file_type_config = self.global_utility.get_config_by_key_name(configurations, 'FileTypesInfo')
-            subscriptions_config = self.global_utility.get_config_by_key_name(configurations, 'Subscriptions')
+            configurations = self.db_class.get_all_configurations(db_server, db_name)
+            all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
+            # user_name = os.getenv('USER_NAME')
+            # password = os.getenv('PWD')
+            client_id = self.glogal_state.get_open_ai_key()
+            db_server_name = self.glogal_state.get_database_server_name()
+            database_name = self.glogal_state.get_database_name()
+            source_file_path = self.glogal_state.get_audio_source_folder_path()
+            destination_path = self.glogal_state.get_audio_destination_folder_path()
+            ldap_user = self.glogal_state.get_ladp_user_name()
+            ldap_pwd = self.glogal_state.get_ldap_user_password()
+            self.logger.info(f'Client_ID :- {client_id}')
+            self.logger.info(f'Database Server :- {db_server_name}')
+            self.logger.info(f'Database Name :- {database_name}')
+            self.logger.info(f'user name :- {ldap_user}')
+            self.logger.info(f'password :- {ldap_pwd}')
+
+            # source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
+            # client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
+            # file_type_config = self.global_utility.get_config_by_key_name(configurations, 'FileTypesInfo')
+            # subscriptions_config = self.global_utility.get_config_by_key_name(configurations, 'Subscriptions')
 
             # Create engine
             #
-            self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
-            is_authenticate = self.db_instance.get_ldap_authenticate(user_name, password)
+            # self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
+            is_authenticate = self.db_instance.get_ldap_authenticate(ldap_user, ldap_pwd)
             # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
             if is_authenticate:
-                source_file_path = "D:/Cogent_Audio_Repo/"
-                destination_path = "D:/Cogent_AI_Audio_Repo/"
                 is_validate_path = self.validate_folder(source_file_path, destination_path)
                 if is_validate_path:
                     file_collection = self.global_utility.get_all_files(source_file_path)
