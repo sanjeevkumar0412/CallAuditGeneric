@@ -1,16 +1,14 @@
 from app.utilities.utility import GlobalUtility
-from app.configs.config import  CONFIG
+from app.configs.config import CONFIG
 class GlobalState:
     _instance = None
     def __init__(self):
-        self.global_utility = GlobalUtility().get_instance()
+        self.global_utility = GlobalUtility()
         self.audio_source_path = None
 
-
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def get_source_folder_path(self):

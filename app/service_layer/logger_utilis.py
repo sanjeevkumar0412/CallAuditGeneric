@@ -12,11 +12,6 @@ class LoggerUtility:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-    @classmethod
-    def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
 
     @staticmethod
     def debug(self, message: str):

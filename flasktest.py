@@ -3,7 +3,7 @@ app = Flask(__name__)
 
 from database_query_utils import *
 from database_query_utils import DBRecord
-db_instance = DBRecord.get_instance()
+db_instance = DBRecord()
 
 @app.route('/get_all_data', methods=['GET'])
 def get_record():

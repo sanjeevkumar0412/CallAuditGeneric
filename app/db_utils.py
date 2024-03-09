@@ -20,12 +20,11 @@ class DBRecord:
     print(">>>>>>>>", table_list)
 
     def __init__(self):
-        self.db_instance = DbConnection.get_instance()
+        self.db_instance = DbConnection()
 
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def get_all_record(self, table_name):

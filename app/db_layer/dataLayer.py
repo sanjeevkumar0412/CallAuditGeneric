@@ -37,10 +37,9 @@ class SqlServerDB:
     def __init__(self):
         raise RuntimeError('Error on BaseClass Call get_instance() instead')
 
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def get_all_configurations(self, clent_id, connection_string):

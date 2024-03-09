@@ -5,7 +5,7 @@ import threading
 #
 from flask import Flask
 
-os.environ["OPENAI_API_KEY"] = <"your_api_key">
+os.environ["OPENAI_API_KEY"] = ""
 # # from flask_sqlalchemy import SQLAlchemy
 # # app = Flask(__name__)
 # # app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///../Cogent-AI.db'
@@ -105,7 +105,7 @@ from sqlalchemy.ext.automap import automap_base
 # import app
 # from db_connection import DbConnection
 #
-# db_instance = DbConnection.get_instance()
+# db_instance = DbConnection()
 # db_instance.connect_to_database()
 
 # @app.route('/postclient', methods=['GET'])
@@ -125,7 +125,7 @@ from sqlalchemy.ext.automap import automap_base
 #####Fetch for this connection#########
 
 # from db_utils import DBRecord
-# db_instance = DBRecord.get_instance()
+# db_instance = DBRecord()
 
 ############----------End##############
 

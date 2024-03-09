@@ -12,14 +12,11 @@ class SubProcessModel:
     _logs = ""
 
     def __init__(self):       
-        self.global_utility =  GlobalUtility.get_instance()
-    
+        self.global_utility =  GlobalUtility()
 
-
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
     
     def transcribe_by_subprocess(self,chunks_files,chunk_directory,chunks,filename):   

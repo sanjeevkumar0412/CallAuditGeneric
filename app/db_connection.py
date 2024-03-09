@@ -19,12 +19,11 @@ class DbConnection:
     _instance = None
 
     def __init__(self):
-        self.logger = Logger.get_instance()
+        self.logger = Logger()
 
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def connect_to_sql_connection_ashutosh_approach(self,server, database, username, password):

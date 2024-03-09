@@ -14,7 +14,7 @@ class GlobalUtility:
 # place keys here
 
    def __init__(self):  
-        self.logger = Logger.get_instance()
+        self.logger = Logger()
         self.cofigurations_data = None
         self. user_management_data = None
         self.client_data = None
@@ -24,14 +24,16 @@ class GlobalUtility:
         self.job_status_data = None
         self.file_type_info_data = None
 
-   def __init__(self):
-        raise RuntimeError('Error on BaseClass Call get_instance() instead')
+   def __new__(cls):
+       if cls._instance is None:
+           cls._instance = super().__new__(cls)
+       return cls._instance
 
-   @classmethod
-   def get_instance(cls):
-        if cls._instance is None:
-            cls._instance = cls.__new__(cls)
-        return cls._instance
+   # @classmethod
+   # def get_instance(cls):
+   #      if cls._instance is None:
+   #          cls._instance = cls.__new__(cls)
+   #      return cls._instance
 
    def set_configurations_data(self, data):
        self.cofigurations_data = data

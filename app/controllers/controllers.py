@@ -6,13 +6,18 @@ from app.services.logger import Logger
 
 
 class Controller:
-
+    _instance = None
     def __init__(self):
         super().__init__()
-        self.open_ai_model = OpenAIModel.get_instance()
-        self.whisper_model = WhisperModel.get_instance()
-        self.sub_process_model = SubProcessModel.get_instance()
-        self.logger = Logger.get_instance()
+        self.open_ai_model = OpenAIModel()
+        self.whisper_model = WhisperModel()
+        self.sub_process_model = SubProcessModel()
+        self.logger = Logger()
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def build_chunk_files_transcribe_audio(self, chunks_files, subscriptions_model=None):
         transcript = None

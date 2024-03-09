@@ -9,24 +9,16 @@ from db_layer.models import Client,Configurations,BillingInformation,FileTypesIn
 from sqlalchemy.engine import URL
 
 class DataBaseClass:
-
     _instance = None
-
-
     def __init__(self):
-        self.global_utility = GlobalUtility.get_instance()
-        self.logger = Logger().get_instance()
-        self.db_connection = DbConnection.get_instance()
+        self.global_utility = GlobalUtility()
+        self.logger = Logger()
+        self.db_connection = DbConnection()
 
-
-    @classmethod
-    def get_instance(cls):
+    def __new__(cls):
         if cls._instance is None:
-            cls._instance = cls.__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
-    
-    def insert_data(self,model,model_name, data):         
-         model.insert(model_name,data)
 
     def get_all_configurations(self,server,database):
         try:
@@ -63,10 +55,10 @@ class DataBaseClass:
             subscription_plan_column_names = subscription_plan_data[0].__dict__.keys() if subscription_plan_data else []
             # subscription_plan_array = [{column: getattr(row, column) for column in subscription_plan_column_names} for row in
             #                        subscription_plan_column_names]
-            # self.global_utility.set_client_data(clients_array)
-            # self.global_utility.set_configurations_data(confguration_array)
-            # self.global_utility.set_file_type_info_data(filetype_info_array)
-            # self.global_utility.get_subscription_data(subscriptions_array)
+            self.global_utility.set_client_data(clients_array)
+            self.global_utility.set_configurations_data(confguration_array)
+            self.global_utility.set_file_type_info_data(filetype_info_array)
+            self.global_utility.set_subscription_data(subscriptions_array)
             session.close()
             configurations = {
                 'Client':  clients_array,

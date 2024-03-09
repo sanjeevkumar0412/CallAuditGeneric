@@ -19,7 +19,7 @@ import threading
 # from db_utils import DBRecord
 # from db_utils import get_all_record, get_single_record, delete_single_record
 # from db_utils import *
-# db_instance = DBRecord.get_instance()
+# db_instance = DBRecord()
 
 # from app.db_layer.models import UsersManagement
 # data = db_instance.get_all_record("UsersManagement")
@@ -31,15 +31,14 @@ load_dotenv()
 class StartTranscribe:
 
     def __init__(self):
-        self.global_utility = GlobalUtility.get_instance()
+        self.global_utility = GlobalUtility()
         self.controller = Controller()
-        self.logger = Logger.get_instance()
-        self.db_connection = DbConnection.get_instance()
-        self.db_instance = DBRecord.get_instance()
-        self.db_utility = DBUtility().get_instance()
-        self.logger_utility = LoggerUtility.get_instance()
-        self.db_class = DataBaseClass().get_instance()
-        self.glogal_state = GlobalState.get_instance()
+        self.logger = Logger()
+        self.db_connection = DbConnection()
+        self.db_utility = DBUtility()
+        self.logger_utility = LoggerUtility()
+        self.db_class = DataBaseClass()
+        self.glogal_state = GlobalState()
     def validate_oauth_token(self, user_name):
         try:
             print("validate_oauth_token")
@@ -78,7 +77,7 @@ class StartTranscribe:
             self.logger_utility.info('sdfgdyfgdyfgy')
             self.db_utility.get_logger_info()
             configurations = self.db_class.get_all_configurations(db_server,db_name)
-            # audio = self.glogal_state.get_source_folder_path()
+            audio = self.glogal_state.get_source_folder_path()
             all_configurations = self.global_utility.get_config_by_key_name(configurations,'Configurations')
             source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
             client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
