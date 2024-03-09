@@ -206,7 +206,7 @@ class ClientCallSummary(Base):
 class Logs(Base):
     __tablename__ = 'Logs'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     LogType = Column(String(50), unique=False, nullable=False)
     LogSummary = Column(String(50), unique=False, nullable=False)

@@ -81,6 +81,7 @@ class StartTranscribe:
             ldap_pwd = None
             # ldap_pwd = self.glogal_state.get_ldap_user_password()
             whisper_model = self.glogal_state.get_whisper_model_name()
+            # self.db_class.save_log_table_entry(db_server_name,database_name)
             self.logger.info(f'Client_ID :- {opem_key_name}')
             self.logger.info(f'Database Server :- {db_server_name}')
             self.logger.info(f'Database Name :- {database_name}')
