@@ -1,6 +1,7 @@
 # Database settings
 
 class CONFIG:
+    CLIENT_ID = 'ClientId',
     AUDIO_SOURCE_FOLDER_PATH = 'AudioSourceFolderPath'
     AUDIO_DESTINATION_FOLDER_PATH = 'AudioDestinationFolderPath'
     AUDIO_FILE_SIZE ='AudioFileSize'

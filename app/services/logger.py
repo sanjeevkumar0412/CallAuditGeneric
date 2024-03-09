@@ -1,6 +1,9 @@
-# from dependency_injector import containers, providers, dependencies
 from loguru import logger
-from pathlib import Path
+# from sqlalchemy import create_engine
+# from sqlalchemy.orm import sessionmaker
+# from db_layer.models import Logs
+# from app.services.database import DataBaseClass
+# from configs.global_state import GlobalState
 
 
 class Logger:
@@ -8,28 +11,29 @@ class Logger:
     _logs = ""
 
     def __init__(self):
+        # self.db_class = DataBaseClass()
         self._instance = logger
+        # self.global_state = GlobalState()
 
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    @staticmethod
     def debug(self, message: str):
         logger.debug(f"Debug message : {message}")
 
     def info(self, message):
         logger.info(f"Logger Info : {message}")
 
-    @staticmethod
+
     def warning(self, message):
         logger.warning(f"Warning message  : {message}")
 
     def error(self, function_name, message):
         logger.error(f"Error in {function_name} : {message}")
 
-    @staticmethod
+
     def get_logs(self, message):
         logger.log(f"Log message : {message}")
 
@@ -71,3 +75,24 @@ class Logger:
             level (str, optional): Log level. Defaults to "INFO".
         """
         logger.add(file_name, level=level, rotation=rotation)
+
+    def save_log_table_entry(self, modul_name,level,severity, message):
+        self.db_class.save_log_table_entry(modul_name,level,severity,message)
+        # try:
+        #     db_server_name = self.glogal_state.get_database_server_name()
+        #     database_name = self.glogal_state.get_database_name()
+        #     client_id = self.glogal_state.get_client_id
+        #     # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
+        #     dns = f'mssql+pyodbc://{db_server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
+        #     engine = create_engine(dns)
+        #     Session = sessionmaker(bind=engine)
+        #     session = Session()
+        #     log_info = Logs(ClientId=client_id,LogSummary=message,LogDetails =message,LogType =level,ModulName =modul_name,Severity = severity)
+        #     session.add(log_info)
+        #     session.commit()
+        #     session.close()
+        # except Exception as e:
+        #     session.close()
+        #     logger.error(f"An error occurred in save_log_table_entry: {e}")
+        # finally:
+        #     session.close()

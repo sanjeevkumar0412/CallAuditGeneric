@@ -71,18 +71,22 @@ class StartTranscribe:
             all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
             # user_name = os.getenv('USER_NAME')
             # password = os.getenv('PWD')
-            client_id = self.glogal_state.get_open_ai_key()
+            opem_key_name = self.glogal_state.get_open_ai_key()
+            client_id = self.glogal_state.get_client_id()
             db_server_name = self.glogal_state.get_database_server_name()
             database_name = self.glogal_state.get_database_name()
             source_file_path = self.glogal_state.get_audio_source_folder_path()
             destination_path = self.glogal_state.get_audio_destination_folder_path()
             ldap_user = self.glogal_state.get_ladp_user_name()
-            ldap_pwd = self.glogal_state.get_ldap_user_password()
-            self.logger.info(f'Client_ID :- {client_id}')
+            ldap_pwd = None
+            # ldap_pwd = self.glogal_state.get_ldap_user_password()
+            whisper_model = self.glogal_state.get_whisper_model_name()
+            self.logger.info(f'Client_ID :- {opem_key_name}')
             self.logger.info(f'Database Server :- {db_server_name}')
             self.logger.info(f'Database Name :- {database_name}')
             self.logger.info(f'user name :- {ldap_user}')
             self.logger.info(f'password :- {ldap_pwd}')
+            self.logger.info(f'whisper_model :- {whisper_model}')
 
             # source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
             # client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
@@ -92,6 +96,7 @@ class StartTranscribe:
             # Create engine
             #
             # self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
+
             is_authenticate = self.db_instance.get_ldap_authenticate(ldap_user, ldap_pwd)
             # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
             if is_authenticate:
@@ -107,6 +112,7 @@ class StartTranscribe:
                 self.logger.info('You are authenticate with the proper credentials.please try with other credentials')
         except Exception as e:
             self.logger.error('start_transcribe_process', e)
+            # self.db_class.save_log_table_entry('start_transcribe_process','ERROR','ERROR',e)
 
     def start_recording_transcribe_process(self, file_collection, source_file_path, destination_path,
                                            subscription_model):

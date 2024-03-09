@@ -20,7 +20,7 @@ class Users(Base):
         return f"<Client(Id={self.Id}, Name='{self.Name}', Email='{self.Email}')>"
 
 class Client(Base):
-    __tablename__ = 'client'
+    __tablename__ = 'Client'
     __table_args__ = {'extend_existing': True}
 
     Id = Column(Integer, unique=True, nullable=False)

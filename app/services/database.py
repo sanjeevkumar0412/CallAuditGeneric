@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker,query
-from db_layer.models import Client,Configurations,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan
+from db_layer.models import Client,Configurations,Logs,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan
 from sqlalchemy.engine import URL
 
 class DataBaseClass:
@@ -72,5 +72,24 @@ class DataBaseClass:
             session.close()
             self.logger.error("connect_to_database", e)
             raise
+        finally:
+            session.close()
+
+    def save_log_table_entry(self,client_id,server_name,database, modul_name,level,severity, message):
+        try:
+            # db_server_name = self.glogal_state.get_database_server_name()
+            # database_name = self.glogal_state.get_database_name()
+            # client_id = self.glogal_state.get_client_id()
+            dns = f'mssql+pyodbc://{server_name}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            log_info = Logs(ClientId=client_id,LogSummary=message,LogDetails =message,LogType =level,ModulName =modul_name,Severity = severity)
+            session.add(log_info)
+            session.commit()
+            session.close()
+        except Exception as e:
+            session.close()
+            self.logger.error(f"An error occurred in save_log_table_entry: {e}")
         finally:
             session.close()

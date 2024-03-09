@@ -108,7 +108,8 @@ class DBRecord:
             # If bind is successful, credentials are valid
             return True, "Credentials verified successfully"
         except Exception as e:
-            return False, f"Error: {e}"
+            # return False, f"Error: {e}"
+            return False
 
     def ldap_authenticate(self, username, password):
         # Establish connection with the LDAP server
