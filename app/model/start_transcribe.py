@@ -79,8 +79,8 @@ class StartTranscribe:
             source_file_path = self.glogal_state.get_audio_source_folder_path()
             destination_path = self.glogal_state.get_audio_destination_folder_path()
             ldap_user = self.glogal_state.get_ladp_user_name()
-            ldap_pwd = None
-            # ldap_pwd = self.glogal_state.get_ldap_user_password()
+            # ldap_pwd = None
+            ldap_pwd = self.glogal_state.get_ldap_user_password()
             whisper_model = self.glogal_state.get_whisper_model_name()
             self.logger.info(f'Client_ID :- {opem_key_name}')
             self.logger.info(f'Database Server :- {db_server_name}')
