@@ -8,8 +8,20 @@ from sqlalchemy.orm import sessionmaker
 
 class Logger:
     _instance = None
-    level =None
     _logs = ""
+    error_level_trace = 'TRACE'
+    error_level_debug = 'DEBUG'
+    error_level_info = 'INFO'
+    error_level_warning = 'WARNING'
+    error_level_error = 'ERROR'
+    error_level_critical = 'CRITICAL'
+    severity_level_trace = '5'
+    severity_level_debug = '10'
+    severity_level_info = '20'
+    severity_level_warning = '30'
+    severity_level_error = '40'
+    severity_level_critical = '50'
+
 
     def __init__(self):
         # self.db_class = DataBaseClass()

@@ -111,8 +111,8 @@ class StartTranscribe:
                     self.logger.error('start_transcribe_process', 'folder path does not exist')
             else:
                 log_info = Logs(ClientId=client_id, LogSummary=error_message, LogDetails=error_message,
-                                LogType='Error',
-                                ModulName='start_transcribe_process', Severity='Critical')
+                                LogType=self.logger.error_level_critical,
+                                ModulName='start_transcribe_process', Severity=self.logger.severity_level_critical)
                 self.logger.save_log_table_entry(db_server_name, database_name, log_info)
                 self.logger.info('You are authenticate with the proper credentials.please try with other credentials')
         except Exception as e:
