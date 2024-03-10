@@ -1,6 +1,6 @@
 from loguru import logger
-# from sqlalchemy import create_engine
-# from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 # from db_layer.models import Logs
 # from app.services.database import DataBaseClass
 # from configs.global_state import GlobalState
@@ -8,6 +8,7 @@ from loguru import logger
 
 class Logger:
     _instance = None
+    level =None
     _logs = ""
 
     def __init__(self):
@@ -76,23 +77,23 @@ class Logger:
         """
         logger.add(file_name, level=level, rotation=rotation)
 
-    def save_log_table_entry(self, modul_name,level,severity, message):
-        self.db_class.save_log_table_entry(modul_name,level,severity,message)
-        # try:
-        #     db_server_name = self.glogal_state.get_database_server_name()
-        #     database_name = self.glogal_state.get_database_name()
-        #     client_id = self.glogal_state.get_client_id
-        #     # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
-        #     dns = f'mssql+pyodbc://{db_server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        #     engine = create_engine(dns)
-        #     Session = sessionmaker(bind=engine)
-        #     session = Session()
-        #     log_info = Logs(ClientId=client_id,LogSummary=message,LogDetails =message,LogType =level,ModulName =modul_name,Severity = severity)
-        #     session.add(log_info)
-        #     session.commit()
-        #     session.close()
-        # except Exception as e:
-        #     session.close()
-        #     logger.error(f"An error occurred in save_log_table_entry: {e}")
-        # finally:
-        #     session.close()
+    def save_log_table_entry(self, server_name,database_name,model_info):
+        # self.db_class.save_log_table_entry(modul_name,level,severity,message)
+        try:
+            # db_server_name = self.glogal_state.get_database_server_name()
+            # database_name = self.glogal_state.get_database_name()
+            # client_id = self.glogal_state.get_client_id
+            # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
+            dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            # log_info = Logs(ClientId=client_id,LogSummary=message,LogDetails =message,LogType =level,ModulName =modul_name,Severity = severity)
+            session.add(model_info)
+            session.commit()
+            session.close()
+        except Exception as e:
+            session.close()
+            logger.error(f"An error occurred in save_log_table_entry: {e}")
+        finally:
+            session.close()

@@ -96,6 +96,8 @@ class DBRecord:
         return data
 
     def get_ldap_authenticate(self, username, password):
+        success = True
+        error_message= None
         # Establish connection with the LDAP server
         # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
         server_address = 'ldap://10.9.32.17:389'
@@ -104,12 +106,18 @@ class DBRecord:
             # Bind to the LDAP server with provided credentials
             conn = Connection(server, user=username, password=password, authentication=SIMPLE)
             if not conn.bind():
-                return False, "Invalid credentials"
+                success = False
+                error_message = str("Invalid credentials")
+                return success, error_message
             # If bind is successful, credentials are valid
-            return True, "Credentials verified successfully"
+            success = True
+            error_message = str("Credentials verified successfully")
+            return success, error_message
         except Exception as e:
+            success = False
+            error_message = str(e)
             # return False, f"Error: {e}"
-            return False
+            return success, error_message
 
     def ldap_authenticate(self, username, password):
         # Establish connection with the LDAP server

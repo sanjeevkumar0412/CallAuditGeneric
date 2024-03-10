@@ -12,7 +12,7 @@ class GlobalState:
 
 
     def get_client_id(self):
-        return self.global_utility.get_config_by_value(self.global_utility.get_cofigurations_data(), CONFIG.CLIENT_ID)
+        return int(self.global_utility.get_config_by_value(self.global_utility.get_cofigurations_data(), CONFIG.CLIENT_ID))
     def get_source_folder_path(self):
         return self.global_utility.get_config_by_value(self.global_utility.get_cofigurations_data(), CONFIG.AUDIO_SOURCE_FOLDER_PATH)
     def get_audio_destination_folder_path(self):

@@ -9,6 +9,7 @@ from app.db_connection import DbConnection
 from app.service_layer.logger_utilis import LoggerUtility
 from app.services.database import DataBaseClass
 from app.configs.global_state import GlobalState
+from app.db_layer.models import Logs
 import re
 from sqlalchemy.orm import sessionmaker
 from db_layer.models import Client
@@ -81,7 +82,6 @@ class StartTranscribe:
             ldap_pwd = None
             # ldap_pwd = self.glogal_state.get_ldap_user_password()
             whisper_model = self.glogal_state.get_whisper_model_name()
-            # self.db_class.save_log_table_entry(db_server_name,database_name)
             self.logger.info(f'Client_ID :- {opem_key_name}')
             self.logger.info(f'Database Server :- {db_server_name}')
             self.logger.info(f'Database Name :- {database_name}')
@@ -98,9 +98,9 @@ class StartTranscribe:
             #
             # self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
 
-            is_authenticate = self.db_instance.get_ldap_authenticate(ldap_user, ldap_pwd)
+            success, error_message  = self.db_instance.get_ldap_authenticate(ldap_user, ldap_pwd)
             # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
-            if is_authenticate:
+            if success:
                 is_validate_path = self.validate_folder(source_file_path, destination_path)
                 if is_validate_path:
                     file_collection = self.global_utility.get_all_files(source_file_path)
@@ -110,8 +110,16 @@ class StartTranscribe:
                 else:
                     self.logger.error('start_transcribe_process', 'folder path does not exist')
             else:
+                log_info = Logs(ClientId=client_id, LogSummary=error_message, LogDetails=error_message,
+                                LogType='Error',
+                                ModulName='start_transcribe_process', Severity='Critical')
+                self.logger.save_log_table_entry(db_server_name, database_name, log_info)
                 self.logger.info('You are authenticate with the proper credentials.please try with other credentials')
         except Exception as e:
+            log_info = Logs(ClientId=client_id, LogSummary=e, LogDetails=e,
+                            LogType='Error',
+                            ModulName='start_transcribe_process', Severity='Critical')
+            self.logger.save_log_table_entry(db_server_name, database_name, log_info)
             self.logger.error('start_transcribe_process', e)
             # self.db_class.save_log_table_entry('start_transcribe_process','ERROR','ERROR',e)
 
