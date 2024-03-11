@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker,query
-from db_layer.models import Client,Configurations,Logs,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan
+from db_layer.models import Client,Configurations,Logs,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan,AudioTranscribeTracker
 from sqlalchemy.engine import URL
 
 class DataBaseClass:
@@ -116,5 +116,46 @@ class DataBaseClass:
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in save_log_table_entry: {e}")
+        finally:
+            session.close()
+
+    def create_audio_file_entry(self,model_info):
+        try:
+            db_server = self.global_utility.global_state.get_database_server_name()
+            db_name = self.global_utility.global_state.get_database_name()
+            dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            session.add(model_info)
+            session.commit()
+            session.close()
+        except Exception as e:
+            session.close()
+            self.logger.error(f"An error occurred in save_log_table_entry: {e}")
+        finally:
+            session.close()
+
+    def update_transcribe_text(self, id, update_values):
+        try:
+            db_server = self.global_utility.global_state.get_database_server_name()
+            db_name = self.global_utility.global_state.get_database_name()
+            dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            record = session.query(AudioTranscribeTracker).get(int(id))
+            if record is not None:  # Check if the record exists
+                for column, value in update_values.items():
+                    setattr(record, column, value)
+                session.commit()
+                print(f"Record for ID '{id}' updated successfully.")
+            else:
+                print(f"User with ID {id} not found.")
+            session.commit()
+            session.close()
+        except Exception as e:
+            session.close()
+            self.logger.error(f"An error occurred in update_transcribe_text: {e}")
         finally:
             session.close()
