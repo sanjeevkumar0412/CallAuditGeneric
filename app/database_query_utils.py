@@ -20,9 +20,10 @@ class DBRecord:
     def __init__(self):
         self.db_instance = DbConnection()
 
-    def __new__(cls):
+    @classmethod
+    def get_instance(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            cls._instance = cls.__new__(cls)
         return cls._instance
 
 
@@ -48,12 +49,12 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
-                print("DDD",result)
             else:
-                result = {"Info": f"Invalid Table name  {table_name} !"}
+                result = { "message":"404 Not Found","Info": f"Table {table_name} not found ! "}
 
             if result==[]:
-                result={"Info":f"Data is not available for {table_name} !"}
+                result={"message":'204 No Content',"Info":f"Content not available for {table_name} !"}
+
             return {'data': result}
         except Exception as e:
             # DbConnection.close_database_connection()
@@ -67,10 +68,10 @@ class DBRecord:
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
             else:
-                result = {"Info": f"Invalid Table name  {table_name} !"}
+                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
 
             if result==[]:
-                result={"Info":f"Information is not available for {table_name} Id {id} !"}
+                result={"message":'204 No Content',"Info":f"Information is not available for {table_name} Id {id} !"}
 
             return {'data': result}
         except Exception as e:
@@ -88,12 +89,12 @@ class DBRecord:
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion()
                 else:
-                    result = {"Info": f"Invalid Column name  {column_name} !"}
+                    result = {"message":"404 Not Found","Info": f"Column  {column_name} not found!"}
             else:
-                result = {"Info": f"Invalid Table name  {table_name} !"}
+                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
 
             if result==[]:
-                result={"Info":f"Data is not available for {table_name} !"}
+                result={"message":'204 No Content',"Info":f"Record not found for {table_name} !"}
             return {'data': result}
         except Exception as e:
             print("Error function in get_data_by_column_name",e)
@@ -104,9 +105,9 @@ class DBRecord:
             if table_exists:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
-                result={"msg":f"Successfully deleted record {id}"}
+                result={"message":'200 OK',"msg":f"Successfully deleted record {id}"}
             else:
-                result = {"Info": f"Invalid Table name  {table_name} !"}
+                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
 
             return {'data': result}
         except Exception as e:
