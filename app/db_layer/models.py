@@ -246,12 +246,13 @@ class AudioTranscribe(Base):
 
     __tablename__ = 'AudioTranscribe'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     AudioFileName = Column(String(50), unique=False, nullable=False)
     JobStatus = Column(String(50), unique=False, nullable=False)
     FileType = Column(String(50), unique=False, nullable=False)
     TranscribeText = Column(String(50), unique=False, nullable=False)
+    AudioFileContent = Column(String(200), unique=False, nullable=False)
     TranscribeFilePath = Column(String(50), unique=False, nullable=False)
     TranscribeStartTime = Column(DateTime(timezone=True), unique=False, default=True)
     TranscribeEndTime = Column(DateTime(timezone=True), unique=False, default=True)
@@ -269,11 +270,12 @@ class AudioTranscribe(Base):
 class AudioTranscribeTracker(Base):
     __tablename__ = 'AudioTranscribeTracker'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     AudioId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
     AudioFileName = Column(String(50), unique=False, nullable=False)
     ChunkSequence = Column(String(50), unique=False, nullable=False)
+    ChunkAudioFileContent = Column(String(200), unique=False, nullable=False)
     ChunkText = Column(String(50), unique=False, nullable=False)
     ChunkFilePath = Column(String(50), unique=False, nullable=False)
     ChunkStatus = Column(String(50), unique=False, nullable=False)
