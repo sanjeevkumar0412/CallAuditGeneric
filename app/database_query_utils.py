@@ -102,6 +102,28 @@ class DBRecord:
         except Exception as e:
             print("Error function in get_data_by_column_name",e)
 
+
+    def update_record_by_column(self,table_name,column_to_update,new_value,condition_column,condition_value):
+
+        try:
+            table_exists = table_name in tables_check
+            if table_exists:
+                check_column = inspector.get_columns(table_name)
+                column_exists = any(column['name'] == column_to_update for column in check_column)
+                if column_exists:
+                    raw_sql = f"UPDATE {table_name} SET {column_to_update} = '{new_value}' WHERE {condition_column} = '{condition_value}'"
+                    cursor.execute(raw_sql)
+                    result = {"message": '200 OK', "msg": f"Successfully updated the record"}
+                else:
+                    result = {"message": "404 Not Found", "Info": f"Column  {column_to_update} not found!"}
+            else:
+                result = {"message": "404 Not Found", "Info": f"Table {table_name} not found !"}
+
+            return {'data': result}
+
+        except Exception as e:
+            print("Error function in update_record_by_column",e)
+
     def delete_record_by_id(self, table_name, id):
         try:
             table_exists = table_name in tables_check
@@ -113,5 +135,7 @@ class DBRecord:
                 result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
 
             return {'data': result}
+
         except Exception as e:
             print("Error: delete_single_record",e)
+
