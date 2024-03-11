@@ -35,6 +35,22 @@ def get_recordby_column_name():
         data={"Error":"Invalid table/Data not available for this "+ table_name}
     return data
 
+
+@app.route('/update_record_by_column', methods=['GET'])
+def get_update_by_column_name():
+
+    table_name = request.args.get('table_name')
+    column_to_update = request.args.get('column_to_update')
+    new_value = request.args.get('new_value')
+    condition_column = request.args.get('condition_column')
+    condition_value = request.args.get('condition_value')
+
+    data = db_instance.update_record_by_column(table_name,column_to_update,new_value,condition_column,condition_value)
+
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ table_name}
+    return data
+
 @app.route('/delete_record_by_id')
 def delete_recordby_id():
     table_name = request.args.get('table_name')
