@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from app.utilities.utility import GlobalUtility
 from app.utilities.db_utility import DBUtility
 from app.controllers.controllers import Controller
@@ -8,7 +9,7 @@ from app.db_utils import DBRecord
 from app.db_connection import DbConnection
 from app.service_layer.logger_utilis import LoggerUtility
 from app.services.database import DataBaseClass
-from app.configs.global_state import GlobalState
+# from app.configs.global_state import GlobalState
 from app.db_layer.models import Logs,AudioTranscribe,AudioTranscribeTracker
 import re
 from sqlalchemy.orm import sessionmaker
@@ -39,7 +40,7 @@ class StartTranscribe:
         self.db_utility = DBUtility()
         self.logger_utility = LoggerUtility()
         self.db_class = DataBaseClass()
-        self.global_state = GlobalState()
+        # self.global_state = GlobalState()
         self.db_instance = DBRecord()
     def validate_oauth_token(self, user_name):
         try:
@@ -70,9 +71,6 @@ class StartTranscribe:
             self.logger.info(f'db_name :- {db_name}')
             configurations = self.db_class.get_all_configurations(db_server, db_name)
             all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
-            # user_name = os.getenv('USER_NAME')
-            # password = os.getenv('PWD')
-            cofigurations_data = self.global_utility.get_cofigurations_data()
             opem_key_name = self.global_utility.get_open_ai_key()
             client_id = self.global_utility.get_client_id()
             # self.db_class.get_data_from_table('Logs',client_id)
@@ -84,22 +82,7 @@ class StartTranscribe:
             # ldap_pwd = None
             ldap_pwd = self.global_utility.get_ldap_user_password()
             whisper_model = self.global_utility.get_whisper_model_name()
-            self.logger.info(f'Client_ID :- {opem_key_name}')
-            self.logger.info(f'Database Server :- {db_server_name}')
-            self.logger.info(f'Database Name :- {database_name}')
-            self.logger.info(f'user name :- {ldap_user}')
-            self.logger.info(f'password :- {ldap_pwd}')
-            self.logger.info(f'whisper_model :- {whisper_model}')
-
-            # source_folder = self.global_utility.get_config_by_value(all_configurations,'SourcePath')
-            # client_info_config = self.global_utility.get_config_by_key_name(configurations, 'Client')
-            # file_type_config = self.global_utility.get_config_by_key_name(configurations, 'FileTypesInfo')
-            # subscriptions_config = self.global_utility.get_config_by_key_name(configurations, 'Subscriptions')
-
-            # Create engine
-            #
-            # self.db_connection.connect_to_sql_connection('FLM-VM-COGAIDEV', 'AudioTrans', db_user_name, db_password)
-
+            # self.logger.info(f'Client_ID :- {opem_key_name}','Database Server :- {db_server_name}','Database Name :- {database_name}','user name :- {ldap_user}','whisper_model :- {whisper_model}')
             success, error_message  = self.db_instance.get_ldap_authenticate(ldap_user, ldap_pwd)
             # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
             if success:
@@ -145,15 +128,31 @@ class StartTranscribe:
                             audio_file_path = os.path.join(dir_folder_url, file)
                             file_size = os.path.getsize(audio_file_path)
                             file_size_mb = file_size / (1024 * 1024)
-                            audio_file_size = self.global_state.get_audio_max_file_size(self.global_utility.get_cofigurations_data())
-                            audio_transcibe_model = AudioTranscribe(ClientId=self.global_state.get_client_id(self.global_utility.get_cofigurations_data()),AudioFileName = file,JobStatus ='Starting', FileType = extension,TranscribeText ='',TranscribeFilePath =audio_file_path)
-                            self.db_class.create_audio_file_entry(audio_transcibe_model)
+                            audio_file_size = self.global_utility.get_audio_max_file_size()
+
                             if file_size_mb > audio_file_size:
-                                print('file size :- ', file_size)
-                                self.start_process_recordings_large_file(audio_file_path, dir_folder_url, name_file,
+                                self.logger.info(f'file size :- {file_size}')
+                                audio_transcibe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
+                                                                        AudioFileName=file, JobStatus='Starting',
+                                                                        FileType=extension, TranscribeText='',
+                                                                        TranscribeFilePath=audio_file_path)
+                                parent_record = self.db_class.create_audio_file_entry(audio_transcibe_model)
+                                self.start_process_recordings_large_file(parent_record,audio_file_path, dir_folder_url, name_file,
                                                                          subscription_model, transcribe_files)
                             else:
-                                self.start_process_recordings(audio_file_path, dir_folder_url, name_file,
+                                audio_transcibe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
+                                                                        AudioFileName=file, JobStatus='Starting',
+                                                                        FileType=extension, TranscribeText='',
+                                                                        TranscribeFilePath=audio_file_path)
+                                parent_record = self.db_class.create_audio_file_entry(audio_transcibe_model)
+                                chunk_transcibe_model = AudioTranscribeTracker(
+                                    ClientId=self.global_utility.get_client_id(),
+                                    AudioId=parent_record.Id,
+                                    AudioFileName=file, ChunkSequence=1, ChunkText='',
+                                    ChunkFilePath=audio_file_path, ChunkStatus='Drafted',
+                                    ChunkCreatedDate=datetime.utcnow())
+                                parent_record = self.db_class.create_audio_file_entry(chunk_transcibe_model)
+                                self.start_process_recordings(parent_record,parent_record,audio_file_path, dir_folder_url, name_file,
                                                               subscription_model, transcribe_files)
                         else:
                             self.logger.error('start_recording_transcribe_process',
@@ -163,11 +162,11 @@ class StartTranscribe:
                                           f"Folder is not created for the file {file}")
                 else:
                     self.logger.error('start_recording_transcribe_process', f"{file} is not supported.")
-            self.logger.info("All Transcribe files: ", transcribe_files)
+            self.logger.info(f"All Transcribe files: {transcribe_files}")
         except Exception as e:
             self.logger.error('start_recording_transcribe_process', f'Error while creating build_transcribe_model {e}')
 
-    def start_process_recordings_large_file(self, audio_file_path, dir_folder_url, name_file, subscription_model,
+    def start_process_recordings_large_file(self,parent_record, audio_file_path, dir_folder_url, name_file, subscription_model,
                                             transcribe_files):
         try:
             chunks = self.global_utility.split_audio_chunk_files(audio_file_path, dir_folder_url)
@@ -175,6 +174,16 @@ class StartTranscribe:
             # chunk_chunk_files_path = chunks[1]
             txt_file = os.path.join(dir_folder_url, name_file) + '.txt'
             transcribe_files.append(txt_file)
+
+            for i in range(len(chunks_files)):
+                chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
+                file_name, extension = self.global_utility.get_file_extension(f"chunk_{i}.wav")
+                chunk_transcibe_model = AudioTranscribeTracker(ClientId=self.global_utility.get_client_id(),
+                                                        AudioId=parent_record.Id,
+                                                        AudioFileName=f"chunk_{i}.wav", ChunkSequence=i, ChunkText='',
+                                                        ChunkFilePath=chunk_file,ChunkStatus ='Drafted',
+                                                               ChunkCreatedDate = datetime.utcnow())
+                child_record = self.db_class.create_audio_file_entry(chunk_transcibe_model)
             for i in range(len(chunks_files)):
                 chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
                 self.logger.info(f'Open Ai Chunk Audio File Path:- {chunk_file}')
@@ -184,11 +193,20 @@ class StartTranscribe:
         except Exception as e:
             self.logger.error('start_process_recordings_large_file', e)
 
-    def start_process_recordings(self, audio_file_path, dir_folder_url, name_file, subscription_model,
+    def start_process_recordings(self, parent_record,child_record,audio_file_path, dir_folder_url, name_file, subscription_model,
                                  transcribe_files):
         try:
+            start_transcribe_time = datetime.utcnow()
             txt_file = os.path.join(dir_folder_url, name_file) + '.txt'
             transcript = self.controller.build_transcribe_audio(audio_file_path, subscription_model)
+            end_transcribe_time = datetime.utcnow()
+            update_values = {"TranscribeText": transcript['text'],"JobStatus":"Completed",
+                                   "TranscribeStartTime": start_transcribe_time,
+                                   "TranscribeEndTime": end_transcribe_time,'TranscribeDate':end_transcribe_time}
+            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": "Completed",
+                             "ChunkTranscribeStart": start_transcribe_time, "ChunkTranscribeEnd": end_transcribe_time}
+            self.db_class.update_transcribe_text(parent_record.Id, update_values,False)
+            self.db_class.update_transcribe_text(child_record.Id, update_child_values)
             transcribe_files.append(txt_file)
             is_text_file_written = self.global_utility.wrire_txt_file(txt_file, transcript)
         except Exception as e:
