@@ -1,7 +1,7 @@
 from app.services.logger import Logger
 from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,MetaData, Table
 from sqlalchemy import text
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker,query
@@ -121,8 +121,8 @@ class DataBaseClass:
 
     def create_audio_file_entry(self,model_info):
         try:
-            db_server = self.global_utility.global_state.get_database_server_name()
-            db_name = self.global_utility.global_state.get_database_name()
+            db_server = self.global_utility.get_database_server_name()
+            db_name = self.global_utility.get_database_name()
             dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -138,8 +138,8 @@ class DataBaseClass:
 
     def update_transcribe_text(self, id, update_values):
         try:
-            db_server = self.global_utility.global_state.get_database_server_name()
-            db_name = self.global_utility.global_state.get_database_name()
+            db_server = self.global_utility.get_database_server_name()
+            db_name = self.global_utility.get_database_name()
             dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -159,3 +159,23 @@ class DataBaseClass:
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
         finally:
             session.close()
+
+    def get_data_from_table(self, table_name, client_id):
+        try:
+            db_server = self.global_utility.get_database_server_name()
+            db_name = self.global_utility.get_database_name()
+            dns  = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            metadata = MetaData()
+            with engine.begin() as connection:
+                table = Table(table_name, metadata, autoload=False, autoload_with=engine)
+                query = table.select().where(table.ClientId == client_id)
+                result = connection.execute(query)
+                for row in result:
+                    print(row)
+                result.close()
+        except Exception as e:
+            result.close()
+            self.logger.error(f"An error occurred in update_transcribe_text: {e}")
+        finally:
+            result.close()

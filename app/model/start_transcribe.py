@@ -9,7 +9,7 @@ from app.db_connection import DbConnection
 from app.service_layer.logger_utilis import LoggerUtility
 from app.services.database import DataBaseClass
 from app.configs.global_state import GlobalState
-from app.db_layer.models import Logs
+from app.db_layer.models import Logs,AudioTranscribe,AudioTranscribeTracker
 import re
 from sqlalchemy.orm import sessionmaker
 from db_layer.models import Client
@@ -72,16 +72,18 @@ class StartTranscribe:
             all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
             # user_name = os.getenv('USER_NAME')
             # password = os.getenv('PWD')
-            opem_key_name = self.global_state.get_open_ai_key()
-            client_id = self.global_state.get_client_id()
-            db_server_name = self.global_state.get_database_server_name()
-            database_name = self.global_state.get_database_name()
-            source_file_path = self.global_state.get_audio_source_folder_path()
-            destination_path = self.global_state.get_audio_destination_folder_path()
-            ldap_user = self.global_state.get_ladp_user_name()
+            cofigurations_data = self.global_utility.get_cofigurations_data()
+            opem_key_name = self.global_utility.get_open_ai_key()
+            client_id = self.global_utility.get_client_id()
+            # self.db_class.get_data_from_table('Logs',client_id)
+            db_server_name = self.global_utility.get_database_server_name()
+            database_name = self.global_utility.get_database_name()
+            source_file_path = self.global_utility.get_audio_source_folder_path()
+            destination_path = self.global_utility.get_audio_destination_folder_path()
+            ldap_user = self.global_utility.get_ladp_user_name()
             # ldap_pwd = None
-            ldap_pwd = self.global_state.get_ldap_user_password()
-            whisper_model = self.global_state.get_whisper_model_name()
+            ldap_pwd = self.global_utility.get_ldap_user_password()
+            whisper_model = self.global_utility.get_whisper_model_name()
             self.logger.info(f'Client_ID :- {opem_key_name}')
             self.logger.info(f'Database Server :- {db_server_name}')
             self.logger.info(f'Database Name :- {database_name}')
@@ -143,7 +145,10 @@ class StartTranscribe:
                             audio_file_path = os.path.join(dir_folder_url, file)
                             file_size = os.path.getsize(audio_file_path)
                             file_size_mb = file_size / (1024 * 1024)
-                            if file_size_mb > 5:
+                            audio_file_size = self.global_state.get_audio_max_file_size(self.global_utility.get_cofigurations_data())
+                            audio_transcibe_model = AudioTranscribe(ClientId=self.global_state.get_client_id(self.global_utility.get_cofigurations_data()),AudioFileName = file,JobStatus ='Starting', FileType = extension,TranscribeText ='',TranscribeFilePath =audio_file_path)
+                            self.db_class.create_audio_file_entry(audio_transcibe_model)
+                            if file_size_mb > audio_file_size:
                                 print('file size :- ', file_size)
                                 self.start_process_recordings_large_file(audio_file_path, dir_folder_url, name_file,
                                                                          subscription_model, transcribe_files)
