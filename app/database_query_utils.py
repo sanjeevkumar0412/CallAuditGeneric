@@ -49,6 +49,7 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
+                result ={"message":"200 Success OK","result":result}
             else:
                 result = { "message":"404 Not Found","Info": f"Table {table_name} not found ! "}
 
@@ -67,6 +68,7 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
+                result = {"message": "200 Success OK", "result": result}
             else:
                 result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
 
@@ -88,6 +90,7 @@ class DBRecord:
                     raw_sql =  f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion()
+                    result = {"message": "200 Success OK", "result": result}
                 else:
                     result = {"message":"404 Not Found","Info": f"Column  {column_name} not found!"}
             else:
