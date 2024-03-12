@@ -5,7 +5,7 @@ from sqlalchemy import create_engine,MetaData, Table
 from sqlalchemy import text
 from sqlalchemy import select
 from sqlalchemy.orm import sessionmaker,query
-from db_layer.models import Client,Configurations,Logs,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan,AudioTranscribeTracker
+from db_layer.models import Client,Configurations,Logs,BillingInformation,FileTypesInfo,Users,Subscriptions,SubscriptionPlan,AudioTranscribeTracker,AudioTranscribe
 from sqlalchemy.engine import URL
 
 class DataBaseClass:
@@ -127,28 +127,35 @@ class DataBaseClass:
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            session.add(model_info)
+            record_model = model_info
+            session.add(record_model)
             session.commit()
             session.close()
+            print(f"Record inserted successfully. ID: {record_model.Id}")
+            return record_model
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in save_log_table_entry: {e}")
         finally:
             session.close()
 
-    def update_transcribe_text(self, id, update_values):
+    def update_transcribe_text(self, id, update_values, is_child_thread =True):
         try:
             db_server = self.global_utility.get_database_server_name()
             db_name = self.global_utility.get_database_name()
+            model_updated = AudioTranscribe
+            if is_child_thread:
+                model_updated = AudioTranscribeTracker
+
             dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            record = session.query(AudioTranscribeTracker).get(int(id))
+            record = session.query(model_updated).get(int(id))
             if record is not None:  # Check if the record exists
                 for column, value in update_values.items():
                     setattr(record, column, value)
-                session.commit()
+                # session.commit()
                 print(f"Record for ID '{id}' updated successfully.")
             else:
                 print(f"User with ID {id} not found.")
