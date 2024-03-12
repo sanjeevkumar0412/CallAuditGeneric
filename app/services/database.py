@@ -124,12 +124,13 @@ class DataBaseClass:
             record_model = model_info
             session.add(record_model)
             session.commit()
-            session.close()
-            print(f"Record inserted successfully. ID: {record_model.Id}")
+            # session.expunge_all()
+            # session.close()
+            self.logger.info(f"Record inserted successfully. ID: {record_model.Id}")
             return record_model
         except Exception as e:
             session.close()
-            self.logger.error(f"An error occurred in save_log_table_entry: {e}")
+            self.logger.error(f"An error occurred in save_log_table_entry: ", {e})
         finally:
             session.close()
 
@@ -230,12 +231,12 @@ class DataBaseClass:
             if record is not None:  # Check if the record exists
                 for column, value in update_values.items():
                     setattr(record, column, value)
-                # session.commit()
-                print(f"Record for ID '{record_id}' updated successfully.")
+                session.commit()
+                print(f"Parent Record for ID '{record_id}' updated successfully.")
             else:
                 print(f"User with ID {record_id} not found.")
-            session.commit()
-            session.close()
+            # session.commit()
+            # session.close()
             return {
                 'status': 'Success',
                 'message': f"Record for ID '{record_id}' updated successfully.",
@@ -265,7 +266,7 @@ class DataBaseClass:
                 for column, value in update_values.items():
                     setattr(record, column, value)
                 session.commit()
-                self.logger.info(f"Record for ID '{record_id}' updated successfully.")
+                self.logger.info(f"Child Record for ID '{record_id}' updated successfully.")
             else:
                 self.logger.info(f"User with ID {record_id} not found.")
             # session.commit()
@@ -275,7 +276,7 @@ class DataBaseClass:
                         AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
             if len(record_data) == 0:
                 parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
-                values = {'JobStatus': 'Completed'}
+                values = {'JobStatus': 'Drafted'}
                 if record is not None:  # Check if the record exists
                     for column, value in values.items():
                         setattr(parent_record, column, value)
@@ -285,7 +286,7 @@ class DataBaseClass:
             return {
                 'status': 'Success',
                 'message': f"Record for ID '{record_id}' updated successfully.",
-                'code' : 200
+                'code': 200
             }
         except Exception as e:
             session.close()
