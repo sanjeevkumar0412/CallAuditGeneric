@@ -7,6 +7,7 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
+
 # from app.configs.global_state import GlobalState
 
 load_dotenv()
@@ -216,34 +217,22 @@ class GlobalUtility:
 
     def split_audio_chunk_files(self, audio_file, chunk_file_directory):
         try:
-            print('create_chunk_subprocess_file chunk file url :- ', audio_file)
-            print('create_chunk_subprocess_file chunk file Folder :- ', chunk_file_directory)
+            self.logger.info(f'Create Chunk file {audio_file}  file url :- {chunk_file_directory}')
             input_audio = AudioSegment.from_file(audio_file)
             chunk_size = 300000  # 5 minutes
-            #   chunk_size = os.getenv('chunk_size')
-            #   chunk_size =  os.environ['chunk_size']
-            #  300000 #5 minutes
             chunk_files = [input_audio[i:i + chunk_size] for i in range(0, len(input_audio), chunk_size)]
             for i, chunk_paths in enumerate(chunk_files):
-                print("Chunk Split Start...", str(datetime.now()))
+                self.logger.info(f"Chunk Split Starting...{str(datetime.now())}")
                 chunk_paths.export(f"{chunk_file_directory}/chunk_{i}.wav", bitrate='128k', format="mp3")
             return [chunk_files, chunk_paths]
         except Exception as e:
-            print(f'caught {type(e)}: e', e)
+            self.logger.error(f'Error in Chunking split_audio_chunk_files:- ', e)
             return []
 
-        # transcribe_by_subprocess(chunks,chunkFileDirectory,chunks,fName)
-
     def create_folder_structure(self, file, source_file_path, destination_path):
-        #   destination_folder =  os.getenv('destination_folder'),
-        #   source_file_path = os.getenv('source_file_path'),
-        #   destination_folder = os.environ['destination_folder']
-        #   source_file_path = os.environ['sourceFilePath']
-        print('source_file_path path:- ', source_file_path)
-        print('destination_folder path:- ', destination_path)
         file_url = source_file_path + "/" + file;
         name_file = file_url.split('/')[-1].split('.')[0]
-        print('Audio File name for folder creation : ', name_file)
+        self.logger.info(f'Audio File name for folder {destination_path} creation : {name_file}')
         try:
             dir_folder_url = os.path.join(destination_path, name_file)
             os.mkdir(dir_folder_url)

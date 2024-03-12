@@ -155,7 +155,8 @@ class StartTranscribe:
                                                                         FileType=extension, TranscribeText='',
                                                                         TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcibe_model)
-                                self.logger.info(f'New Item Created ID is {parent_record}')
+                                if parent_record is not None:
+                                    self.logger.info(f'New Item Created ID is {parent_record.Id}')
                                 chunk_transcibe_model = AudioTranscribeTracker(
                                     ClientId=self.global_utility.get_client_id(),
                                     AudioId=parent_record.Id,
