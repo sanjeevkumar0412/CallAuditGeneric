@@ -163,9 +163,10 @@ class StartTranscribe:
                                     ChunkFilePath=audio_file_path, ChunkStatus='Drafted',
                                     ChunkCreatedDate=datetime.utcnow())
                                 parent_record = self.database_class.create_audio_file_entry(chunk_transcibe_model)
-                                self.start_process_recordings(parent_record, parent_record, audio_file_path,
-                                                              dir_folder_url, name_file,
-                                                              subscription_model, transcribe_files)
+                                # Open Code to Transcribe the text and saved into Sql Table
+                                # self.start_process_recordings(parent_record, parent_record, audio_file_path,
+                                #                               dir_folder_url, name_file,
+                                #                               subscription_model, transcribe_files)
                         else:
                             self.logger.error('start_recording_transcribe_process',
                                               f"{file} is not copied  in the destination folder {dir_folder_url}")
@@ -201,19 +202,20 @@ class StartTranscribe:
                                                                 ChunkCreatedDate=datetime.utcnow())
                 child_record = self.database_class.create_audio_file_entry(chunk_transcribe_model)
                 self.logger.info(f"Sql Table Entry Completed file chunk_{i}.wav inside folder {dir_folder_url}")
-                if child_record is not None:
-                    start_transcribe_time = datetime.utcnow()
-                    self.logger.info(f"Transcribe Starting chunk_{i}.wav inside folder {dir_folder_url}")
-                    transcript = self.controller.build_transcribe_audio(chunk_file, subscription_model)
-                    is_text_file_written = self.global_utility.wrire_txt_file(txt_file, transcript)
-                    end_transcribe_time = datetime.utcnow()
-                    update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": "Completed",
-                                           "ChunkTranscribeStart": start_transcribe_time,
-                                           "ChunkTranscribeEnd": end_transcribe_time}
-                    self.database_class.update_audio_transcribe_tracker_table(db_server_name, database_name,
-                                                                              child_record.Id,
-                                                                              update_child_values)
-                    self.logger.info(f"Transcribe Completed and saved into sql table chunk_{i}.wav inside folder {dir_folder_url}")
+                # Open Code to Transcribe the text and saved into Sql Table
+                # if child_record is not None:
+                #     start_transcribe_time = datetime.utcnow()
+                #     self.logger.info(f"Transcribe Starting chunk_{i}.wav inside folder {dir_folder_url}")
+                #     transcript = self.controller.build_transcribe_audio(chunk_file, subscription_model)
+                #     is_text_file_written = self.global_utility.wrire_txt_file(txt_file, transcript)
+                #     end_transcribe_time = datetime.utcnow()
+                #     update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": "Completed",
+                #                            "ChunkTranscribeStart": start_transcribe_time,
+                #                            "ChunkTranscribeEnd": end_transcribe_time}
+                #     self.database_class.update_audio_transcribe_tracker_table(db_server_name, database_name,
+                #                                                               child_record.Id,
+                #                                                               update_child_values)
+                #     self.logger.info(f"Transcribe Completed and saved into sql table chunk_{i}.wav inside folder {dir_folder_url}")
             # for i in range(len(chunks_files)):
             #     chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
             #     self.logger.info(f'Open Ai Chunk Audio File Path:- {chunk_file}')
