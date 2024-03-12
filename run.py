@@ -1,5 +1,6 @@
 from app.model.start_transcribe import StartTranscribe
 
+
 def main():
     try:
         transcribe_model = StartTranscribe()

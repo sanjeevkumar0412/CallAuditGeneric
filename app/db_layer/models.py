@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy import Column, Integer, String,DateTime,Boolean,ForeignKey
 
-Base = declarative_base()
+# Base = declarative_base()
 
 class Base(DeclarativeBase):
     pass
@@ -41,10 +41,10 @@ class AuthTokenManagement(Base):
     __tablename__ = 'AuthTokenManagement'
 
     Id = Column(Integer, primary_key=True,unique=True,nullable=False)
-    UserName = Column(String(50),nullable=False)
-    ClientId = Column(String(50),ForeignKey("Client.ClientId"),nullable=False)
-    Token = Column(String(50),nullable=False)
-    SecretKey = Column(String(50),nullable=False)
+    UserName = Column(String,nullable=False)
+    ClientId = Column(String,ForeignKey("Client.ClientId"),nullable=False)
+    Token = Column(String,nullable=False)
+    SecretKey = Column(String,nullable=False)
     Created=Column(DateTime, default=datetime.utcnow())
     Modified=Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -59,12 +59,12 @@ class BillingInformation(Base):
     __tablename__ = 'BillingInformation'
 
     BillingId = Column(Integer, primary_key=True)
-    ClientId=Column(String(50), ForeignKey("Client.ClientId"))
-    SubscriptionId = Column(String(50), ForeignKey("SubscriptionPlan.SubscriptionId"))
-    ClientName = Column(String(50),nullable=False)
+    ClientId=Column(String, ForeignKey("Client.ClientId"))
+    SubscriptionId = Column(String, ForeignKey("SubscriptionPlan.SubscriptionId"))
+    ClientName = Column(String,nullable=False)
     SubscriptionStartDate=Column(DateTime,default=datetime.utcnow())
     SubscriptionEndDate=Column(DateTime,default=datetime.utcnow())
-    PaymentStatus = Column(String(50), nullable=False)
+    PaymentStatus = Column(String, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -77,10 +77,10 @@ class UsersManagement(Base):
 
     __tablename__ = 'UsersManagement'
 
-    UserName = Column(String(50), primary_key=True, unique=False, nullable=False)
-    ClientId = Column(String(50), ForeignKey('Client.ClientId'), nullable=False)
-    UserEmail = Column(String(50), unique=False, nullable=False)
-    UserPassword = Column(String(50), unique=False, nullable=False)
+    UserName = Column(String, primary_key=True, unique=False, nullable=False)
+    ClientId = Column(String, ForeignKey('Client.ClientId'), nullable=False)
+    UserEmail = Column(String, unique=False, nullable=False)
+    UserPassword = Column(String, unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -94,9 +94,9 @@ class Subscriptions(Base):
 
     __tablename__ = 'Subscriptions'
 
-    SubscriptionId = Column(String(50), primary_key=True)
-    ClientId = Column(String(50), ForeignKey('Client.ClientId'), nullable=False)
-    SubscriptionPlan = Column(String(150), unique=False, nullable=False)
+    SubscriptionId = Column(String, primary_key=True)
+    ClientId = Column(String, ForeignKey('Client.ClientId'), nullable=False)
+    SubscriptionPlan = Column(String, unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -110,9 +110,9 @@ class Subscriptions(Base):
 class SubscriptionPlan(Base):
     __tablename__ = 'SubscriptionPlan'
 
-    SubscriptionId = Column(String(50), primary_key=True)
-    ClientId = Column(String(50), ForeignKey('Client.ClientId'), nullable=False)
-    SubscriptionName = Column(String(150), unique=False, nullable=False)
+    SubscriptionId = Column(String, primary_key=True)
+    ClientId = Column(String, ForeignKey('Client.ClientId'), nullable=False)
+    SubscriptionName = Column(String, unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -128,12 +128,12 @@ class Configurations(Base):
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    ConfigKey = Column(String(50), unique=False, nullable=False)
-    ConfigValue = Column(String(50), unique=False, nullable=False)
+    ConfigKey = Column(String, unique=False, nullable=False)
+    ConfigValue = Column(String, unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
-    IsActive = Column(Boolean(100), unique=False, default=True)
-    IsDeleted = Column(Boolean(100), unique=False, default=True)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=True)
 
     def __repr__(self):
         return f"<Configurations(ClientId={self.ClientId}, ConfigKey='{self.ConfigKey}', ConfigValue='{self.ConfigValue}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive},IsDeleted='{self.IsDeleted}" \
@@ -141,9 +141,9 @@ class Configurations(Base):
 class JobStatus(Base):
     __tablename__ = 'JobStatus'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    StatusName = Column(String(100), unique=False, default=True)
+    StatusName = Column(String, unique=False, default=True)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -155,26 +155,25 @@ class FileTypesInfo(Base):
 
     __tablename__ = 'FileTypesInfo'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    FileType = Column(String(50), unique=False, nullable=False)
-    FilePath = Column(String(50), unique=False, nullable=False)
-    FileType = Column(String(50), unique=False, nullable=False)
+    FileType = Column(String, unique=False, nullable=False)
+    FilePath = Column(String, unique=False, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=True)
     def __repr__(self):
-        return f"<FileTypesInfo(ClientId={self.ClientId}, FileType='{self.FileType}', FilePath='{self.FilePath}', FileDescription='{self.FileDescription}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive},IsDeleted='{self.IsDeleted})>"
+        return f"<FileTypesInfo(ClientId={self.ClientId}, FileType='{self.FileType}', FilePath='{self.FilePath}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive},IsDeleted='{self.IsDeleted})>"
 
 class ClientCallRecording(Base):
 
     __tablename__ = 'ClientCallRecording'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
-    ClientId = Column(Integer, ForeignKey('client.Id'), nullable=False)
-    CallFileName = Column(String(50), unique=False, nullable=False)
-    CallFilePath = Column(String(50), unique=False, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    CallFileName = Column(String, unique=False, nullable=False)
+    CallFilePath = Column(String, unique=False, nullable=False)
     UploadDate = Column(DateTime, default=datetime.utcnow())
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
@@ -189,7 +188,7 @@ class ClientCallRecording(Base):
 class ClientCallSummary(Base):
     __tablename__ = 'ClientCallSummary'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     SummaryDescription = Column(String(150), unique=False, nullable=False)
     SummaryDateTime = Column(DateTime, default=datetime.utcnow())
@@ -208,14 +207,14 @@ class Logs(Base):
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    LogType = Column(String(50), unique=False, nullable=False)
-    LogSummary = Column(String(50), unique=False, nullable=False)
-    ModulName = Column(String(50), unique=False, nullable=False)
-    LogDetails = Column(String(50), unique=False, nullable=False)
-    Severity = Column(String(50), unique=False, nullable=False)
-    LogDate = Column(DateTime, default=datetime.utcnow())
-    Created = Column(DateTime, default=datetime.utcnow())
-    Modified = Column(DateTime, default=datetime.utcnow())
+    LogType = Column(String, unique=False, nullable=False)
+    LogSummary = Column(String, unique=False, nullable=False)
+    ModulName = Column(String, unique=False, nullable=False)
+    LogDetails = Column(String, unique=False, nullable=False)
+    Severity = Column(String, unique=False, nullable=False)
+    LogDate = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=False)
 
     def __repr__(self):
         return f"<Logs(ClientId={self.ClientId}, LogType='{self.LogType}',LogSummary='{self.LogSummary}',LogDetails='{self.LogDetails}',ModulName='{self.ModulName}',Severity='{self.Severity}',LogDate='{self.LogDate},Created='{self.Created}" \
@@ -225,20 +224,20 @@ class Logs(Base):
 class SentimentAnalysis(Base):
     __tablename__ = 'SentimentAnalysis'
 
-    Id = Column(Integer, primary_key=True, unique=True, nullable=False)
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False,autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
-    SentimentScore = Column(String(50), nullable=False)
-    SentimentLabel  = Column(String(50), nullable=False)
-    AnalysisDateTime = Column(DateTime, default=datetime.utcnow())
-    SentimentStatus = Column(String(50), nullable=False)
-    Created = Column(DateTime, default=datetime.utcnow())
-    Modified = Column(DateTime, default=datetime.utcnow())
+    SentimentScore = Column(String, nullable=True)
+    SentimentText  = Column(String, nullable=True)
+    AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    SentimentStatus = Column(String, nullable=True)
+    Created = Column(DateTime, default=datetime.utcnow(),nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(),nullable=True)
     IsActive = Column(Boolean, unique=False, default=True)
-    IsDeleted = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
 
     def __repr__(self):
-        return f"<SentimentAnalysis(ClientId={self.ClientId}, TranscriptId='{self.TranscriptId}',SentimentScore='{self.SentimentScore}',SentimentLabel='{self.SentimentLabel},AnalysisDateTime='{self.AnalysisDateTime}" \
+        return f"<SentimentAnalysis(ClientId={self.ClientId}, TranscriptId='{self.TranscriptId}',SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
                f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
 
 
