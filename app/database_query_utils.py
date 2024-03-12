@@ -17,8 +17,8 @@ tables_check = inspector.get_table_names()
 class DBRecord:
     _instance = None
 
-    def __init__(self):
-        self.db_instance = DbConnection()
+    # def __init__(self):
+    #     self.db_instance = DbConnection()
 
     @classmethod
     def get_instance(cls):
@@ -49,12 +49,12 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
-                result ={"message":"200 Success OK","result":result}
+                result ={"status":"200","result":result}
             else:
-                result = { "message":"404 Not Found","Info": f"Table {table_name} not found ! "}
+                result = { "status":"404","Info": f"Table {table_name} not found ! "}
 
             if result==[]:
-                result={"message":'204 No Content',"Info":f"Content not available for {table_name} !"}
+                result={"status":'204',"Info":f"Content not available for {table_name} !"}
 
             return {'data': result}
         except Exception as e:
@@ -68,12 +68,12 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
-                result = {"message": "200 Success OK", "result": result}
+                result = {"status": "200", "result": result}
             else:
-                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
+                result = {"status":"404","Info": f"Table {table_name} not found !"}
 
             if result==[]:
-                result={"message":'204 No Content',"Info":f"Information is not available for {table_name} Id {id} !"}
+                result={"status":'204',"Info":f"Information is not available for {table_name} Id {id} !"}
 
             return {'data': result}
         except Exception as e:
@@ -90,14 +90,14 @@ class DBRecord:
                     raw_sql =  f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion()
-                    result = {"message": "200 Success OK", "result": result}
+                    result = {"status": "200", "result": result}
                 else:
-                    result = {"message":"404 Not Found","Info": f"Column  {column_name} not found!"}
+                    result = {"status":"404","Info": f"Column  {column_name} not found!"}
             else:
-                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
+                result = {"status":"404","Info": f"Table {table_name} not found !"}
 
             if result==[]:
-                result={"message":'204 No Content',"Info":f"Record not found for {table_name} !"}
+                result={"status":'204',"Info":f"Record not found for {table_name} !"}
             return {'data': result}
         except Exception as e:
             print("Error function in get_data_by_column_name",e)
@@ -113,11 +113,11 @@ class DBRecord:
                 if column_exists:
                     raw_sql = f"UPDATE {table_name} SET {column_to_update} = '{new_value}' WHERE {condition_column} = '{condition_value}'"
                     cursor.execute(raw_sql)
-                    result = {"message": '200 OK', "msg": f"Successfully updated the record"}
+                    result = {"status": '200', "msg": f"Successfully updated the record"}
                 else:
-                    result = {"message": "404 Not Found", "Info": f"Column  {column_to_update} not found!"}
+                    result = {"status": "404", "Info": f"Column  {column_to_update} not found!"}
             else:
-                result = {"message": "404 Not Found", "Info": f"Table {table_name} not found !"}
+                result = {"status": "404", "Info": f"Table {table_name} not found !"}
 
             return {'data': result}
 
@@ -130,9 +130,9 @@ class DBRecord:
             if table_exists:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
-                result={"message":'200 OK',"msg":f"Successfully deleted record {id}"}
+                result={"status":'200',"msg":f"Successfully deleted record {id}"}
             else:
-                result = {"message":"404 Not Found","Info": f"Table {table_name} not found !"}
+                result = {"status":"404","Info": f"Table {table_name} not found !"}
 
             return {'data': result}
 
