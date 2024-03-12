@@ -70,7 +70,6 @@ class StartTranscribe:
             db_name = os.getenv('DB_NAME')
             self.logger.info(f'db_server :- {db_server}')
             self.logger.info(f'db_name :- {db_name}')
-            self.chunk_audio_transcribe()
             configurations = self.db_class.get_all_configurations(db_server, db_name)
             all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
             opem_key_name = self.global_utility.get_open_ai_key()
@@ -194,32 +193,6 @@ class StartTranscribe:
                 is_text_file_written = self.global_utility.wrire_txt_file(txt_file, transcript)
         except Exception as e:
             self.logger.error('start_process_recordings_large_file', e)
-    def chunk_audio_transcribe(self):
-        file_collection = self.global_utility.get_all_files('D:\Cogent_AI_Audio_Repo\Interview1')
-        threads = []
-        for file in file_collection:
-            file_path = os.path.join('D:\Cogent_AI_Audio_Repo\Interview1',file)
-            thread = threading.Thread(target=self.process_chunk, args={file,})
-            threads.append(thread)
-            thread.start()
-        for thread in threads:
-            thread.join()
-
-
-    def process_chunk(self,file):
-        # Save chunk to database
-        # audio_data = chunk.export_raw()  # Convert to raw bytes
-        # save_chunk_to_db(engine, chunk_id, audio_data)
-        # Transcribe chunk
-        file_path = os.path.join('D:\Cogent_AI_Audio_Repo\Interview1',file)
-        self.logger.info(f"File Path :-  {file_path} ")
-        transcription = self.controller.build_transcribe_audio(file_path, "Small")
-
-        if transcription:
-            self.logger.info(f"Chunk {file} transcribed: {transcription['text']}")
-            print(f"Chunk {file} transcribed: {transcription}")
-        else:
-            print(f"Chunk {file} transcription failed.")
     def start_process_recordings(self, parent_record,child_record,audio_file_path, dir_folder_url, name_file, subscription_model,
                                  transcribe_files):
         try:
