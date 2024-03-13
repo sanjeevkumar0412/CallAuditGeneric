@@ -1,9 +1,8 @@
 from loguru import logger
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-# from db_layer.models import Logs
-# from app.services.database import DataBaseClass
-# from configs.global_state import GlobalState
+from app.db_layer.models import Logs
 
 
 class Logger:
@@ -22,7 +21,6 @@ class Logger:
     severity_level_error = '40'
     severity_level_critical = '50'
 
-
     def __init__(self):
         # self.db_class = DataBaseClass()
         self._instance = logger
@@ -39,13 +37,11 @@ class Logger:
     def info(self, message):
         logger.info(f"Logger Info : {message}")
 
-
     def warning(self, message):
         logger.warning(f"Warning message  : {message}")
 
     def error(self, function_name, message):
         logger.error(f"Error in {function_name} : {message}")
-
 
     def get_logs(self, message):
         logger.log(f"Log message : {message}")
@@ -89,18 +85,12 @@ class Logger:
         """
         logger.add(file_name, level=level, rotation=rotation)
 
-    def save_log_table_entry(self, server_name,database_name,model_info):
-        # self.db_class.save_log_table_entry(modul_name,level,severity,message)
+    def save_log_table_entry(self, server_name, database_name, model_info):
         try:
-            # db_server_name = self.glogal_state.get_database_server_name()
-            # database_name = self.glogal_state.get_database_name()
-            # client_id = self.glogal_state.get_client_id
-            # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
             dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            # log_info = Logs(ClientId=client_id,LogSummary=message,LogDetails =message,LogType =level,ModulName =modul_name,Severity = severity)
             session.add(model_info)
             session.commit()
             session.close()
@@ -109,3 +99,76 @@ class Logger:
             logger.error(f"An error occurred in save_log_table_entry: {e}")
         finally:
             session.close()
+
+    def log_entry_into_sql_table(self, server_name, database_name, client_id, is_removed=False):
+        try:
+            def log_to_sql(record):
+                try:
+                    dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
+                    engine = create_engine(dns)
+                    Session = sessionmaker(bind=engine)
+                    session = Session()
+                    logger_record = record.record
+                    log_entry = Logs(
+                        ClientId=client_id,
+                        ErrorLevel=logger_record["level"].name,
+                        Severity=str(logger_record["level"].no),
+                        LogType=logger_record["level"].name,
+                        LogDetails=logger_record["message"],
+                        LogSummary=logger_record["message"],
+                        LoggerName=logger_record["name"],
+                        LineNumber=logger_record["line"],
+                        FunctionName=logger_record["function"],
+                        FileName=logger_record["file"].name,
+                        StackTrace=logger_record["message"],
+                        ModulName=logger_record["module"],
+                        LogDate=logger_record["time"]
+                    )
+                    session.add(log_entry)
+                    session.commit()
+                except Exception as e:
+                    logger.error("An error occurred while connecting to the SQL database:", e)
+                finally:
+                    session.close()
+
+
+            # Add the custom Loguru handler (Sink)
+            if is_removed:
+                logger.remove(log_to_sql)
+            else:
+                logger.add(log_to_sql, level='DEBUG', serialize=True)
+        except Exception as e:
+            logger.error("An error occurred while connecting to the SQL database:", e)
+
+
+
+class SqlalchemySink:
+    def __init__(self, server_name, database_name, client_id):
+        self.server_name = server_name,
+        self.database_name = database_name,
+        self.client_id = client_id
+
+    def write(self, record):
+        try:
+            dns = f'mssql+pyodbc://{self.server_name}/{self.database_name}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            # Create a new log entry object from the record
+            log_entry = Logs(
+                ClientId=self.client_id,
+                ErrorLevel=record.level.name,
+                LogType=record.level.name,
+                LogDetails=record.message,
+                LogSummary=record.message,
+                LoggerName=record.logger.name,
+                LineNumber=record.line_no,
+                FunctionName=record.file.name,
+                FileName=record.function,
+                StackTrace=record.stacktrace
+            )
+            session.add(log_entry)
+            session.commit()
+            session.close()
+        except Exception as e:
+            print(f"An error occurred in SqlalchemySink write: {e}")
