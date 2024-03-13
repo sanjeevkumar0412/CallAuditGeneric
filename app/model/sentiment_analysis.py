@@ -1,6 +1,6 @@
 from app.services.logger import Logger
 import os,json
-# os.environ["OPENAI_API_KEY"] = "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"
+# os.environ["OPENAI_API_KEY"] = ""
 from db_layer.models import AudioTranscribe,AudioTranscribeTracker,SentimentAnalysis
 
 from sqlalchemy import create_engine
@@ -10,7 +10,6 @@ from sqlalchemy.engine.reflection import Inspector
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 engine = create_engine(dns)
-inspector = Inspector.from_engine(engine)
 Session = sessionmaker(bind=engine)
 
 session = Session()
@@ -63,20 +62,25 @@ class SentimentAnalysisCreation:
         #Databse Query here
         # table_name = 'AudioRecord'
         # column_value = 'filename'
-        print("111111111111")
-
         # with open(self.path, 'r') as file:# Read text data from the file
         #     texts = file.readlines()
         #     print(texts)
-        results = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
-                    "score": self.get_sentiment(text.strip())['score']} for text in transcribe_data]
+        print("Get data from another table >>>>>>>",len(transcribe_data))
+        print("Get data Client name from another table >>>>>>>",transcribe_data.get("TranscribeMergeText"))
+        transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
+        clientId=transcribe_data.get("ClientId")
+        transcribId=transcribe_data.get("TranscribeId")
+        clientId=transcribe_data.get("ClientId")
+
+        exit()
+        sentimentText = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
+                    "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
         # Column Name Id,ClientId,transcriptId,SentimentScore SentimentText,AnalysisDate,Created,Modified,IsActive,IsDeleted,SentimentStatus
         # column_input=("ClientId":)
         # SentimentAnalysis.add
-        print("LLLLLLLLLLLL",results)
 
 
-        return results
+        return sentimentText
 
 
     def get_data_from_transcribe_tracker_table(self, audio_id):
@@ -97,20 +101,21 @@ class SentimentAnalysisCreation:
                     for row in results:
                         print("row outpupt",row.ClientId)
                         # print(">>>>>>>ChunkText",row["ChunkText"])
-                        audio_dictionary.update({"ClientId":row.ClientId,"TranscribeId":row.AudioId,"ChunkSequence":row.ChunkSequence,"ChunkText":row.ChunkText,})
-                        # print("chunk value >>>",audio_dictionary)
                         transcribe_text.append(row.ChunkText)
+                        audio_dictionary.update({"ClientId":row.ClientId,"TranscribeId":row.AudioId,"ChunkSequence":row.ChunkSequence,"TranscribeMergeText":transcribe_text})
+                        # print("chunk value >>>",audio_dictionary)
                         # print("transcribe_text",transcribe_text)
                 else:
                     self.logger.info(f":Transcribe Job Status is pending")
             else:
                 self.logger.info(f":Record not found {audio_id}")
-            # self.transcribe_data_from_database(transcribe_text)
+            self.transcribe_data_from_database(audio_dictionary)
             # print("New Trans result from DB>>>",trans_result)
             # return transcribe_text
 
-            print("transcribe_text >>>>>>>",transcribe_text)
-            # print("dic>>>>>>>",audio_dictionary)
+            # print("transcribe_text >>>>>>>",transcribe_text)
+            print("dic>>>>>>>",audio_dictionary)
+            return audio_dictionary
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
             print(e)
