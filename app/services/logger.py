@@ -139,36 +139,3 @@ class Logger:
                 logger.add(log_to_sql, level='DEBUG', serialize=True)
         except Exception as e:
             logger.error("An error occurred while connecting to the SQL database:", e)
-
-
-
-class SqlalchemySink:
-    def __init__(self, server_name, database_name, client_id):
-        self.server_name = server_name,
-        self.database_name = database_name,
-        self.client_id = client_id
-
-    def write(self, record):
-        try:
-            dns = f'mssql+pyodbc://{self.server_name}/{self.database_name}?driver=ODBC+Driver+17+for+SQL+Server'
-            engine = create_engine(dns)
-            Session = sessionmaker(bind=engine)
-            session = Session()
-            # Create a new log entry object from the record
-            log_entry = Logs(
-                ClientId=self.client_id,
-                ErrorLevel=record.level.name,
-                LogType=record.level.name,
-                LogDetails=record.message,
-                LogSummary=record.message,
-                LoggerName=record.logger.name,
-                LineNumber=record.line_no,
-                FunctionName=record.file.name,
-                FileName=record.function,
-                StackTrace=record.stacktrace
-            )
-            session.add(log_entry)
-            session.commit()
-            session.close()
-        except Exception as e:
-            print(f"An error occurred in SqlalchemySink write: {e}")
