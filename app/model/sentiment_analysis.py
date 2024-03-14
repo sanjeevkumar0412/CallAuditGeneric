@@ -1,11 +1,11 @@
 from app.services.logger import Logger
-import os,json
+import os
 from datetime import datetime
-from db_layer.models import AudioTranscribe,AudioTranscribeTracker,SentimentAnalysis
+from db_layer.models import AudioTranscribeTracker,SentimentAnalysis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.engine.reflection import Inspector
+
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 engine = create_engine(dns)
@@ -21,14 +21,7 @@ class SentimentAnalysisCreation:
     # _instance = None
 
     def __init__(self):
-        # self.path = path
         self.logger = Logger()
-    #
-    # @classmethod
-    # def get_instance(cls):
-    #     if cls._instance is None:
-    #         cls._instance = cls.__new__(cls)
-    #     return cls._instance
 
     def get_sentiment(self,text):
         prompt = f"The following text expresses a sentiment: '{text}' The sentiment of this text is:"

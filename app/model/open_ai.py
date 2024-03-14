@@ -1,7 +1,3 @@
-import openai
-from pydub import AudioSegment
-import os
-from datetime import datetime
 import time
 from openai import OpenAI
 

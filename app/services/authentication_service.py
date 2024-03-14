@@ -1,12 +1,22 @@
 import jwt
 import datetime
 import secrets
-from ldap3 import Server, Connection, ALL, SIMPLE, NTLM, core
+from ldap3 import Server, Connection, ALL, SIMPLE
+from app.services.logger import Logger
+
+
 class AuthenticationService:
+    _instance = None
+
+    def __init__(self):
+        self.logger = Logger()
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
 
     def get_ldap_authenticate(self, username, password):
-        # Establish connection with the LDAP server
-        # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
         server_address = 'ldap://10.9.32.17:389'
         server = Server(server_address, get_info=ALL, use_ssl=False)
         try:
@@ -21,17 +31,10 @@ class AuthenticationService:
             return False
 
     def ldap_authenticate(self, username, password):
-        # Establish connection with the LDAP server
-        # SERVER_ADDRESS = 'LDAP://ldap.agreeya.com/DC=agreeya,DC=com'
         SERVER_ADDRESS = 'ldap://10.9.32.17:389'
         SEARCH_BASE = "DC=agreeya,DC=local"  # Replace with your domain's search base
         conn = None
         try:
-            # with Connection(SERVER_ADDRESS, user=username, password=username) as conn:
-            #     if conn.bind():
-            #         print("Authentication successful!")
-            #     else:
-            #         print("Authentication failed!")
             conn = Connection(SERVER_ADDRESS, user=username, password=password)
             if conn.bind():
                 print("Authentication successful!")
