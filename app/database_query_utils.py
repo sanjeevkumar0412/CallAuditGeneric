@@ -1,7 +1,5 @@
-from db_connection import DbConnection
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
 from sqlalchemy.engine.reflection import Inspector
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
@@ -14,18 +12,16 @@ conn = engine.raw_connection()
 cursor = conn.cursor()
 
 tables_check = inspector.get_table_names()
+
+
 class DBRecord:
     _instance = None
-
-    # def __init__(self):
-    #     self.db_instance = DbConnection()
 
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls.__new__(cls)
         return cls._instance
-
 
     def list_of_dictionary_conversion(self):
         from datetime import datetime
@@ -40,7 +36,7 @@ class DBRecord:
             res.append(row_dict)
         return res
 
-    def get_all_record(self,table_name):
+    def get_all_record(self, table_name):
         try:
             # with app.app_context():
             # raw_sql = 'SELECT * FROM '+'dbo.'+table_name
@@ -49,19 +45,18 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
-                result ={"status":"200","result":result}
+                result = {"status": "200", "result": result}
             else:
-                result = { "status":"404","Info": f"Table {table_name} not found ! "}
+                result = {"status": "404", "Info": f"Table {table_name} not found ! "}
 
-            if result==[]:
-                result={"status":'204',"Info":f"Content not available for {table_name} !"}
+            if result == []:
+                result = {"status": '204', "Info": f"Content not available for {table_name} !"}
 
             return {'data': result}
         except Exception as e:
-            # DbConnection.close_database_connection()
             print(".........Error in get_all_record...........", e)
 
-    def get_record_by_id(self,table_name, id):
+    def get_record_by_id(self, table_name, id):
         try:
             table_exists = table_name in tables_check
             if table_exists:
@@ -70,40 +65,38 @@ class DBRecord:
                 result = self.list_of_dictionary_conversion()
                 result = {"status": "200", "result": result}
             else:
-                result = {"status":"404","Info": f"Table {table_name} not found !"}
+                result = {"status": "404", "Info": f"Table {table_name} not found !"}
 
-            if result==[]:
-                result={"status":'204',"Info":f"Information is not available for {table_name} Id {id} !"}
+            if result == []:
+                result = {"status": '204', "Info": f"Information is not available for {table_name} Id {id} !"}
 
             return {'data': result}
         except Exception as e:
-            # DbConnection.close_database_connection()
             print(".........Error in get_record_by_id...........", e)
 
-    def get_data_by_column_name(self, table_name, column_name,column_value):
+    def get_data_by_column_name(self, table_name, column_name, column_value):
         try:
             table_exists = table_name in tables_check
             if table_exists:
                 check_column = inspector.get_columns(table_name)
                 column_exists = any(column['name'] == column_name for column in check_column)
                 if column_exists:
-                    raw_sql =  f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
+                    raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion()
                     result = {"status": "200", "result": result}
                 else:
-                    result = {"status":"404","Info": f"Column  {column_name} not found!"}
+                    result = {"status": "404", "Info": f"Column  {column_name} not found!"}
             else:
-                result = {"status":"404","Info": f"Table {table_name} not found !"}
+                result = {"status": "404", "Info": f"Table {table_name} not found !"}
 
-            if result==[]:
-                result={"status":'204',"Info":f"Record not found for {table_name} !"}
+            if result == []:
+                result = {"status": '204', "Info": f"Record not found for {table_name} !"}
             return {'data': result}
         except Exception as e:
-            print("Error function in get_data_by_column_name",e)
+            print("Error function in get_data_by_column_name", e)
 
-
-    def update_record_by_column(self,table_name,column_to_update,new_value,condition_column,condition_value):
+    def update_record_by_column(self, table_name, column_to_update, new_value, condition_column, condition_value):
 
         try:
             table_exists = table_name in tables_check
@@ -122,7 +115,7 @@ class DBRecord:
             return {'data': result}
 
         except Exception as e:
-            print("Error function in update_record_by_column",e)
+            print("Error function in update_record_by_column", e)
 
     def delete_record_by_id(self, table_name, id):
         try:
@@ -130,12 +123,11 @@ class DBRecord:
             if table_exists:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
-                result={"status":'200',"msg":f"Successfully deleted record {id}"}
+                result = {"status": '200', "msg": f"Successfully deleted record {id}"}
             else:
-                result = {"status":"404","Info": f"Table {table_name} not found !"}
+                result = {"status": "404", "Info": f"Table {table_name} not found !"}
 
             return {'data': result}
 
         except Exception as e:
-            print("Error: delete_single_record",e)
-
+            print("Error: delete_single_record", e)
