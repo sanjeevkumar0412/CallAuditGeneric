@@ -77,15 +77,15 @@ class SentimentAnalysisCreation:
                                                      AnalysisDateTime=analysis_sentiment_date,SentimentStatus='Inprogress',Created=created_sentiment_date, \
                                                      Modified=modified_sentiment_date
                                                      )
-            # session.add(sentiment_column_data)
-            # session.commit()
+            session.add(sentiment_column_data)
+            session.commit()
 
             sentiment_status_update = session.query(SentimentAnalysis).filter(SentimentAnalysis.TranscriptId == transcribid).first()
 
             if sentiment_status_update:
                 pass
-                # sentiment_status_update.SentimentStatus="Completed"
-                # session.commit()
+                sentiment_status_update.SentimentStatus="Completed"
+                session.commit()
                 print("Sentiment status successfully updated !")
             else:
                 print("Error while updating sentiment status !")
