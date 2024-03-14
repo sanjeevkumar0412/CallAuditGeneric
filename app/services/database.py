@@ -30,34 +30,38 @@ class DataBaseClass:
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-
+            # Get data from Client table
             clients_data = session.query(Client).filter_by(ClientId=client_id).all()
-            clients_column_names = clients_data[0].__dict__.keys() if clients_data else []
-            clients_array = [{column: getattr(row, column) for column in clients_column_names} for row in clients_data]
-
-            confguration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
-            confguration_column_names = confguration_data[0].__dict__.keys() if confguration_data else []
-            confguration_array = [{column: getattr(row, column) for column in confguration_column_names} for row in
-                                  confguration_data]
-
+            # clients_column_names = clients_data[0].__dict__.keys() if clients_data else []
+            # clients_array = [{column: getattr(row, column) for column in clients_column_names} for row in clients_data]
+            clients_array = self.global_utility.get_configuration_by_column(clients_data)
+            # Get data from Configuration table
+            configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
+            # configuration_column_names = configuration_data[0].__dict__.keys() if configuration_data else []
+            # configuration_array = [{column: getattr(row, column) for column in configuration_column_names} for row in
+            #                       configuration_data]
+            configuration_array= self.global_utility.get_configuration_by_column(configuration_data)
+            # Get data from FileTypeInfo table
             filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
-            filetype_info_column_names = filetype_info_data[0].__dict__.keys() if filetype_info_data else []
-            filetype_info_array = [{column: getattr(row, column) for column in filetype_info_column_names} for row in
-                                   filetype_info_data]
-
+            # filetype_info_column_names = filetype_info_data[0].__dict__.keys() if filetype_info_data else []
+            # filetype_info_array = [{column: getattr(row, column) for column in filetype_info_column_names} for row in
+            #                        filetype_info_data]
+            filetype_info_array = self.global_utility.get_configuration_by_column(filetype_info_data)
+            # Get data from Subscription table
             subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-            subscriptions_column_names = subscriptions_data[0].__dict__.keys() if subscriptions_data else []
-            subscriptions_array = [{column: getattr(row, column) for column in subscriptions_column_names} for row in
-                                   subscriptions_data]
-
+            # subscriptions_column_names = subscriptions_data[0].__dict__.keys() if subscriptions_data else []
+            # subscriptions_array = [{column: getattr(row, column) for column in subscriptions_column_names} for row in
+            #                        subscriptions_data]
+            subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
+            # Set the configuration data in utility variables
             self.global_utility.set_client_data(clients_array)
-            self.global_utility.set_configurations_data(confguration_array)
+            self.global_utility.set_configurations_data(configuration_array)
             self.global_utility.set_file_type_info_data(filetype_info_array)
             self.global_utility.set_subscription_data(subscriptions_array)
-            session.close()
+            # session.close()
             configurations = {
                 'Client': clients_array,
-                'Configurations': confguration_array,
+                'Configurations': configuration_array,
                 'FileTypesInfo': filetype_info_array,
                 'Subscriptions': subscriptions_array
             }

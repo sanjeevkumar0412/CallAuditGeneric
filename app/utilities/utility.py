@@ -7,8 +7,8 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
-
-# from app.configs.global_state import GlobalState
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
@@ -34,12 +34,8 @@ class GlobalUtility:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
-
-    # @classmethod
-    # def get_instance(cls):
-    #      if cls._instance is None:
-    #          cls._instance = cls.__new__(cls)
-    #      return cls._instance
+    def get_key_config_value(self, key_name):
+        return self.get_config_by_value(self.cofigurations_data, key_name)
 
     def set_configurations_data(self, data):
         self.cofigurations_data = data
@@ -178,8 +174,8 @@ class GlobalUtility:
 
     def convert_text_files(self, output_file, dir_url, file_name):
         print('merge_text_files')
-        txtfile = dir_url + '/' + file_name + '.txt'
-        with open(txtfile, 'w') as outfile:
+        txt_file = dir_url + '/' + file_name + '.txt'
+        with open(txt_file, 'w') as outfile:
             for file in os.listdir('.'):
                 if file.startswith('chunk_') and file.endswith(".txt"):
                     with open(file, 'r') as infile:
@@ -190,8 +186,8 @@ class GlobalUtility:
 
     def merge_text_files(self, output_file, chunks_files, filename):
         print('merge_text_files')
-        txtfile = output_file + '/' + filename + '.txt'
-        with open(txtfile, 'w') as outfile:
+        txt_file = output_file + '/' + filename + '.txt'
+        with open(txt_file, 'w') as outfile:
             for file in os.listdir('.'):
                 if file.startswith("chunk_") and file.endswith(".txt"):
                     with open(file, 'r') as infile:
@@ -305,3 +301,9 @@ class GlobalUtility:
                             return value
                     # keys.append(key)
         return keys
+
+    def get_configuration_by_column(self, results):
+        filetype_info_column_names = results[0].__dict__.keys() if results else []
+        filetype_info_array = [{column: getattr(row, column) for column in filetype_info_column_names} for row in
+                               results]
+        return filetype_info_array

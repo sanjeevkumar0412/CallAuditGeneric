@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-import threading
+from app.configs.config import CONFIG
 from app.utilities.utility import GlobalUtility
 from app.utilities.db_utility import DBUtility
 from app.controllers.controllers import Controller
@@ -10,23 +10,9 @@ from app.db_utils import DBRecord
 from app.db_connection import DbConnection
 from app.service_layer.logger_utilis import LoggerUtility
 from app.services.database import DataBaseClass
-# from app.configs.global_state import GlobalState
 from app.db_layer.models import Logs, AudioTranscribe, AudioTranscribeTracker
-import re
-from sqlalchemy.orm import sessionmaker
-from db_layer.models import Client
-from sqlalchemy import select
-# from app.db_layer.models import UsersManagement
-import threading
+from app.configs.constant import CONSTANT
 
-# from db_utils import DBRecord
-# from db_utils import get_all_record, get_single_record, delete_single_record
-# from db_utils import *
-# db_instance = DBRecord()
-
-# from app.db_layer.models import UsersManagement
-# data = db_instance.get_all_record("UsersManagement")
-# print("<<<<<<<<<<<< Get Start Trans>>..,",data)
 
 load_dotenv()
 
@@ -77,8 +63,12 @@ class StartTranscribe:
             all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
             opem_key_name = self.global_utility.get_open_ai_key()
             client_id = self.global_utility.get_client_id()
+            name_client = int(self.global_utility.get_key_config_value(CONFIG.CLIENT_ID))
             db_server_name = self.global_utility.get_database_server_name()
             database_name = self.global_utility.get_database_name()
+            # self.logger.log_entry_into_sql_table(db_server_name, db_name, client_id, False)
+            self.logger.info('self.database_class.get_audio_transcribe_tracker_table_data')
+            # self.logger.remove(log_to_database, level="ERROR")
             # audio_data = self.database_class.get_audio_transcribe_table_data(db_server_name, database_name, client_id)
             # audio_child_data = self.database_class.get_audio_transcribe_tracker_table_data(db_server_name, database_name,
             #                                                                                client_id, 3)
@@ -141,7 +131,7 @@ class StartTranscribe:
                             if file_size_mb > audio_file_size:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
                                 audio_transcibe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
-                                                                        AudioFileName=file, JobStatus='Starting',
+                                                                        AudioFileName=file, JobStatus=CONSTANT.STATUS_DRAFT,
                                                                         FileType=extension, TranscribeText='',
                                                                         TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcibe_model)
@@ -151,7 +141,7 @@ class StartTranscribe:
                             else:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
                                 audio_transcibe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
-                                                                        AudioFileName=file, JobStatus='Starting',
+                                                                        AudioFileName=file, JobStatus='CONSTANT.STATUS_DRAFT',
                                                                         FileType=extension, TranscribeText='',
                                                                         TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcibe_model)
@@ -161,7 +151,7 @@ class StartTranscribe:
                                     ClientId=self.global_utility.get_client_id(),
                                     AudioId=parent_record.Id,
                                     AudioFileName=file, ChunkSequence=1, ChunkText='',
-                                    ChunkFilePath=audio_file_path, ChunkStatus='Drafted',
+                                    ChunkFilePath=audio_file_path, ChunkStatus=CONSTANT.STATUS_DRAFT,
                                     ChunkCreatedDate=datetime.utcnow())
                                 parent_record = self.database_class.create_audio_file_entry(chunk_transcibe_model)
                                 # Open Code to Transcribe the text and saved into Sql Table
@@ -199,7 +189,7 @@ class StartTranscribe:
                                                                 AudioId=parent_record.Id,
                                                                 AudioFileName=f"chunk_{i}.wav", ChunkSequence=i,
                                                                 ChunkText='',
-                                                                ChunkFilePath=chunk_file, ChunkStatus='Drafted',
+                                                                ChunkFilePath=chunk_file, ChunkStatus=CONSTANT.STATUS_DRAFT,
                                                                 ChunkCreatedDate=datetime.utcnow())
                 child_record = self.database_class.create_audio_file_entry(chunk_transcribe_model)
                 self.logger.info(f"Sql Table Entry Completed file chunk_{i}.wav inside folder {dir_folder_url}")
@@ -234,10 +224,10 @@ class StartTranscribe:
             txt_file = os.path.join(dir_folder_url, name_file) + '.txt'
             transcript = self.controller.build_transcribe_audio(audio_file_path, subscription_model)
             end_transcribe_time = datetime.utcnow()
-            update_values = {"TranscribeText": transcript['text'], "JobStatus": "Completed",
+            update_values = {"TranscribeText": transcript['text'], "JobStatus": CONSTANT.STATUS_COMPLETED,
                              "TranscribeStartTime": start_transcribe_time,
                              "TranscribeEndTime": end_transcribe_time, 'TranscribeDate': end_transcribe_time}
-            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": "Completed",
+            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": CONSTANT.STATUS_COMPLETED,
                                    "ChunkTranscribeStart": start_transcribe_time,
                                    "ChunkTranscribeEnd": end_transcribe_time}
             # self.database_class.update_transcribe_text(parent_record.Id, update_values, False)
