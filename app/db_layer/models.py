@@ -30,7 +30,10 @@ class Client(Base):
     ClientName = Column(String, unique=True, nullable=False)
     ClientEmail = Column(String, unique=True, nullable=False)
     ClientUserName = Column(String, unique=True, nullable=False)
-    ClientPassword = Column(String)
+    ClientPassword = Column(String, unique=True, nullable=False)
+    ServerName = Column(String, unique=True, nullable=False)
+    DatabaseName = Column(String, unique=True, nullable=False)
+    AuthenticationType= Column(String, unique=True, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -44,10 +47,10 @@ class AuthTokenManagement(Base):
     __tablename__ = 'AuthTokenManagement'
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False)
-    UserName = Column(String, nullable=False)
     ClientId = Column(String, ForeignKey("Client.ClientId"), nullable=False)
-    Token = Column(String, nullable=False)
-    SecretKey = Column(String, nullable=False)
+    UserName = Column(String, unique=False,nullable=False)
+    Token = Column(String, unique=False,nullable=False)
+    SecretKey = Column(String, unique=False,nullable=False)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
     IsActive = Column(Boolean, unique=False, default=True)
@@ -296,3 +299,22 @@ class AudioTranscribeTracker(Base):
     def __repr__(self):
         return f"<AudioTranscribeTracker(ClientId={self.ClientId}, AudioId='{self.AudioId}',AudioFileName='{self.AudioFileName}',ChunkSequence='{self.ChunkSequence}',ChunkText='{self.ChunkText},ChunkFilePath='{self.ChunkFilePath}" \
                f",ChunkStatus='{self.ChunkStatus}',ChunkTranscribeStart='{self.ChunkTranscribeStart}',ChunkTranscribeEnd='{self.ChunkTranscribeEnd}',ChunkCreatedDate='{self.ChunkCreatedDate}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
+
+class ClientMaster(Base):
+    __tablename__ = 'ClientMaster'
+
+    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, unique=True, nullable=False)
+    ClientName = Column(String, unique=True, nullable=False)
+    ClientUser = Column(String, unique=True, nullable=False)
+    ServerName = Column(String, unique=True, nullable=False)
+    DatabaseName = Column(String, unique=True, nullable=False)
+    ConnectionString = Column(String, unique=True, nullable=False)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=False)
+    IsActive = Column(Boolean, unique=False, default=True, nullable=False)
+    IsDeleted = Column(Boolean, unique=False, default=False, nullable=False)
+
+    def __repr__(self):
+        return (
+            f"<ClientMaster(ClientId={self.ClientId}, ClientName='{self.ClientName}', ClientUser='{self.ClientUser}', ServerName='{self.ServerName}', DatabaseName='{self.DatabaseName}', ConnectionString='{self.ConnectionString}', Modified='{self.Modified}',Created='{self.Created}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>")

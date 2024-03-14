@@ -13,6 +13,7 @@ load_dotenv()
 
 class GlobalUtility:
     _instance = None
+    master_client_data = None
 
     # place keys here
 
@@ -31,8 +32,15 @@ class GlobalUtility:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
+
     def get_key_config_value(self, key_name):
         return self.get_config_by_value(self.cofigurations_data, key_name)
+
+    def set_master_client_data(self, data):
+        self.master_client_data = data
+
+    def get_master_client_data(self):
+        return self.master_client_data
 
     def set_configurations_data(self, data):
         self.cofigurations_data = data
@@ -285,6 +293,13 @@ class GlobalUtility:
     def get_config_by_key_name(self, dictionary, target_key):
         for key, value in dictionary.items():
             if key == target_key:
+                return value
+        return None
+
+    def get_list_array_value(self,list_data, key_name):
+        for item in list_data:
+            value = item.get(key_name)
+            if value is not None:
                 return value
         return None
 

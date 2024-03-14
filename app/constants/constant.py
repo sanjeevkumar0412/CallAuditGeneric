@@ -5,3 +5,5 @@ class CONSTANT:
     STATUS_FAILED = 'Failed'
     STATUS_DRAFT = 'Draft'
     STATUS_EXPORTED = 'Exported'
+    AUTHENTICATION_OAUTH = 'OAuth'
+    AUTHENTICATION_LDAP = 'LDAP'

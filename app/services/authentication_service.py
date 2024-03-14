@@ -17,24 +17,41 @@ class AuthenticationService:
         return cls._instance
 
     def get_ldap_authenticate(self, username, password):
+        success = True
+        error_message = None
+        # Establish connection with the LDAP server
+        # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
         server_address = 'ldap://10.9.32.17:389'
         server = Server(server_address, get_info=ALL, use_ssl=False)
         try:
             # Bind to the LDAP server with provided credentials
             conn = Connection(server, user=username, password=password, authentication=SIMPLE)
             if not conn.bind():
-                return False, "Invalid credentials"
+                success = False
+                error_message = str("Invalid credentials")
+                return success, error_message
             # If bind is successful, credentials are valid
-            return True, "Credentials verified successfully"
+            success = True
+            error_message = str("Credentials verified successfully")
+            return success, error_message
         except Exception as e:
+            success = False
+            error_message = str(e)
             # return False, f"Error: {e}"
-            return False
+            return success, error_message
 
-    def ldap_authenticate(self, username, password):
+    def ldap_authenticate_not_an_use(self, username, password):
+        # Establish connection with the LDAP server
+        # SERVER_ADDRESS = 'LDAP://ldap.agreeya.com/DC=agreeya,DC=com'
         SERVER_ADDRESS = 'ldap://10.9.32.17:389'
         SEARCH_BASE = "DC=agreeya,DC=local"  # Replace with your domain's search base
         conn = None
         try:
+            # with Connection(SERVER_ADDRESS, user=username, password=username) as conn:
+            #     if conn.bind():
+            #         print("Authentication successful!")
+            #     else:
+            #         print("Authentication failed!")
             conn = Connection(SERVER_ADDRESS, user=username, password=password)
             if conn.bind():
                 print("Authentication successful!")
@@ -45,7 +62,7 @@ class AuthenticationService:
         finally:
             conn.unbind()
 
-    def get_token_based_authenticate(self, username):
+    def get_token_based_authenticate(self, client_id, user_name):
         # Establish connection with the LDAP server
         secret_key = secrets.token_bytes(32)
         hex_key = secret_key.hex()
@@ -54,7 +71,7 @@ class AuthenticationService:
 
         # Generate a JWT token with an expiry time of 1 hour
         payload = {
-            'user_id': username,
+            'user_id': user_name,
             'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
         }
         token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')

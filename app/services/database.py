@@ -2,9 +2,14 @@ from app.services.logger import Logger
 from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
+from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
+import jwt
+import datetime
+import secrets
+from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe
+    AudioTranscribe, ClientMaster, AuthTokenManagement
 
 
 class DataBaseClass:
@@ -245,5 +250,182 @@ class DataBaseClass:
                 'message': e,
                 'code': 400
             }
+        finally:
+            session.close()
+
+    def get_client_configurations(self, server, database, client_id, master_client_user):
+        try:
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            records = session.query(Client).filter(
+                (Client.ClientId == client_id) & (Client.ClientUserName == master_client_user) & (
+                    Client.IsActive)).all()
+            print(f"Records Length :- {len(records)}")
+            client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_client_data(client_result)
+            return client_result
+        except Exception as e:
+            session.close()
+            self.logger.error("connect_to_database", e)
+            return []
+        finally:
+            session.close()
+
+    def get_oauth_access_token(self, server, database, user_name, secret_key):
+        try:
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            records = session.query(Client).filter(
+                (Client.ClientUserName == user_name) & (Client.ClientPassword == secret_key) & (
+                    Client.IsActive)).all()
+            print(f"Records Length :- {len(records)}")
+            client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_client_data(client_result)
+            return client_result
+        except Exception as e:
+            session.close()
+            self.logger.error("connect_to_database", e)
+            return []
+        finally:
+            session.close()
+
+    def get_client_master_data(self, server, database, client_id):
+        try:
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            records = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
+            print(f"Records Length :- {len(records)}")
+            client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_master_client_data(client_result)
+            return client_result
+        except Exception as e:
+            session.close()
+            self.logger.error("connect_to_database", e)
+            return []
+        finally:
+            session.close()
+
+    def get_ldap_authenticate(self, username, password):
+        success = True
+        error_message = None
+        # Establish connection with the LDAP server
+        # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
+        server_address = 'ldap://10.9.32.17:389'
+        server = Server(server_address, get_info=ALL, use_ssl=False)
+        try:
+            # Bind to the LDAP server with provided credentials
+            conn = Connection(server, user=username, password=password, authentication=SIMPLE)
+            if not conn.bind():
+                success = False
+                error_message = str("Invalid credentials")
+                return success, error_message
+            # If bind is successful, credentials are valid
+            success = True
+            error_message = str("Credentials verified successfully")
+            return success, error_message
+        except Exception as e:
+            success = False
+            error_message = str(e)
+            return success, error_message
+
+    def get_token_based_authenticate(self, server, database, client_id, user_name):
+
+        try:
+            success = True
+            error_message = None
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            record = session.query(AuthTokenManagement).filter(
+                (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                    Client.IsActive)).all()
+            print(f"Records Length :- {len(record)}")
+            if len(record) > 0:
+                result = self.global_utility.get_configuration_by_column(record)
+                token = self.global_utility.get_list_array_value(result,
+                                                                 CONFIG.TOKEN)
+                record_id = self.global_utility.get_list_array_value(result,
+                                                                 CONFIG.ID)
+                secret_key = self.global_utility.get_list_array_value(result,
+                                                                      CONFIG.SECRETKEY)
+
+                decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
+                print("Decoded token:", decoded_token)
+                success = True
+                error_message = str("Token verified successfully")
+                return success, error_message
+            else:
+                self.generate_token(session,client_id, user_name)
+        except jwt.ExpiredSignatureError:
+            print("Token has expired")
+            self.update_token(session, record_id,user_name)
+            success = True
+            error_message = str("Token has expired & updated successfully.")
+            return success, error_message
+        except jwt.InvalidTokenError:
+            success = False
+            error_message = str("Invalid token")
+            return success, error_message
+        except Exception as e:
+            success = False
+            error_message = str(e)
+            return success, error_message
+
+    def generate_token(self, session,client_id, user_name):
+        try:
+            secret_key = secrets.token_bytes(32)
+            hex_key = secret_key.hex()
+            print(f"Generated secret key: {hex_key}")
+            SECRET_KEY = hex_key
+
+            # Generate a JWT token with an expiry time of 1 hour
+            payload = {
+                'user_id': user_name,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            }
+            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+            record_model = AuthTokenManagement(Token=token, UserName=user_name, ClientId=client_id, SecretKey=SECRET_KEY)
+            session.add(record_model)
+            session.commit()
+            self.logger.info(f"Record inserted successfully. ID: {record_model.Id}")
+            return record_model
+            print("Generated token:", record_model.Id)
+        except Exception as e:
+            self.logger.error(f"An error occurred in update_transcribe_text: {e}")
+        finally:
+            session.close()
+
+
+    def update_token(self, session,record_id, user_name):
+        try:
+            secret_key = secrets.token_bytes(32)
+            hex_key = secret_key.hex()
+            print(f"Generated secret key: {hex_key}")
+            SECRET_KEY = hex_key
+
+            # Generate a JWT token with an expiry time of 1 hour
+            payload = {
+                'user_id': user_name,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            }
+            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+            update_values = {'Token': token,'SecretKey': SECRET_KEY}
+            record = session.query(AudioTranscribeTracker).get(int(record_id))
+            if record is not None:  # Check if the record exists
+                for column, value in update_values.items():
+                    setattr(record, column, value)
+                session.commit()
+            self.logger.info(f"Record inserted successfully. ID: {record.Id}")
+            # return record
+            print("Generated token:", record.Id)
+        except Exception as e:
+            self.logger.error(f"An error occurred in update_transcribe_text: {e}")
         finally:
             session.close()
