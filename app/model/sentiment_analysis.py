@@ -1,10 +1,7 @@
 from app.services.logger import Logger
 import os,json
 from datetime import datetime
-
-# os.environ["OPENAI_API_KEY"] = ""
 from db_layer.models import AudioTranscribe,AudioTranscribeTracker,SentimentAnalysis
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
@@ -17,8 +14,8 @@ Session = sessionmaker(bind=engine)
 session = Session()
 from openai import OpenAI
 client = OpenAI(
-    # api_key=os.environ.get("OPENAI_API_KEY_NEW"),
-    api_key=os.environ["OPENAI_API_KEY"],
+    # api_key=os.environ.get(""),
+    api_key=os.environ[""],
 )
 class SentimentAnalysisCreation:
     # _instance = None
