@@ -1,11 +1,13 @@
 from app.services.logger import Logger
 import os,json
+from datetime import datetime
+
 # os.environ["OPENAI_API_KEY"] = ""
 from db_layer.models import AudioTranscribe,AudioTranscribeTracker,SentimentAnalysis
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.engine.reflection import Inspector
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
@@ -21,8 +23,8 @@ client = OpenAI(
 class SentimentAnalysisCreation:
     # _instance = None
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self):
+        # self.path = path
         self.logger = Logger()
     #
     # @classmethod
@@ -55,33 +57,47 @@ class SentimentAnalysisCreation:
             score = -1
         else:
             score = 0
+
         data ={'sentiment':sentiment,'score':score}
         return data
 
     def transcribe_data_from_database(self,transcribe_data):
-        #Databse Query here
-        # table_name = 'AudioRecord'
-        # column_value = 'filename'
-        # with open(self.path, 'r') as file:# Read text data from the file
-        #     texts = file.readlines()
-        #     print(texts)
-        print("Get data from another table >>>>>>>",len(transcribe_data))
-        print("Get data Client name from another table >>>>>>>",transcribe_data.get("TranscribeMergeText"))
-        transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
-        clientId=transcribe_data.get("ClientId")
-        transcribId=transcribe_data.get("TranscribeId")
-        clientId=transcribe_data.get("ClientId")
 
-        exit()
-        sentimentText = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
-                    "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
-        # Column Name Id,ClientId,transcriptId,SentimentScore SentimentText,AnalysisDate,Created,Modified,IsActive,IsDeleted,SentimentStatus
-        # column_input=("ClientId":)
-        # SentimentAnalysis.add
+        try:
+            transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
+            clientid=transcribe_data.get("ClientId")
+            transcribid=transcribe_data.get("TranscribeId")
+            created_sentiment_date = datetime.utcnow()
 
+            analysis_sentiment_date = datetime.utcnow()
 
-        return sentimentText
+            sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
+                                      "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
 
+            modified_sentiment_date = datetime.utcnow()
+
+            sentiment_column_data = SentimentAnalysis(ClientId=clientid, TranscriptId=transcribid,SentimentScore=sentiment_output_data[0]['score'],SentimentText=sentiment_output_data[0]['text'], \
+                                                     AnalysisDateTime=analysis_sentiment_date,SentimentStatus='Inprogress',Created=created_sentiment_date, \
+                                                     Modified=modified_sentiment_date
+                                                     )
+            # session.add(sentiment_column_data)
+            # session.commit()
+
+            sentiment_status_update = session.query(SentimentAnalysis).filter(SentimentAnalysis.TranscriptId == transcribid).first()
+
+            if sentiment_status_update:
+                pass
+                # sentiment_status_update.SentimentStatus="Completed"
+                # session.commit()
+                print("Sentiment status successfully updated !")
+            else:
+                print("Error while updating sentiment status !")
+
+            return sentiment_column_data
+
+        except IntegrityError as e:
+            session.rollback()
+            print("Error:", e)
 
     def get_data_from_transcribe_tracker_table(self, audio_id):
         try:
@@ -124,23 +140,18 @@ class SentimentAnalysisCreation:
             # result.close()
 
 if __name__ == "__main__":
-    path="D:/Cogent-AI/app/chunk_6.txt"
-
-    # Single Input Entry
 
     # input_text = input("Please enter input for Sentiment Analysis:")
-    sentiment_instance=SentimentAnalysisCreation(path)
+    sentiment_instance=SentimentAnalysisCreation()
     # sentiment = sentiment_instance.get_sentiment(input_text)
     # print("Single Sentiment",sentiment)
 
     # For FIle or DB
     audio_id=38
 
-
-    # audio_id_query = session.query(AudioTranscribeTracker.AudioId).filter(AudioTranscribeTracker.AudioId==audio_id,AudioTranscribeTracker.ChunkStatus == 'Completed')
-    # query_results = audio_id_query.all()
-
     re=sentiment_instance.get_data_from_transcribe_tracker_table(audio_id)
+
+
     # print(">>>>>>>>>>>>audio_id_query query_results>>>>>>>>",re)
     # analyzer = SentimentAnalysisCreation(path)
     # sentiment_results = analyzer.transcribe_data_from_database()
