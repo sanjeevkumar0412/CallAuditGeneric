@@ -128,8 +128,6 @@ class DataBaseClass:
             record_model = model_info
             session.add(record_model)
             session.commit()
-            # session.expunge_all()
-            # session.close()
             self.logger.info(f"Record inserted successfully. ID: {record_model.Id}")
             return record_model
         except Exception as e:

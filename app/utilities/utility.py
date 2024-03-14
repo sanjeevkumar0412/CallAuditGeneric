@@ -7,8 +7,6 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 
 load_dotenv()
 
@@ -28,7 +26,6 @@ class GlobalUtility:
         self.billing_information_data = None
         self.job_status_data = None
         self.file_type_info_data = None
-        # self.global_state = GlobalState()
 
     def __new__(cls):
         if cls._instance is None:
