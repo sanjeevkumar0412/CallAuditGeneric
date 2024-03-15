@@ -163,14 +163,14 @@ class FlaskDBService:
             # audio_transcribe = session.query(AudioTranscribe).filter_by((AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
             audio_transcribe = session.query(AudioTranscribe).filter(
                 (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
-            contactsArr = []
+            audio_transcribe_array = []
             for contact in audio_transcribe:
-                contactsArr.append(contact.toDict())
+                audio_transcribe_array.append(contact.toDict())
                 # user_dict = records.to_dict()
             # json_string = json.dumps(records)
             # results = self.global_utility.get_configuration_by_column(records)
             # return {"status": "200", "result": results}
-            return contactsArr
+            return audio_transcribe_array
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)

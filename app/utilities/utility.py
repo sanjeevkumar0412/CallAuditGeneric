@@ -316,15 +316,10 @@ class GlobalUtility:
         return keys
 
     def get_configuration_by_column(self, results):
-        res = []
         columns = results[0].__dict__.keys() if results else []
-        for row in results:
-            row_dict = dict(zip(columns, row))
-            res.append(row_dict)
-
-        filetype_info_array = [{column: getattr(row, column) for column in columns} for row in
+        result_array = [{column: getattr(row, column) for column in columns} for row in
                                results]
-        return filetype_info_array
+        return result_array
 
     def convert_to_json_format(self, results):
         columns = results[0].__dict__.keys() if results else []
