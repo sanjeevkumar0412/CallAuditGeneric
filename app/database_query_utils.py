@@ -1,6 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.reflection import Inspector
+from db_layer.models import AudioTranscribe
+from sqlalchemy.sql import select
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 engine = create_engine(dns)
@@ -131,3 +133,23 @@ class DBRecord:
 
         except Exception as e:
             print("Error: delete_single_record", e)
+
+    def get_master_data_by_id(self, table_name, id):
+        try:
+            table_exists = table_name in tables_check
+            if table_exists:
+                combined_filter = AudioTranscribe.ClientId = id
+                query = select([AudioTranscribe]).where(combined_filter)
+                raw_sql = f"SELECT * FROM  AudioTranscribe WHERE ClientId = {id}"
+                cursor.execute(raw_sql)
+                result = self.list_of_dictionary_conversion()
+                result = {"status": "200", "result": result}
+            else:
+                result = {"status": "404", "Info": f"Table {table_name} not found !"}
+
+            if result == []:
+                result = {"status": '204', "Info": f"Information is not available for {table_name} Id {id} !"}
+
+            return {'data': result}
+        except Exception as e:
+            print(".........Error in get_record_by_id...........", e)

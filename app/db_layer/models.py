@@ -1,7 +1,7 @@
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey,inspect
 
 
 Base = declarative_base()
@@ -256,25 +256,75 @@ class SentimentAnalysis(Base):
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
 
-    Id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
-    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    AudioFileName = Column(String, unique=False, nullable=False)
-    JobStatus = Column(String, unique=False, nullable=False)
-    FileType = Column(String, unique=False, nullable=False)
-    TranscribeText = Column(String, unique=False, nullable=True)
-    TranscribeFilePath = Column(String, unique=False, nullable=False)
-    SentimentStatus= Column(String, unique=False, nullable=False)
-    TranscribeStartTime = Column(DateTime, unique=False, nullable=True)
-    TranscribeEndTime = Column(DateTime, unique=False, nullable=True)
-    TranscribeDate = Column(DateTime, unique=False, nullable=True)
+    Id = Column(Integer, primary_key=True, autoincrement=True)
+    ClientId = Column(Integer, ForeignKey(Client.ClientId), nullable=False)
+    AudioFileName = Column(String, nullable=False)
+    JobStatus = Column(String, nullable=False)
+    FileType = Column(String, nullable=False)
+    TranscribeText = Column(String, nullable=True)
+    TranscribeFilePath = Column(String, nullable=False)
+    SentimentStatus= Column(String, nullable=False)
+    TranscribeStartTime = Column(DateTime, nullable=True)
+    TranscribeEndTime = Column(DateTime, nullable=True)
+    TranscribeDate = Column(DateTime, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
-    IsActive = Column(Boolean, unique=False, default=True, nullable=True)
-    IsDeleted = Column(Boolean, unique=False, default=False, nullable=True)
+    IsActive = Column(Boolean, default=True, nullable=True)
+    IsDeleted = Column(Boolean, default=False, nullable=True)
 
-    def __repr__(self):
-        return f"<AudioTranscribe(ClientId={self.ClientId}, AudioFileName='{self.AudioFileName}',JobStatus='{self.JobStatus}',FileType='{self.FileType}',TranscribeText='{self.TranscribeText},TranscribeFilePath='{self.TranscribeFilePath}" \
-               f",TranscribeStartTime='{self.TranscribeStartTime}',TranscribeEndTime='{self.TranscribeEndTime}',TranscribeDate='{self.TranscribeDate}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
+    def toDict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+    # def toDict(self):
+    #     column_attrs = inspect(self).mapper.column_attrs
+    #     return {
+    #         c.key: (
+    #             getattr(self, c.key).isoformat() if isinstance(column_attrs[c.key].type, DateTime) else getattr(self,
+    #                                                                                                             c.key))
+    #         for c in column_attrs
+    #     }
+
+
+    # def toDict(self):
+    #     return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+    # def __init__(self, Id, ClientId, AudioFileName,JobStatus,FileType,TranscribeText,TranscribeFilePath,SentimentStatus,TranscribeStartTime,TranscribeEndTime,TranscribeDate,Created,Modified,IsActive,IsDeleted):
+    #      self.Id:Id
+    #      self.ClientId = ClientId
+    #      self.AudioFileName=AudioFileName
+    #      self.JobStatus=JobStatus
+    #      self.FileType = FileType
+    #      self.TranscribeText =TranscribeText
+    #      self.TranscribeFilePath= TranscribeFilePath
+    #      self.SentimentStatus = SentimentStatus
+    #      self.TranscribeStartTime= TranscribeStartTime
+    #      self.TranscribeEndTime =TranscribeEndTime
+    #      self.TranscribeDate =TranscribeDate
+    #      self.Created =Created
+    #      self.Modified= Modified
+    #      self.IsActive= IsActive
+    #      self.IsDeleted =self.IsDeleted
+    # def to_dict(self):
+    #     """Returns a dictionary representation of the model instance."""
+    #     return {
+    #         "Id": self.Id,
+    #         "ClientId": self.ClientId,
+    #         "AudioFileName": self.AudioFileName,
+    #         "JobStatus": self.JobStatus,
+    #         "FileType": self.FileType,
+    #         "TranscribeText": self.TranscribeText,
+    #         "TranscribeFilePath": self.TranscribeFilePath,
+    #         "SentimentStatus": self.SentimentStatus,
+    #         "TranscribeStartTime": self.TranscribeStartTime,
+    #         "TranscribeEndTime": self.TranscribeEndTime,
+    #         "TranscribeDate": self.TranscribeDate,
+    #         "Created": self.Created,
+    #         "Modified": self.Modified,
+    #         "IsActive": self.IsActive,
+    #         "IsDeleted": self.IsDeleted,
+    #     }
+    # def __repr__(self):
+    #     return f"<AudioTranscribe(ClientId={self.ClientId}, AudioFileName='{self.AudioFileName}',JobStatus='{self.JobStatus}',FileType='{self.FileType}',TranscribeText='{self.TranscribeText},TranscribeFilePath='{self.TranscribeFilePath}" \
+    #            f",TranscribeStartTime='{self.TranscribeStartTime}',TranscribeEndTime='{self.TranscribeEndTime}',TranscribeDate='{self.TranscribeDate}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}')>"
 
 
 class AudioTranscribeTracker(Base):
