@@ -40,14 +40,12 @@ class StartTranscribe:
             db_server_name = os.getenv('DB_SERVER')
             db_sql_name = os.getenv('DB_NAME')
             user_name = os.getenv('OAUTH_USER_NAME')
-            secret_key = os.getenv('OAUTH_SECRET_KEY')
-            oauth_type = os.getenv('AUTHENTICATION_TYPE')
             client = int(os.getenv('CLIENT_ID'))
-
-            # client = int(os.getenv('CLIENT_ID'))
             self.logger.info(f'db_server :- {db_server_name}')
             self.logger.info(f'db_name :- {db_sql_name}')
+            # get the master table data
             master_configurations = self.database_class.get_client_master_data(db_server_name, db_sql_name, client)
+            # all master table configurations
             master_client_id = int(self.global_utility.get_list_array_value(master_configurations, CONFIG.CLIENT_ID))
             master_db_server = self.global_utility.get_list_array_value(master_configurations, CONFIG.SERVER_NAME)
             master_db_name = self.global_utility.get_list_array_value(master_configurations, CONFIG.DATABASE_NAME)
@@ -62,17 +60,18 @@ class StartTranscribe:
                                                                             CONFIG.CLIENT_USER_NAME)
                 client_user_password = self.global_utility.get_list_array_value(client_config_result,
                                                                                 CONFIG.CLIENT_PASSWORD)
-                client_id = int(self.global_utility.get_list_array_value(client_config_result,CONFIG.CLIENT_ID))
-                db_server = self.global_utility.get_list_array_value(client_config_result,CONFIG.SERVER_NAME)
-                db_name = self.global_utility.get_list_array_value(client_config_result,CONFIG.DATABASE_NAME)
+                client_id = int(self.global_utility.get_list_array_value(client_config_result, CONFIG.CLIENT_ID))
+                db_server = self.global_utility.get_list_array_value(client_config_result, CONFIG.SERVER_NAME)
+                db_name = self.global_utility.get_list_array_value(client_config_result, CONFIG.DATABASE_NAME)
                 # oauth authentication_type
                 if authentication_type == CONSTANT.AUTHENTICATION_OAUTH:
-                    success, error_message = self.database_class.get_token_based_authenticate(db_server,db_name,client_id,user_name)
+                    success, error_message = self.database_class.get_token_based_authenticate(db_server, db_name,
+                                                                                              client_id, user_name)
                 else:
                     # ldap authentication_type
                     success, error_message = self.database_class.get_ldap_authenticate(client_user_name,
-                                                                                               client_user_password)
-
+                                                                                       client_user_password)
+                # authentication process completed
                 if success:
                     configurations = self.database_class.get_all_configurations(db_server, db_name,
                                                                                 master_client_id)
@@ -97,23 +96,26 @@ class StartTranscribe:
                     whisper_model = self.global_utility.get_whisper_model_name()
                     success, error_message = self.authentication_service.get_ldap_authenticate(ldap_user, ldap_pwd)
                     # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
-                    if success:
-                        is_validate_path = self.validate_folder(source_file_path, destination_path)
-                        if is_validate_path:
-                            file_collection = self.global_utility.get_all_files(source_file_path)
-                            self.start_recording_transcribe_process(file_collection, source_file_path, destination_path,
-                                                                    whisper_model)
-                            # Premium, Normal, Small
-                        else:
-                            self.logger.error('start_transcribe_process', 'folder path does not exist')
+                    # if success:
+                    is_validate_path = self.validate_folder(source_file_path, destination_path)
+                    if is_validate_path:
+                        file_collection = self.global_utility.get_all_files(source_file_path)
+                        self.start_recording_transcribe_process(file_collection, source_file_path, destination_path,
+                                                                whisper_model)
+                        # Premium, Normal, Small
                     else:
-                        log_info = Logs(ClientId=client_id, LogSummary=error_message, LogDetails=error_message,
-                                        LogType=self.logger.error_level_critical,
-                                        ModulName='start_transcribe_process',
-                                        Severity=self.logger.severity_level_critical)
-                        self.logger.save_log_table_entry(db_server_name, database_name, log_info)
-                        self.logger.info(
-                            'You are not authenticate with the proper credentials.please try with other credentials')
+                        self.logger.info('There is no container at the specified path.')
+                    # else:
+                    #     log_info = Logs(ClientId=client_id, LogSummary=error_message, LogDetails=error_message,
+                    #                     LogType=self.logger.error_level_critical,
+                    #                     ModulName='start_transcribe_process',
+                    #                     Severity=self.logger.severity_level_critical)
+                    #     self.logger.save_log_table_entry(db_server_name, database_name, log_info)
+                    #     self.logger.info(
+                    #         'You are not authenticate with the proper credentials.please try with other credentials')
+            else:
+                self.logger.info(
+                    'You are not authenticate with the proper credentials.please try with other credentials')
         except Exception as e:
             log_info = Logs(ClientId=client_id, LogSummary=e, LogDetails=e,
                             LogType='Error',

@@ -4,6 +4,7 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.engine import URL
 import jwt
 import datetime
 import secrets
@@ -295,12 +296,17 @@ class DataBaseClass:
 
     def get_client_master_data(self, server, database, client_id):
         try:
+            connection_string1 = "DRIVER={SQL Server Native Client 10.0};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=user;PWD=password"
+            connection_string = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=agreeya\sudhir.kumar;PWD=Solenki1@#"
+            connection_string2 = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans"
+            connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
+
+            # engine = create_engine(connection_url)
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
             records = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
-            print(f"Records Length :- {len(records)}")
             client_result = self.global_utility.get_configuration_by_column(records)
             self.global_utility.set_master_client_data(client_result)
             return client_result
