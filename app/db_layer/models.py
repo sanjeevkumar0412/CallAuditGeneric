@@ -222,7 +222,7 @@ class SentimentAnalysis(Base):
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
+    # TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
     SentimentScore = Column(String, nullable=True)
     SentimentText = Column(String, nullable=True)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
@@ -234,7 +234,7 @@ class SentimentAnalysis(Base):
     Sentiment = Column(String, nullable=True)
 
     def __repr__(self):
-        return f"<SentimentAnalysis(ClientId={self.ClientId}, TranscriptId='{self.TranscriptId}',SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
+        return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
                f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}')>"
 
 class AudioTranscribe(Base):

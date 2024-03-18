@@ -75,15 +75,14 @@ def delete_recordby_id():
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return {'data': data}
 
-@app.route('/get_data_from_transcribe_tracker_table')
+@app.route('/get_data_from_transcribe_table')
 def get_transcribe_sentiment():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
-    transcribe_id = request.args.get('transcribe_id')
-    sentiment_check = request.args.get('sentiment_check')
-    data = sentiment_instance.get_data_from_transcribe_tracker_table(transcribe_id,sentiment_check)
+    audio_file_name = request.args.get('audio_file')
+    data = sentiment_instance.get_data_from_transcribe_table(audio_file_name)
     if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ sentiment_check}
+        data={"Error":"Invalid table/Data not available for this "+ audio_file_name}
     return {'data': data}
 
 @app.route('/get_client_master_configurations', methods=['GET'])
@@ -194,17 +193,6 @@ def get_ldap_based_authenticate():
         return flask_service.set_json_format([],True,message)
     else:
         return flask_service.set_json_format([],False,message)
-
-@app.route('/get_data_from_transcribe_tracker_table')
-def get_transcribe_sentiment():
-    from app.model.sentiment_analysis import SentimentAnalysisCreation
-    sentiment_instance = SentimentAnalysisCreation()
-    transcribe_id = request.args.get('transcribe_id')
-    sentiment_check = request.args.get('sentiment_check')
-    data = sentiment_instance.get_data_from_transcribe_tracker_table(transcribe_id,sentiment_check)
-    if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ sentiment_check}
-    return {'data': data}
 
 
 
