@@ -130,6 +130,8 @@ class StartTranscribe:
             for file in file_collection:
                 file_url = source_file_path + "/" + file
                 file_name, extension = self.global_utility.get_file_extension(file)
+                file_type_id = self.global_utility.get_file_type_by_key_name(
+                    self.global_utility.get_file_type_info_data(), extension)
                 if extension == ".wav" or extension == ".mp3":
                     name_file = file_url.split('/')[-1].split('.')[0]
                     dir_folder_url = os.path.join(destination_path, name_file)
@@ -146,32 +148,36 @@ class StartTranscribe:
 
                             if file_size_mb > audio_file_size:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                status_id = self.global_utility.get_status_by_key_name(
+                                    self.global_utility.get_job_status_data(), 'PreProcessing')
                                 audio_transcribe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
-                                                                         AudioFileName=file,
-                                                                         JobStatus=CONSTANT.STATUS_DRAFT,
-                                                                         FileType=extension, TranscribeText='',
-                                                                         TranscribeFilePath=audio_file_path)
+                                                                        AudioFileName=file, JobStatus=status_id,
+                                                                        FileType=file_type_id,
+                                                                        TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcribe_model)
                                 self.start_process_recordings_large_file(parent_record, audio_file_path, dir_folder_url,
                                                                          name_file,
                                                                          subscription_model, transcribe_files)
                             else:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                self.logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                status_id = self.global_utility.get_status_by_key_name(
+                                    self.global_utility.get_job_status_data(), 'PreProcessing')
                                 audio_transcribe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
-                                                                         AudioFileName=file,
-                                                                         JobStatus='CONSTANT.STATUS_DRAFT',
-                                                                         FileType=extension, TranscribeText='',
-                                                                         TranscribeFilePath=audio_file_path)
+                                                                        AudioFileName=file, JobStatus=status_id,
+                                                                        FileType=file_type_id,
+                                                                        TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcribe_model)
                                 if parent_record is not None:
                                     self.logger.info(f'New Item Created ID is {parent_record.Id}')
                                 chunk_transcribe_model = AudioTranscribeTracker(
                                     ClientId=self.global_utility.get_client_id(),
                                     AudioId=parent_record.Id,
-                                    AudioFileName=file, ChunkSequence=1, ChunkText='',
-                                    ChunkFilePath=audio_file_path, ChunkStatus=CONSTANT.STATUS_DRAFT,
+                                    ChunkFileType=file_type_id,
+                                    ChunkFileName=file, ChunkSequence=1, ChunkText='',
+                                    ChunkFilePath=audio_file_path, ChunkStatus=status_id,
                                     ChunkCreatedDate=datetime.utcnow())
-                                self.database_class.create_audio_file_entry(chunk_transcribe_model)
+                                parent_record = self.database_class.create_audio_file_entry(chunk_transcribe_model)
                         else:
                             self.logger.error('start_recording_transcribe_process',
                                               f"{file} is not copied  in the destination folder {dir_folder_url}")
@@ -195,19 +201,26 @@ class StartTranscribe:
             transcribe_files.append(txt_file)
             db_server_name = self.global_utility.get_database_server_name()
             database_name = self.global_utility.get_database_name()
-            for i in range(len(chunks_files)):
-                chunk_file = f"{dir_folder_url}/chunk_{i}.wav"
-                self.logger.info(f"Uploading Starting chunk_{i}.wav inside folder {dir_folder_url}")
-                file_name, extension = self.global_utility.get_file_extension(f"chunk_{i}.wav")
-                chunk_transcribe_model = AudioTranscribeTracker(ClientId=self.global_utility.get_client_id(),
-                                                                AudioId=parent_record.Id,
-                                                                AudioFileName=f"chunk_{i}.wav", ChunkSequence=i,
-                                                                ChunkText='',
-                                                                ChunkFilePath=chunk_file,
-                                                                ChunkStatus=CONSTANT.STATUS_DRAFT,
-                                                                ChunkCreatedDate=datetime.utcnow())
-                self.database_class.create_audio_file_entry(chunk_transcribe_model)
-                self.logger.info(f"Sql Table Entry Completed file chunk_{i}.wav inside folder {dir_folder_url}")
+            status_id = self.global_utility.get_status_by_key_name(self.global_utility.get_job_status_data(),
+                                                                   'PreProcessing')
+            counter = 0
+            for filename in os.listdir(dir_folder_url):
+                if filename.endswith(".wav"):  # Replace ".wav" with your audio format
+                    counter += 1
+                    filepath = os.path.join(dir_folder_url, filename)
+                    file_name, extension = self.global_utility.get_file_extension(filename)
+                    file_type_id = self.global_utility.get_file_type_by_key_name(
+                        self.global_utility.get_file_type_info_data(), extension)
+                    chunk_transcribe_model = AudioTranscribeTracker(ClientId=self.global_utility.get_client_id(),
+                                                                    AudioId=parent_record.Id,
+                                                                    ChunkFileName=filename, ChunkSequence=counter,
+                                                                    ChunkText='',
+                                                                    ChunkFileType=file_type_id,
+                                                                    ChunkFilePath=filepath, ChunkStatus=status_id,
+                                                                    ChunkCreatedDate=datetime.utcnow())
+                    child_record = self.database_class.create_audio_file_entry(chunk_transcribe_model)
+                    self.logger.info(
+                        f"Sql Table Entry Completed file chunk_{filename}.wav inside folder {dir_folder_url}")
         except Exception as e:
             self.logger.error('start_process_recordings_large_file', e)
 
