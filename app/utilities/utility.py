@@ -1,5 +1,6 @@
 from pydub import AudioSegment
 from dotenv import load_dotenv
+import time
 from flask import json
 import shutil
 import os
@@ -217,6 +218,10 @@ class GlobalUtility:
                     print(f"Merged {file}")
         self.delete_files_wishper(output_file, chunks_files)
 
+    def generate_unique_name(self,prefix="chunk_"):
+        timestamp = int(time.time())
+        return f"{prefix}{timestamp}.wav"  # Replace ".wav" with your audio format
+
     def split_audio_chunk_files(self, audio_file, chunk_file_directory):
         try:
             self.logger.info(f'Create Chunk file {audio_file}  file url :- {chunk_file_directory}')
@@ -225,7 +230,9 @@ class GlobalUtility:
             chunk_files = [input_audio[i:i + chunk_size] for i in range(0, len(input_audio), chunk_size)]
             for i, chunk_paths in enumerate(chunk_files):
                 self.logger.info(f"Chunk Split Starting...{str(datetime.now())}")
-                chunk_paths.export(f"{chunk_file_directory}/chunk_{i}.wav", bitrate='128k', format="mp3")
+                unique_name = self.generate_unique_name()
+                # chunk_paths.export(f"{chunk_file_directory}/chunk_{i}.wav", bitrate='128k', format="mp3")
+                chunk_paths.export(f"{chunk_file_directory}/{unique_name}", bitrate='128k', format="mp3")
             return [chunk_files, chunk_paths]
         except Exception as e:
             self.logger.error(f'Error in Chunking split_audio_chunk_files:- ', e)
@@ -304,6 +311,19 @@ class GlobalUtility:
                 return value
         return None
 
+    def get_status_by_key_name(self, dictionary, target_value):
+        status = 0
+        filtered_data = [item for item in dictionary if item["StatusName"].lower() == target_value.lower()]
+        if len(filtered_data) > 0:
+            status = int(filtered_data[0]['Id'])
+        return status
+
+    def get_file_type_by_key_name(self, dictionary, target_value):
+        file_type = 0
+        filtered_data = [item for item in dictionary if item["FileType"].lower() == target_value.lower()]
+        if len(filtered_data) > 0:
+            file_type = int(filtered_data[0]['Id'])
+        return file_type
     def get_config_by_value(self, dictionary, target_value):
         keys = None
         for dictionary in dictionary:

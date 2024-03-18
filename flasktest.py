@@ -160,7 +160,7 @@ def add_update_transcribe_tracker():
 @app.route('/get_token_based_authenticate', methods=['GET'])
 def get_token_based_authenticate():
     client_id = int(request.args.get('clientid'))
-    user_name = int(request.args.get('username'))
+    user_name = request.args.get('username')
     current_user = os.getlogin()
     print('Current login user:', current_user)
     success, message = flask_service.get_token_based_authenticate(server_name,database_name,client_id,user_name)
@@ -171,8 +171,8 @@ def get_token_based_authenticate():
 
 @app.route('/get_ldap_based_authenticate', methods=['GET'])
 def get_ldap_based_authenticate():
-    user_name = int(request.args.get('username'))
-    password = int(request.args.get('password'))
+    user_name = request.args.get('username')
+    password = request.args.get('password')
     current_user = os.getlogin()
     print('Current login user:', current_user)
     success, message = flask_service.get_ldap_authenticate(user_name,password)

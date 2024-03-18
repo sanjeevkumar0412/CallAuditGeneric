@@ -10,7 +10,7 @@ import datetime
 import secrets
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe, ClientMaster, AuthTokenManagement
+    AudioTranscribe, ClientMaster, AuthTokenManagement,JobStatus
 
 
 class DataBaseClass:
@@ -41,20 +41,34 @@ class DataBaseClass:
             configuration_array = self.global_utility.get_configuration_by_column(configuration_data)
             # Get data from FileTypeInfo table
             filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
+            filetype_info_coll = []
+            for status_result in filetype_info_data:
+                filetype_info_coll.append(status_result.toDict())
             filetype_info_array = self.global_utility.get_configuration_by_column(filetype_info_data)
             # Get data from Subscription table
+            subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
+            subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
+
+            job_status_data = session.query(JobStatus).filter_by(ClientId=client_id).all()
+            job_status_coll = []
+            for status_result in job_status_data:
+                job_status_coll.append(status_result.toDict())
+            job_status_array = self.global_utility.get_configuration_by_column(job_status_data)
+
             subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
             subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
             # Set the configuration data in utility variables
             self.global_utility.set_client_data(clients_array)
             self.global_utility.set_configurations_data(configuration_array)
-            self.global_utility.set_file_type_info_data(filetype_info_array)
+            self.global_utility.set_file_type_info_data(filetype_info_coll)
             self.global_utility.set_subscription_data(subscriptions_array)
+            self.global_utility.set_job_status_data(job_status_coll)
             configurations = {
                 'Client': clients_array,
                 'Configurations': configuration_array,
                 'FileTypesInfo': filetype_info_array,
-                'Subscriptions': subscriptions_array
+                'Subscriptions': subscriptions_array,
+                'JobStatus': job_status_array
             }
             return configurations
         except Exception as e:
