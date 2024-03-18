@@ -68,17 +68,13 @@ def delete_recordby_id():
 
     table_name = request.args.get('table_name')
     itm_id = request.args.get('id')
-<<<<<<< HEAD
     data = db_instance.delete_record_by_id(table_name,itm_id)
 
-=======
-    data = db_instance.delete_record_by_id(table_name, itm_id)
->>>>>>> c24bec95f3d80be1b013b620bb113b9e382dc94e
+    # data = db_instance.delete_record_by_id(table_name, itm_id)
     if data == None:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return {'data': data}
 
-<<<<<<< HEAD
 @app.route('/get_data_from_transcribe_tracker_table')
 def get_transcribe_sentiment():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
@@ -89,7 +85,7 @@ def get_transcribe_sentiment():
     if data == None:
         data={"Error":"Invalid table/Data not available for this "+ sentiment_check}
     return {'data': data}
-=======
+
 @app.route('/get_client_master_configurations', methods=['GET'])
 def get_client_master_configurations():
     try:
@@ -199,8 +195,18 @@ def get_ldap_based_authenticate():
     else:
         return flask_service.set_json_format([],False,message)
 
+@app.route('/get_data_from_transcribe_tracker_table')
+def get_transcribe_sentiment():
+    from app.model.sentiment_analysis import SentimentAnalysisCreation
+    sentiment_instance = SentimentAnalysisCreation()
+    transcribe_id = request.args.get('transcribe_id')
+    sentiment_check = request.args.get('sentiment_check')
+    data = sentiment_instance.get_data_from_transcribe_tracker_table(transcribe_id,sentiment_check)
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ sentiment_check}
+    return {'data': data}
 
->>>>>>> c24bec95f3d80be1b013b620bb113b9e382dc94e
+
 
 if __name__ == '__main__':
     app.run(debug=True)
