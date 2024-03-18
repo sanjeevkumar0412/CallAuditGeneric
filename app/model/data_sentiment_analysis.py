@@ -1,5 +1,5 @@
 import os
-# os.environ["OPENAI_API_KEY"] = "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"
+# os.environ["OPENAI_API_KEY"] = ""
 # import openai
 
 # class SentimentAnalysis:
