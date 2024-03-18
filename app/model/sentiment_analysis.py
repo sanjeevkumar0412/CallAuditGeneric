@@ -15,7 +15,7 @@ session = Session()
 from openai import OpenAI
 client = OpenAI(
     # api_key=os.environ.get(""),
-    api_key=os.environ[""],
+    api_key=os.environ["OPENAI_API_KEY"],
 )
 class SentimentAnalysisCreation:
     # _instance = None
@@ -24,7 +24,7 @@ class SentimentAnalysisCreation:
         self.logger = Logger()
 
     def get_sentiment(self,text):
-        prompt = f"The following text expresses a sentiment: '{text}' The sentiment of this text is:"
+        prompt = f"Could you please listen to the audio file and provide your assessment of its sentiment? We're interested in understanding the overall mood or feeling conveyed in the recording. Your insights will help us gain a better understanding of the emotional tone of the content:'{text}' The sentiment of this text is:"
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
@@ -51,7 +51,7 @@ class SentimentAnalysisCreation:
         data ={'sentiment':sentiment,'score':score}
         return data
 
-    def transcribe_data_from_database(self,transcribe_data):
+    def dump_data_into_sentiment_database(self,transcribe_data):
 
         try:
             transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
@@ -68,16 +68,21 @@ class SentimentAnalysisCreation:
 
             sentiment_column_data = SentimentAnalysis(ClientId=clientid, TranscriptId=transcribid,SentimentScore=sentiment_output_data[0]['score'],SentimentText=sentiment_output_data[0]['text'], \
                                                      AnalysisDateTime=analysis_sentiment_date,SentimentStatus='Inprogress',Created=created_sentiment_date, \
-                                                     Modified=modified_sentiment_date
+                                                     Modified=modified_sentiment_date,Sentiment=sentiment_output_data[0]['sentiment']
                                                      )
             session.add(sentiment_column_data)
             session.commit()
 
-            sentiment_status_update = session.query(SentimentAnalysis).filter(SentimentAnalysis.TranscriptId == transcribid).first()
+            sentiment_id_current = session.query(SentimentAnalysis.Id).filter(SentimentAnalysis.TranscriptId == transcribid)
+            sentiment_id_res=sentiment_id_current.first()
+            print("sentiment_id_currentsentiment_id_current>>>",sentiment_id_current)
+            print("sentiment_id_res>>>",sentiment_id_res)
+            sentiment_status_update = session.query(SentimentAnalysis).filter(SentimentAnalysis.TranscriptId == transcribid,SentimentAnalysis.Id==sentiment_id_res,SentimentAnalysis.SentimentStatus=="Inprogress").first()
 
             if sentiment_status_update:
-                pass
                 sentiment_status_update.SentimentStatus="Completed"
+                # for sentiment_status in sentiment_status_update:
+                #     sentiment_status.SentimentStatus="Completed"
                 session.commit()
                 print("Sentiment status successfully updated !")
             else:
@@ -89,7 +94,7 @@ class SentimentAnalysisCreation:
             session.rollback()
             print("Error:", e)
 
-    def get_data_from_transcribe_tracker_table(self, audio_id):
+    def get_data_from_transcribe_tracker_table(self, audio_id, sentiment_check):
         try:
 
             audio_dictionary={}
@@ -115,13 +120,13 @@ class SentimentAnalysisCreation:
                     self.logger.info(f":Transcribe Job Status is pending")
             else:
                 self.logger.info(f":Record not found {audio_id}")
-            self.transcribe_data_from_database(audio_dictionary)
-            # print("New Trans result from DB>>>",trans_result)
-            # return transcribe_text
-
-            # print("transcribe_text >>>>>>>",transcribe_text)
-            print("dic>>>>>>>",audio_dictionary)
-            return audio_dictionary
+            if sentiment_check == True:
+                print("Got To Sentiment Function ")
+                self.dump_data_into_sentiment_database(audio_dictionary)
+            else:
+                #Transcribe merge data from db table
+                result={"transcribe_data":transcribe_text,"status":200}
+                return result
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
             print(e)
@@ -137,13 +142,13 @@ if __name__ == "__main__":
     # print("Single Sentiment",sentiment)
 
     # For FIle or DB
-    audio_id=38
+    audio_id=19
 
-    re=sentiment_instance.get_data_from_transcribe_tracker_table(audio_id)
+    re=sentiment_instance.get_data_from_transcribe_tracker_table(audio_id,True)
 
 
     # print(">>>>>>>>>>>>audio_id_query query_results>>>>>>>>",re)
     # analyzer = SentimentAnalysisCreation(path)
-    # sentiment_results = analyzer.transcribe_data_from_database()
+    # sentiment_results = analyzer.dump_data_into_sentiment_database()
     # sentiment_list_data= json.dumps(sentiment_results, indent=2)
     # print("Result>>>>>>",sentiment_list_data)
