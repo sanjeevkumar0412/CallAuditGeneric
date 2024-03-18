@@ -46,23 +46,24 @@ class StartTranscribe:
             # get the master table data
             master_configurations = self.database_class.get_client_master_data(db_server_name, db_sql_name, client)
             # all master table configurations
-            master_client_id = int(self.global_utility.get_list_array_value(master_configurations, CONFIG.CLIENT_ID))
-            master_db_server = self.global_utility.get_list_array_value(master_configurations, CONFIG.SERVER_NAME)
-            master_db_name = self.global_utility.get_list_array_value(master_configurations, CONFIG.DATABASE_NAME)
-            master_client_user = self.global_utility.get_list_array_value(master_configurations, CONFIG.CLIENT_USER)
+            master_client_id = int(self.global_utility.get_values_from_json_array(master_configurations, CONFIG.CLIENT_ID))
+            # master_client_id = int(self.global_utility.get_list_array_value(master_configurations, CONFIG.CLIENT_ID))
+            master_db_server = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.SERVER_NAME)
+            master_db_name = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.DATABASE_NAME)
+            master_client_user = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.CLIENT_USER)
             # authentication the configure user
             client_config_result = self.database_class.get_client_configurations(master_db_server, master_db_name,
                                                                                  master_client_id, master_client_user)
             if len(client_config_result) > 0:
-                authentication_type = self.global_utility.get_list_array_value(client_config_result,
+                authentication_type = self.global_utility.get_values_from_json_array(client_config_result,
                                                                                CONFIG.AUTHENTICATION_TYPE)
-                client_user_name = self.global_utility.get_list_array_value(client_config_result,
+                client_user_name = self.global_utility.get_values_from_json_array(client_config_result,
                                                                             CONFIG.CLIENT_USER_NAME)
-                client_user_password = self.global_utility.get_list_array_value(client_config_result,
+                client_user_password = self.global_utility.get_values_from_json_array(client_config_result,
                                                                                 CONFIG.CLIENT_PASSWORD)
-                client_id = int(self.global_utility.get_list_array_value(client_config_result, CONFIG.CLIENT_ID))
-                db_server = self.global_utility.get_list_array_value(client_config_result, CONFIG.SERVER_NAME)
-                db_name = self.global_utility.get_list_array_value(client_config_result, CONFIG.DATABASE_NAME)
+                client_id = int(self.global_utility.get_values_from_json_array(client_config_result, CONFIG.CLIENT_ID))
+                db_server = self.global_utility.get_values_from_json_array(client_config_result, CONFIG.SERVER_NAME)
+                db_name = self.global_utility.get_values_from_json_array(client_config_result, CONFIG.DATABASE_NAME)
                 # oauth authentication_type
                 if authentication_type == CONSTANT.AUTHENTICATION_OAUTH:
                     success, error_message = self.database_class.get_token_based_authenticate(db_server, db_name,
@@ -81,19 +82,19 @@ class StartTranscribe:
                     # configurations = self.database_class.get_all_configurations(db_server, db_name, client_id)
                     self.logger.info('All Configuration getting successfully!')
                     # all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
-                    opem_key_name = self.global_utility.get_open_ai_key()
+                    opem_key_name = 'sk-' + self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.OPENAI_API_KEY)
                     # client_id = self.global_utility.get_client_id()
-                    name_client = int(self.global_utility.get_key_config_value(CONFIG.CLIENT_ID))
-                    db_server_name = self.global_utility.get_database_server_name()
-                    database_name = self.global_utility.get_database_name()
+                    name_client = int(self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.CLIENT_ID))
+                    db_server_name = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.DATABASE_SERVER)
+                    database_name =  self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.DATABASE_SERVER)
                     # self.logger.log_entry_into_sql_table(db_server_name, db_name, client_id, False)
                     self.logger.info('self.database_class.get_audio_transcribe_tracker_table_data')
-                    source_file_path = self.global_utility.get_audio_source_folder_path()
-                    destination_path = self.global_utility.get_audio_destination_folder_path()
-                    ldap_user = self.global_utility.get_ladp_user_name()
+                    source_file_path = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.AUDIO_SOURCE_FOLDER_PATH)
+                    destination_path = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.AUDIO_DESTINATION_FOLDER_PATH)
+                    ldap_user = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.LDAP_USER_NAME)
                     # ldap_pwd = None
-                    ldap_pwd = self.global_utility.get_ldap_user_password()
-                    whisper_model = self.global_utility.get_whisper_model_name()
+                    ldap_pwd = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.LDAP_USER_PASSWORD)
+                    whisper_model = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.WHISPER_MODEL)
                     # success, error_message = self.authentication_service.get_ldap_authenticate(ldap_user, ldap_pwd)
                     # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
                     # if success:

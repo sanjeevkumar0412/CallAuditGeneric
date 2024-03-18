@@ -10,7 +10,7 @@ import datetime
 import secrets
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe, ClientMaster, AuthTokenManagement,JobStatus
+    AudioTranscribe, ClientMaster, AuthTokenManagement,JobStatus,SubscriptionPlan
 
 
 class DataBaseClass:
@@ -35,10 +35,16 @@ class DataBaseClass:
             session = Session()
             # Get data from Client table
             clients_data = session.query(Client).filter_by(ClientId=client_id).all()
-            clients_array = self.global_utility.get_configuration_by_column(clients_data)
+            client_coll = []
+            for client_result in clients_data:
+                client_coll.append(client_result.toDict())
+            # clients_array = self.global_utility.get_configuration_by_column(clients_data)
             # Get data from Configuration table
             configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
-            configuration_array = self.global_utility.get_configuration_by_column(configuration_data)
+            configuration_coll = []
+            for configuration_result in configuration_data:
+                configuration_coll.append(configuration_result.toDict())
+            # configuration_array = self.global_utility.get_configuration_by_column(configuration_data)
             # Get data from FileTypeInfo table
             filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
             filetype_info_coll = []
@@ -47,28 +53,35 @@ class DataBaseClass:
             filetype_info_array = self.global_utility.get_configuration_by_column(filetype_info_data)
             # Get data from Subscription table
             subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-            subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
+            subscriptions_array = []
+            for subscriptions_result in subscriptions_data:
+                subscriptions_array.append(subscriptions_result.toDict())
+            # subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
 
             job_status_data = session.query(JobStatus).filter_by(ClientId=client_id).all()
             job_status_coll = []
             for status_result in job_status_data:
                 job_status_coll.append(status_result.toDict())
-            job_status_array = self.global_utility.get_configuration_by_column(job_status_data)
+            # job_status_array = self.global_utility.get_configuration_by_column(job_status_data)
 
-            subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-            subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
+            subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
+            subscriptions_plan_coll = []
+            for subscriptions_plan_data in subscriptions_plan_data:
+                subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
+            # subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
             # Set the configuration data in utility variables
-            self.global_utility.set_client_data(clients_array)
-            self.global_utility.set_configurations_data(configuration_array)
+            self.global_utility.set_client_data(client_coll)
+            self.global_utility.set_configurations_data(configuration_coll)
             self.global_utility.set_file_type_info_data(filetype_info_coll)
             self.global_utility.set_subscription_data(subscriptions_array)
             self.global_utility.set_job_status_data(job_status_coll)
+            self.global_utility.set_subscription_plan_data(subscriptions_plan_coll)
             configurations = {
-                'Client': clients_array,
-                'Configurations': configuration_array,
-                'FileTypesInfo': filetype_info_array,
+                'Client': client_coll,
+                'Configurations': configuration_coll,
+                'FileTypesInfo': filetype_info_coll,
                 'Subscriptions': subscriptions_array,
-                'JobStatus': job_status_array
+                'JobStatus': job_status_coll
             }
             return configurations
         except Exception as e:
@@ -169,7 +182,10 @@ class DataBaseClass:
             session = Session()
             records = session.query(AudioTranscribe).filter(
                 (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
-            return records
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            return record_coll
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)
@@ -186,8 +202,11 @@ class DataBaseClass:
             records = session.query(AudioTranscribeTracker).filter(
                 (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_parent_id) & (
                         AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
             print(f"Records Length :- {len(records)}")
-            return records
+            return record_coll
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)
@@ -278,9 +297,12 @@ class DataBaseClass:
                 (Client.ClientId == client_id) & (Client.ClientUserName == master_client_user) & (
                     Client.IsActive)).all()
             print(f"Records Length :- {len(records)}")
-            client_result = self.global_utility.get_configuration_by_column(records)
-            self.global_utility.set_client_data(client_result)
-            return client_result
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            # client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_client_data(record_coll)
+            return record_coll
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)
@@ -298,9 +320,12 @@ class DataBaseClass:
                 (Client.ClientUserName == user_name) & (Client.ClientPassword == secret_key) & (
                     Client.IsActive)).all()
             print(f"Records Length :- {len(records)}")
-            client_result = self.global_utility.get_configuration_by_column(records)
-            self.global_utility.set_client_data(client_result)
-            return client_result
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            # client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_client_data(record_coll)
+            return record_coll
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)
@@ -321,9 +346,12 @@ class DataBaseClass:
             Session = sessionmaker(bind=engine)
             session = Session()
             records = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
-            client_result = self.global_utility.get_configuration_by_column(records)
-            self.global_utility.set_master_client_data(client_result)
-            return client_result
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            # client_result = self.global_utility.get_configuration_by_column(records)
+            self.global_utility.set_master_client_data(record_coll)
+            return record_coll
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)

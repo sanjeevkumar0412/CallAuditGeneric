@@ -311,19 +311,7 @@ class GlobalUtility:
                 return value
         return None
 
-    def get_status_by_key_name(self, dictionary, target_value):
-        status = 0
-        filtered_data = [item for item in dictionary if item["StatusName"].lower() == target_value.lower()]
-        if len(filtered_data) > 0:
-            status = int(filtered_data[0]['Id'])
-        return status
 
-    def get_file_type_by_key_name(self, dictionary, target_value):
-        file_type = 0
-        filtered_data = [item for item in dictionary if item["FileType"].lower() == target_value.lower()]
-        if len(filtered_data) > 0:
-            file_type = int(filtered_data[0]['Id'])
-        return file_type
     def get_config_by_value(self, dictionary, target_value):
         keys = None
         for dictionary in dictionary:
@@ -369,4 +357,27 @@ class GlobalUtility:
         ]
         return json.dumps(json_data, default=handle_date)
 
+    def get_status_by_key_name(self, dictionary, target_value):
+        status = 0
+        filtered_data = [item for item in dictionary if item["StatusName"].lower() == target_value.lower()]
+        if len(filtered_data) > 0:
+            status = int(filtered_data[0]['Id'])
+        return status
 
+    def get_file_type_by_key_name(self, dictionary, target_value):
+        file_type = 0
+        filtered_data = [item for item in dictionary if item["FileType"].lower() == target_value.lower()]
+        if len(filtered_data) > 0:
+            file_type = int(filtered_data[0]['Id'])
+        return file_type
+
+    def get_configuration_by_key_name(self, result_set, target_value):
+        config_value = None
+        filtered_data = [item['ConfigValue'] for item in result_set if item['ConfigKey'] == target_value]
+        if len(filtered_data) > 0:
+            config_value = filtered_data[0]
+        return config_value
+
+    def get_values_from_json_array(self,json_array, key_name):
+        values = [elem[key_name] for elem in json_array if key_name in elem]
+        return values[0]
