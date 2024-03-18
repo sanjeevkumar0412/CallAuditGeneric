@@ -37,7 +37,7 @@ class FlaskDBService:
     def get_json_format(result, status=True, message=None):
         api_object = {
             "result": result,
-            "message": 'The api result set for the service supplied.',
+            "message": message == None if 'The api result set for the service supplied.' else message,
             "status": 'success',
         }
         if status == False:
@@ -51,7 +51,7 @@ class FlaskDBService:
     def set_json_format(result, status=True, message=None):
         api_object = {
             "result": result,
-            "message": 'Record has been updated successfully.',
+            "message": message == None if 'Record has been updated successfully.' else message,
             "status": 'success',
         }
         if status == False:
@@ -235,12 +235,12 @@ class FlaskDBService:
                 session.commit()
                 return self.set_json_format([record_id])
             else:
-                return self.set_json_format([],False, f"The record ID, {record_id}, could not be found.")
+                return self.set_json_format([], False, f"The record ID, {record_id}, could not be found.")
 
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
-            return self.set_json_format([],False,e)
+            return self.set_json_format([], False, e)
         finally:
             session.close()
 
@@ -273,13 +273,13 @@ class FlaskDBService:
                 return self.set_json_format([], False, f"The record ID, {record_id}, could not be found.")
             # session.commit()
 
-                    # self.logger.info(f"Record for ID '{parent_record}' updated successfully.")
+            # self.logger.info(f"Record for ID '{parent_record}' updated successfully.")
             # session.close()
 
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
-            return self.set_json_format([],False,e)
+            return self.set_json_format([], False, e)
         finally:
             session.close()
 

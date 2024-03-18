@@ -94,7 +94,7 @@ class StartTranscribe:
                     # ldap_pwd = None
                     ldap_pwd = self.global_utility.get_ldap_user_password()
                     whisper_model = self.global_utility.get_whisper_model_name()
-                    success, error_message = self.authentication_service.get_ldap_authenticate(ldap_user, ldap_pwd)
+                    # success, error_message = self.authentication_service.get_ldap_authenticate(ldap_user, ldap_pwd)
                     # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
                     # if success:
                     is_validate_path = self.validate_folder(source_file_path, destination_path)
