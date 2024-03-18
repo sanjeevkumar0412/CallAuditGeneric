@@ -1,4 +1,5 @@
 from app.services.logger import Logger
+from flask import json
 from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
@@ -8,23 +9,61 @@ from sqlalchemy.engine import URL
 import jwt
 import datetime
 import secrets
+from sqlalchemy.sql import select
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
     AudioTranscribe, ClientMaster, AuthTokenManagement
 
+dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
+engine = create_engine(dns)
+Session = sessionmaker(bind=engine)
+session = Session()
+conn = engine.raw_connection()
+cursor = conn.cursor()
 
-class DataBaseClass:
+
+class FlaskDBService:
     _instance = None
+    global_utility = GlobalUtility()
+    logger = Logger()
+    db_connection = DbConnection()
 
-    def __init__(self):
-        self.global_utility = GlobalUtility()
-        self.logger = Logger()
-        self.db_connection = DbConnection()
-
-    def __new__(cls):
+    @classmethod
+    def get_instance(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            cls._instance = cls.__new__(cls)
         return cls._instance
+
+    def get_json_format(result, status=True, message=None):
+        api_object = {
+            "result": result,
+            "message": message == None if 'The api result set for the service supplied.' else message,
+            "status": 'success',
+        }
+        if status == False:
+            api_object = {
+                "result": [],
+                "message": message,
+                "status": 'failure',
+            }
+        return api_object
+
+    def set_json_format(result, status=True, message=None):
+        api_object = {
+            "result": result,
+            "message": message == None if 'Record has been updated successfully.' else message,
+            "status": 'success',
+        }
+        if status == False:
+            api_object = {
+                "result": [],
+                "message": message,
+                "status": 'failure',
+            }
+        return api_object
+
+    def is_empty(value):
+        return value is None or (isinstance(value, str) and not value.strip())
 
     def get_all_configurations(self, server, database, client_id):
         try:
@@ -153,9 +192,12 @@ class DataBaseClass:
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            records = session.query(AudioTranscribe).filter(
+            audio_transcribe = session.query(AudioTranscribe).filter(
                 (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
-            return records
+            audio_transcribe_array = []
+            for contact in audio_transcribe:
+                audio_transcribe_array.append(contact.toDict())
+            return audio_transcribe_array
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)
@@ -191,22 +233,14 @@ class DataBaseClass:
                 for column, value in update_values.items():
                     setattr(record, column, value)
                 session.commit()
-                print(f"Parent Record for ID '{record_id}' updated successfully.")
+                return self.set_json_format([record_id])
             else:
-                print(f"User with ID {record_id} not found.")
-            return {
-                'status': 'Success',
-                'message': f"Record for ID '{record_id}' updated successfully.",
-                'code': 200
-            }
+                return self.set_json_format([], False, f"The record ID, {record_id}, could not be found.")
+
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
-            return {
-                'status': 'Failure',
-                'message': e,
-                'code': 400
-            }
+            return self.set_json_format([], False, e)
         finally:
             session.close()
 
@@ -217,40 +251,35 @@ class DataBaseClass:
             Session = sessionmaker(bind=engine)
             session = Session()
             record = session.query(AudioTranscribeTracker).get(int(record_id))
-            if record is not None:  # Check if the record exists
+            if len(record) > 0:  # Check if the record exists
                 for column, value in update_values.items():
                     setattr(record, column, value)
                 session.commit()
                 self.logger.info(f"Child Record for ID '{record_id}' updated successfully.")
+                record_data = session.query(AudioTranscribeTracker).filter(
+                    (AudioTranscribeTracker.ClientId == record.ClientId) & (
+                            AudioTranscribeTracker.AudioId == record.AudioId) & (
+                            AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
+                if len(record_data) == 0:
+                    parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
+                    values = {'JobStatus': 'Drafted'}
+                    if record is not None:  # Check if the record exists
+                        for column, value in values.items():
+                            setattr(parent_record, column, value)
+                        session.commit()
+                        # return self.set_json_format([record_id])
+                return self.set_json_format([record_id])
             else:
-                self.logger.info(f"User with ID {record_id} not found.")
+                return self.set_json_format([], False, f"The record ID, {record_id}, could not be found.")
             # session.commit()
-            record_data = session.query(AudioTranscribeTracker).filter(
-                (AudioTranscribeTracker.ClientId == record.ClientId) & (
-                        AudioTranscribeTracker.AudioId == record.AudioId) & (
-                        AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
-            if len(record_data) == 0:
-                parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
-                values = {'JobStatus': 'Drafted'}
-                if record is not None:  # Check if the record exists
-                    for column, value in values.items():
-                        setattr(parent_record, column, value)
-                    session.commit()
-                    self.logger.info(f"Record for ID '{parent_record}' updated successfully.")
-            session.close()
-            return {
-                'status': 'Success',
-                'message': f"Record for ID '{record_id}' updated successfully.",
-                'code': 200
-            }
+
+            # self.logger.info(f"Record for ID '{parent_record}' updated successfully.")
+            # session.close()
+
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
-            return {
-                'status': 'Failure',
-                'message': e,
-                'code': 400
-            }
+            return self.set_json_format([], False, e)
         finally:
             session.close()
 
@@ -296,10 +325,10 @@ class DataBaseClass:
 
     def get_client_master_data(self, server, database, client_id):
         try:
-            connection_string1 = "DRIVER={SQL Server Native Client 10.0};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=user;PWD=password"
-            connection_string = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=agreeya\sudhir.kumar;PWD=Solenki1@#"
-            connection_string2 = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans"
-            connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
+            # connection_string1 = "DRIVER={SQL Server Native Client 10.0};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=user;PWD=password"
+            # connection_string = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=agreeya\sudhir.kumar;PWD=Solenki1@#"
+            # connection_string2 = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans"
+            # connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
 
             # engine = create_engine(connection_url)
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
@@ -358,7 +387,7 @@ class DataBaseClass:
                 token = self.global_utility.get_list_array_value(result,
                                                                  CONFIG.TOKEN)
                 record_id = self.global_utility.get_list_array_value(result,
-                                                                 CONFIG.ID)
+                                                                     CONFIG.ID)
                 secret_key = self.global_utility.get_list_array_value(result,
                                                                       CONFIG.SECRETKEY)
 
@@ -368,10 +397,10 @@ class DataBaseClass:
                 error_message = str("Token verified successfully")
                 return success, error_message
             else:
-                self.generate_token(session,client_id, user_name)
+                self.generate_token(session, client_id, user_name)
         except jwt.ExpiredSignatureError:
             print("Token has expired")
-            self.update_token(session, record_id,user_name)
+            self.update_token(session, record_id, user_name)
             success = True
             error_message = str("Token has expired & updated successfully.")
             return success, error_message
@@ -384,7 +413,7 @@ class DataBaseClass:
             error_message = str(e)
             return success, error_message
 
-    def generate_token(self, session,client_id, user_name):
+    def generate_token(self, session, client_id, user_name):
         try:
             secret_key = secrets.token_bytes(32)
             hex_key = secret_key.hex()
@@ -397,7 +426,8 @@ class DataBaseClass:
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-            record_model = AuthTokenManagement(Token=token, UserName=user_name, ClientId=client_id, SecretKey=SECRET_KEY)
+            record_model = AuthTokenManagement(Token=token, UserName=user_name, ClientId=client_id,
+                                               SecretKey=SECRET_KEY)
             session.add(record_model)
             session.commit()
             self.logger.info(f"Record inserted successfully. ID: {record_model.Id}")
@@ -408,8 +438,7 @@ class DataBaseClass:
         finally:
             session.close()
 
-
-    def update_token(self, session,record_id, user_name):
+    def update_token(self, session, record_id, user_name):
         try:
             secret_key = secrets.token_bytes(32)
             hex_key = secret_key.hex()
@@ -422,7 +451,7 @@ class DataBaseClass:
                 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-            update_values = {'Token': token,'SecretKey': SECRET_KEY}
+            update_values = {'Token': token, 'SecretKey': SECRET_KEY}
             record = session.query(AudioTranscribeTracker).get(int(record_id))
             if record is not None:  # Check if the record exists
                 for column, value in update_values.items():

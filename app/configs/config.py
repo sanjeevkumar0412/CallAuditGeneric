@@ -1,6 +1,7 @@
 # Database settings
 
 class CONFIG:
+    ID = 'Id'
     CLIENT_ID = 'ClientId',
     AUDIO_SOURCE_FOLDER_PATH = 'AudioSourceFolderPath'
     AUDIO_DESTINATION_FOLDER_PATH = 'AudioDestinationFolderPath'
@@ -13,7 +14,10 @@ class CONFIG:
     FILE_SIZE_LIMIT = 'FileSizeLimit'
     CHUNK_SIZE = 'ChunkSize'
     CLIENT_ID = 'ClientId'
-    CLIENT_SECRET = 'ClientSecret'
+    CLIENT_SECRET = 'ClientSecret',
+    CLIENT_USER_NAME = 'ClientUserName'
+    CLIENT_PASSWORD = 'ClientPassword'
+    CLIENT_USER = 'ClientUser'
 
     # User
     LDAP_USER_NAME = 'LDAP_User'
@@ -21,3 +25,10 @@ class CONFIG:
     OPENAI_API_KEY = 'OPENAI_API_KEY'
     DATABASE_SERVER = 'DatabaseServer'
     DATABASE_NAME = 'DatabaseName'
+    SERVER_NAME = 'ServerName'
+    AUTHENTICATION_TYPE = 'AuthenticationType'
+
+    # authentication_token
+    TOKEN_USER_NAME = 'UserName'
+    TOKEN = 'Token'
+    SECRETKEY = 'SecretKey'

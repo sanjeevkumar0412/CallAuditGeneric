@@ -1,5 +1,6 @@
 from pydub import AudioSegment
 from dotenv import load_dotenv
+from flask import json
 import shutil
 import os
 import jwt
@@ -13,6 +14,7 @@ load_dotenv()
 
 class GlobalUtility:
     _instance = None
+    master_client_data = None
 
     # place keys here
 
@@ -31,8 +33,15 @@ class GlobalUtility:
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
+
     def get_key_config_value(self, key_name):
         return self.get_config_by_value(self.cofigurations_data, key_name)
+
+    def set_master_client_data(self, data):
+        self.master_client_data = data
+
+    def get_master_client_data(self):
+        return self.master_client_data
 
     def set_configurations_data(self, data):
         self.cofigurations_data = data
@@ -288,6 +297,13 @@ class GlobalUtility:
                 return value
         return None
 
+    def get_list_array_value(self,list_data, key_name):
+        for item in list_data:
+            value = item.get(key_name)
+            if value is not None:
+                return value
+        return None
+
     def get_config_by_value(self, dictionary, target_value):
         keys = None
         for dictionary in dictionary:
@@ -300,7 +316,37 @@ class GlobalUtility:
         return keys
 
     def get_configuration_by_column(self, results):
-        filetype_info_column_names = results[0].__dict__.keys() if results else []
-        filetype_info_array = [{column: getattr(row, column) for column in filetype_info_column_names} for row in
+        columns = results[0].__dict__.keys() if results else []
+        result_array = [{column: getattr(row, column) for column in columns} for row in
                                results]
-        return filetype_info_array
+        return result_array
+
+    def convert_to_json_format(self, results):
+        columns = results[0].__dict__.keys() if results else []
+        res = []
+        for row in results:
+            row_dict = dict(zip(columns, row))
+            for key, value in row_dict.items():
+                if isinstance(value, datetime):
+                    row_dict[key] = value.isoformat()
+            res.append(row_dict)
+        return res
+
+    def to_json(self,results):
+        """Converts SQLAlchemy ORM results to JSON format."""
+
+        def handle_date(obj):
+            """Handles date objects for JSON serialization."""
+            if isinstance(obj, datetime.date):
+                return obj.isoformat()
+            else:
+                return obj
+
+        json_data = [
+            {col.name: getattr(row, col.name, None)}  # Handle potential missing attributes
+            for row in results
+            for col in row.__dict__.values()
+        ]
+        return json.dumps(json_data, default=handle_date)
+
+
