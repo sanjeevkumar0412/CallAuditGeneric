@@ -175,6 +175,18 @@ class SentimentAnalysisCreation:
             print(e)
             # result.close()
 
+    def get_sentiment_data_from_table(self, audio_file):
+        import json
+        try:
+            sentiment_dic={}
+            data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
+            sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,"AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,"Created":data[0].Created,"SentimentScore":data[0].SentimentScore,"SentimentStatus":data[0].SentimentStatus,"Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
+            result = {"sentimentdata": sentiment_dic,"status": 200}
+            # json_data = json.dumps(result)
+            return result
+        except Exception as e:
+            # self.logger.error(f": Error {e}",e)
+            print(e)
 
 if __name__ == "__main__":
 
@@ -187,7 +199,8 @@ if __name__ == "__main__":
     audio_path='CallRecording111234.mp3'
 
     # re=sentiment_instance.get_data_from_transcribe_table(audio_path)
-    re=sentiment_instance.get_transcribe_data_for_sentiment(audio_path)
+    re=sentiment_instance.get_sentiment_data_from_table(audio_path)
+    # re=sentiment_instance.get_transcribe_data_for_sentiment(audio_path)
     print("By File Name>>",re)
 
 
