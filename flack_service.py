@@ -12,7 +12,7 @@ import secrets
 from sqlalchemy.sql import select
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe, ClientMaster, AuthTokenManagement
+    AudioTranscribe, ClientMaster, AuthTokenManagement,MasterConnectionString
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 engine = create_engine(dns)
@@ -34,10 +34,10 @@ class FlaskDBService:
             cls._instance = cls.__new__(cls)
         return cls._instance
 
-    def get_json_format(result, status=True, message=None):
+    def get_json_format(self,result, status=True, message=None):
         api_object = {
             "result": result,
-            "message": message == None if 'The api result set for the service supplied.' else message,
+            "message": message == None if 'The data result set that the service provided.' else message,
             "status": 'success',
         }
         if status == False:
@@ -48,7 +48,7 @@ class FlaskDBService:
             }
         return api_object
 
-    def set_json_format(result, status=True, message=None):
+    def set_json_format(self,result, status=True, message=None):
         api_object = {
             "result": result,
             "message": message == None if 'Record has been updated successfully.' else message,
@@ -462,5 +462,27 @@ class FlaskDBService:
             print("Generated token:", record.Id)
         except Exception as e:
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
+        finally:
+            session.close()
+
+    def get_connection_string(self, server, database, client_id):
+        try:
+            dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            records = session.query(MasterConnectionString).filter(
+                (MasterConnectionString.ClientId == client_id) &  (
+                    MasterConnectionString.IsActive)).all()
+            print(f"Records Length :- {len(records)}")
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            return record_coll
+        except Exception as e:
+            session.close()
+            self.logger.error("connect_to_database", e)
+            return []
         finally:
             session.close()

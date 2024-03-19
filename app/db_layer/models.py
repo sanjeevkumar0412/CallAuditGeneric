@@ -285,7 +285,7 @@ class ClientMaster(Base):
     __tablename__ = 'ClientMaster'
 
     Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
-    ClientId = Column(Integer, unique=True, nullable=False)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     ClientName = Column(String, unique=True, nullable=False)
     ClientUser = Column(String, unique=True, nullable=False)
     ServerName = Column(String, unique=True, nullable=False)
@@ -295,6 +295,41 @@ class ClientMaster(Base):
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=False)
     IsActive = Column(Boolean, unique=False, default=True, nullable=False)
     IsDeleted = Column(Boolean, unique=False, default=False, nullable=False)
+
+    def toDict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+class DatabaseMaster(Base):
+    __tablename__ = 'DatabaseMaster'
+
+    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    DatabaseName = Column(String, unique=True, nullable=False)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True, nullable=True)
+    IsDeleted = Column(Boolean, unique=False, default=False, nullable=True)
+
+    def toDict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+class MasterConnectionString(Base):
+    __tablename__ = 'MasterConnectionString'
+
+    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    DatabaseType = Column(Integer, ForeignKey('DatabaseMaster.Id'), nullable=False)
+    ConnectionName = Column(String, unique=True, nullable=True)
+    ConnectionString = Column(String, unique=True, nullable=True)
+    Host = Column(String, unique=True, nullable=True)
+    Port = Column(String, unique=True, nullable=True)
+    Username = Column(String, unique=True, nullable=True)
+    Password = Column(String, unique=True, nullable=True)
+    DatabaseName = Column(String, unique=True, nullable=True)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True, nullable=True)
+    IsDeleted = Column(Boolean, unique=False, default=False, nullable=True)
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}

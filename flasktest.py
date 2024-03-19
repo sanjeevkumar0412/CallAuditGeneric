@@ -38,10 +38,10 @@ server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
 
-@app.route('/query/get_all_data', methods=['GET'])
+@app.route('/get_all_data', methods=['GET'])
 def get_record():
     table_name = request.args.get('table_name')
-    data = db_instance.get_all_record(table_name)
+    data = db_instance.get_all_record(table_name.capitalize())
     if data == None:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return data
@@ -62,11 +62,7 @@ def get_recordby_column_name():
     table_name = request.args.get('table_name')
     column_name = request.args.get('column_name')
     column_value = request.args.get('column_value')
-
     data = db_instance.get_data_by_column_name(table_name, column_name, column_value)
-
-    if data == None:
-        data = {"Error": "Invalid table/Data not available for this " + table_name}
     return data
 
 
@@ -177,7 +173,7 @@ def get_audio_transcribe_tracker_data():
             return flask_service.get_json_format([])
         # data_json = json.dumps(data, cls=AlchemyEncoder)
     except Exception as e:
-        return flask_service.get_json_format([], False, e)
+            return flask_service.get_json_format([], False, e)
 
 @app.route('/add_update_transcribe', methods=['GET'])
 def add_update_transcribe():

@@ -40,23 +40,32 @@ class DBRecord:
 
     def get_all_record(self, table_name):
         try:
-            # with app.app_context():
-            # raw_sql = 'SELECT * FROM '+'dbo.'+table_name
             table_exists = table_name in tables_check
             if table_exists:
                 raw_sql = f"SELECT * FROM {table_name}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion()
-                result = {"status": "200", "result": result}
+                api_object = {
+                    "result": result,
+                    "message": 'The data result set that the service provided.',
+                    "status": 'success',
+                }
+                return api_object
             else:
-                result = {"status": "404", "Info": f"Table {table_name} not found ! "}
-
-            if result == []:
-                result = {"status": '204', "Info": f"Content not available for {table_name} !"}
-
-            return {'data': result}
+                api_object = {
+                    "result": [],
+                    "message": f"Table {table_name} not found ! ",
+                    "status": 'failure',
+                }
+                return api_object
         except Exception as e:
-            print(".........Error in get_all_record...........", e)
+            api_object = {
+                "result": [],
+                "message": e,
+                "status": 'failure',
+            }
+            return api_object
+
 
     def get_record_by_id(self, table_name, id):
         try:
@@ -86,17 +95,33 @@ class DBRecord:
                     raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion()
-                    result = {"status": "200", "result": result}
+                    api_object = {
+                        "result": result,
+                        "message": 'The data result set that the service provided.',
+                        "status": 'success',
+                    }
+                    return api_object
                 else:
-                    result = {"status": "404", "Info": f"Column  {column_name} not found!"}
+                    api_object = {
+                        "result": [],
+                        "message": f"Column  {column_name} not found!",
+                        "status": 'failure',
+                    }
+                    return api_object
             else:
-                result = {"status": "404", "Info": f"Table {table_name} not found !"}
-
-            if result == []:
-                result = {"status": '204', "Info": f"Record not found for {table_name} !"}
-            return {'data': result}
+                api_object = {
+                    "result": [],
+                    "message": f"Column  {column_name} not found!",
+                    "status": 'failure',
+                }
+                return api_object
         except Exception as e:
-            print("Error function in get_data_by_column_name", e)
+            api_object = {
+                "result": [],
+                "message": e,
+                "status": 'failure',
+            }
+            return api_object
 
     def update_record_by_column(self, table_name, column_to_update, new_value, condition_column, condition_value):
 
