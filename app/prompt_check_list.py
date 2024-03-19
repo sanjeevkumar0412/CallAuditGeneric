@@ -1,0 +1,5 @@
+prompt_text="Please read the conversations and shares a list of topics in JSON format along with topic you also provide the sentiment analysis reports with every discussed topic. You also include various other things in topic list like whether any foul or bad language used in discussion,You can also add various other things in the list and share the socre and one final agregate socre of this summary and its agregate sentiment. The conversation will be available between two @@@ as follows @@@"
+
+prompt1="Your role is Business analyst who reads conversations between interviewer and candidate Please read the conversations and shares a list of topics in JSON format along with topic you also provide the sentiment analysis reports with every discussed topic. You also include various other things in topic list like whether any foul or bad language used in discussion,You can also add various other things in the list and share the socre and one final agregate socre of this summary and its agregate sentiment. The conversation will be available between two @@@ as follows @@@"
+
+prepare_prompt=""
