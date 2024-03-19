@@ -1,10 +1,12 @@
 from app.services.logger import Logger
 import os
+from app.utilities.utility import GlobalUtility
 from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
+from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = ""
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
@@ -21,17 +23,18 @@ class SentimentAnalysisCreation:
 
     def __init__(self):
         self.logger = Logger()
+        self.global_utility = GlobalUtility()
 
     def get_sentiment(self,text):
 
-        prompt = f" Your role is Business Analyst who reads the transcription of discussion between Deator and Recovery agent of any recovery comp   its sentiment? We're interested in understanding the overall mood or feeling conveyed in the recording. Your insights will help us gain a better understanding of the emotional tone of the content:'{text}' The sentiment of this text is:"
+        prompt = f"{prompt_check_list.prompt_text}{text} The sentiment of this text is:"
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": ""}
             ],
-            temperature=0,
+            temperature=1,
             max_tokens=1,
             top_p=1,
             frequency_penalty=0,
@@ -56,40 +59,39 @@ class SentimentAnalysisCreation:
         try:
             transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
             clientid=transcribe_data.get("ClientId")
+            current_file=transcribe_data.get("filename")
             transcribid=transcribe_data.get("TranscribeId")
             created_sentiment_date = datetime.utcnow()
-
+            # sentiment_status= self.global_utility.get_status_by_key_name(self.global_utility.get_job_status_data(),'PreProcessing')
             analysis_sentiment_date = datetime.utcnow()
+            file_entry_check = session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).all()
 
-            sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
-                                      "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
+            if file_entry_check is None:
+                dump_data_into_table = SentimentAnalysis(ClientId=clientid,
+                                                      AnalysisDateTime=analysis_sentiment_date, SentimentStatus=2,
+                                                      AudioFileName=current_file,Created=created_sentiment_date, \
 
-            modified_sentiment_date = datetime.utcnow()
+                                                      )
+                session.add(dump_data_into_table)
+                session.commit()
+            else:
+                sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
+                                          "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
 
-            sentiment_column_data = SentimentAnalysis(ClientId=clientid, SentimentScore=sentiment_output_data[0]['score'],SentimentText=sentiment_output_data[0]['text'], \
-                                                     AnalysisDateTime=analysis_sentiment_date,SentimentStatus=2,Created=created_sentiment_date, \
-                                                     Modified=modified_sentiment_date,Sentiment=sentiment_output_data[0]['sentiment']
-                                                     )
-            session.add(sentiment_column_data)
-            session.commit()
+                if len(sentiment_output_data) > 0:
 
-            # sentiment_id_current = session.query(SentimentAnalysis.Id).filter(SentimentAnalysis.Id == transcribid)
-            # sentiment_id_res=sentiment_id_current.first()
-            # print("sentiment_id_currentsentiment_id_current>>>",sentiment_id_current)
-            # print("sentiment_id_res>>>",sentiment_id_res)
-            # sentiment_status_update = session.query(SentimentAnalysis).filter(SentimentAnalysis.Id == transcribid,SentimentAnalysis.Id==sentiment_id_res,SentimentAnalysis.SentimentStatus=="Inprogress").first()
-            #
-            # if sentiment_status_update:
-            #     sentiment_status_update.SentimentStatus="Completed"
-            #     # for sentiment_status in sentiment_status_update:
-            #     #     sentiment_status.SentimentStatus="Completed"
-            #     session.commit()
-            #     print("Sentiment status successfully updated !")
-            # else:
-            #     print("Error while updating sentiment status !")
-            #
-            return sentiment_column_data
+                    update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).all()[0]
+                    modified_sentiment_date = datetime.utcnow()
 
+                    if update_sentiment_record:
+                        update_sentiment_record.SentimentScore=sentiment_output_data[0]['score']
+                        update_sentiment_record.SentimentText=sentiment_output_data[0]['text']
+                        update_sentiment_record.SentimentStatus=3
+                        update_sentiment_record.Modified=modified_sentiment_date
+                        update_sentiment_record.Sentiment=sentiment_output_data[0]['sentiment']
+                        session.commit()
+            result={"status":"200","message":"Sentiment Record successfully recorded !"}
+            return result
         except IntegrityError as e:
             session.rollback()
             print("Error:", e)
@@ -102,13 +104,12 @@ class SentimentAnalysisCreation:
 
             check_audio_id_exits = session.query(AudioTranscribe).filter(
                 AudioTranscribe.AudioFileName == audio_file).first()
-            print("check_audio_id_exits", check_audio_id_exits)
-            if check_audio_id_exits:
+            if len(check_audio_id_exits) > 0:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
                     # AudioTranscribeTracker.ChunkStatus == 'Completed')
                 query_audio_id_results = audio_id_query.all()
-                if query_audio_id_results != []:
+                if len(query_audio_id_results) > 0:
                     query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
                                           AudioTranscribeTracker.ChunkFilePath,
                                           AudioTranscribeTracker.ChunkSequence,
@@ -139,16 +140,15 @@ class SentimentAnalysisCreation:
 
             audio_dictionary = {}
             transcribe_text = []
-
-            check_audio_id_exits = session.query(AudioTranscribe).filter(
-                AudioTranscribe.AudioFileName == audio_file).first()
-            print("check_audio_id_exits", check_audio_id_exits)
-            if check_audio_id_exits:
+            check_audio_file_exits = session.query(AudioTranscribe).filter(
+                AudioTranscribe.AudioFileName == audio_file).all()
+            # print("check_audio_id_exits", check_audio_file_exits)
+            if len(check_audio_file_exits) > 0:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
                     # AudioTranscribeTracker.ChunkStatus == 'Completed')
                 query_audio_id_results = audio_id_query.all()
-                if query_audio_id_results != []:
+                if len(query_audio_id_results) > 0:
                     query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
                                           AudioTranscribeTracker.ChunkFilePath,
                                           AudioTranscribeTracker.ChunkSequence,
@@ -160,20 +160,21 @@ class SentimentAnalysisCreation:
                         transcribe_text.append(row.ChunkText)
                         audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
                                                  "ChunkSequence": row.ChunkSequence,
-                                                 "TranscribeMergeText": transcribe_text})
-                        # print("chunk value >>>",audio_dictionary)
-                        # print("transcribe_text",transcribe_text)
+                                                 "TranscribeMergeText": transcribe_text,"filename":audio_file})
                 else:
                     self.logger.info(f":Transcribe Job Status is pending")
             else:
                 self.logger.info(f":Record not found {audio_file}")
+            # self.get_sentiment1(transcribe_text)
             self.dump_data_into_sentiment_database(audio_dictionary)
-            result = {"transcribe_data": transcribe_text, "status": 200}
+
+            result = {"transcribe_data": transcribe_text,"status": 200}
             return result
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
             print(e)
             # result.close()
+
 
 if __name__ == "__main__":
 
@@ -195,3 +196,5 @@ if __name__ == "__main__":
     # sentiment_results = analyzer.dump_data_into_sentiment_database()
     # sentiment_list_data= json.dumps(sentiment_results, indent=2)
     # print("Result>>>>>>",sentiment_list_data)
+
+

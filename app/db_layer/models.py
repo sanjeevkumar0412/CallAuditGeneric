@@ -232,10 +232,12 @@ class SentimentAnalysis(Base):
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=False)
     Sentiment = Column(String, nullable=True)
+    AudioFileName = Column(String, nullable=True)
+
 
     def __repr__(self):
         return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}')>"
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}')>"
 
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
