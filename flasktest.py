@@ -38,7 +38,7 @@ server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
 
-@app.route('/get_all_data', methods=['GET'])
+@app.route('/query/get_all_data', methods=['GET'])
 def get_record():
     table_name = request.args.get('table_name')
     data = db_instance.get_all_record(table_name)
