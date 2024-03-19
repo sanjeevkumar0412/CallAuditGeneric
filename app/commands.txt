@@ -14,3 +14,6 @@ pip install ldap3
 
 Install the PyJWT library
 pip install PyJWT
+
+Install flask-swagger-ui package
+pip install flask-swagger-ui
