@@ -32,3 +32,5 @@ class CONFIG:
     TOKEN_USER_NAME = 'UserName'
     TOKEN = 'Token'
     SECRETKEY = 'SecretKey'
+
+    CONNECTION_STRING = 'ConnectionString'

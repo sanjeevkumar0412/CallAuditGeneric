@@ -467,7 +467,7 @@ class FlaskDBService:
 
     def get_connection_string(self, server, database, client_id):
         try:
-            dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
+            # dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -475,11 +475,10 @@ class FlaskDBService:
             records = session.query(MasterConnectionString).filter(
                 (MasterConnectionString.ClientId == client_id) &  (
                     MasterConnectionString.IsActive)).all()
-            print(f"Records Length :- {len(records)}")
             record_coll = []
             for result in records:
                 record_coll.append(result.toDict())
-            return record_coll
+            return self.global_utility.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING)
         except Exception as e:
             session.close()
             self.logger.error("connect_to_database", e)

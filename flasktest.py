@@ -140,7 +140,7 @@ def get_client_configurations():
 def get_audio_transcribe_data():
     try:
         client_id = int(request.args.get('clientid'))
-        # data = database_service.get_audio_transcribe_table_data(server_name, database_name, client_id)
+        connection_string = flask_service.get_connection_string(server_name,database_name,client_id)
         audio_transcribe = session.query(AudioTranscribe).filter(
             (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
         if len(audio_transcribe) > 0:
