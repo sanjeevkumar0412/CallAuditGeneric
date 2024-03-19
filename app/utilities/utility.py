@@ -92,9 +92,6 @@ class GlobalUtility:
     def get_file_type_info_data(self):
         return self.file_type_info_data
 
-    def get_client_id(self):
-        return int(self.get_config_by_value(self.cofigurations_data, CONFIG.CLIENT_ID))
-
     def get_source_folder_path(self):
         return self.get_config_by_value(self.cofigurations_data, CONFIG.AUDIO_SOURCE_FOLDER_PATH)
 
@@ -107,26 +104,6 @@ class GlobalUtility:
     def get_audio_chuck_file_size(self):
         return self.get_config_by_value(self.cofigurations_data, CONFIG.AUDIO_CHUNK_FILE_SIZE)
 
-    def get_whisper_model_name(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.WHISPER_MODEL)
-
-    def get_audio_source_folder_path(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.AUDIO_SOURCE_FOLDER_PATH)
-
-    def get_ladp_user_name(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.LDAP_USER_NAME)
-
-    def get_ldap_user_password(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.LDAP_USER_PASSWORD)
-
-    def get_open_ai_key(self):
-        return 'sk-' + self.get_config_by_value(self.cofigurations_data, CONFIG.OPENAI_API_KEY)
-
-    def get_database_server_name(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.DATABASE_SERVER)
-
-    def get_database_name(self):
-        return self.get_config_by_value(self.cofigurations_data, CONFIG.DATABASE_NAME)
 
     def get_all_files(self, path):
         files_arr = []

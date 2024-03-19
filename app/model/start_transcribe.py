@@ -47,7 +47,6 @@ class StartTranscribe:
             master_configurations = self.database_class.get_client_master_data(db_server_name, db_sql_name, client)
             # all master table configurations
             master_client_id = int(self.global_utility.get_values_from_json_array(master_configurations, CONFIG.CLIENT_ID))
-            # master_client_id = int(self.global_utility.get_list_array_value(master_configurations, CONFIG.CLIENT_ID))
             master_db_server = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.SERVER_NAME)
             master_db_name = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.DATABASE_NAME)
             master_client_user = self.global_utility.get_values_from_json_array(master_configurations, CONFIG.CLIENT_USER)
@@ -76,18 +75,13 @@ class StartTranscribe:
                 if success:
                     configurations = self.database_class.get_all_configurations(db_server, db_name,
                                                                                 master_client_id)
-                    # client_id = int(self.global_utility.get_list_array_value(CONFIG.CLIENT_ID))
-                    # db_server = self.global_utility.get_list_array_value(CONFIG.SERVER_NAME)
-                    # db_name = self.global_utility.get_list_array_value(CONFIG.DATABASE_NAME)
-                    # configurations = self.database_class.get_all_configurations(db_server, db_name, client_id)
                     self.logger.info('All Configuration getting successfully!')
-                    # all_configurations = self.global_utility.get_config_by_key_name(configurations, 'Configurations')
                     opem_key_name = 'sk-' + self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.OPENAI_API_KEY)
-                    # client_id = self.global_utility.get_client_id()
+
                     name_client = int(self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.CLIENT_ID))
                     db_server_name = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.DATABASE_SERVER)
                     database_name =  self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.DATABASE_SERVER)
-                    # self.logger.log_entry_into_sql_table(db_server_name, db_name, client_id, False)
+
                     self.logger.info('self.database_class.get_audio_transcribe_tracker_table_data')
                     source_file_path = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.AUDIO_SOURCE_FOLDER_PATH)
                     destination_path = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.AUDIO_DESTINATION_FOLDER_PATH)
@@ -95,9 +89,6 @@ class StartTranscribe:
                     # ldap_pwd = None
                     ldap_pwd = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.LDAP_USER_PASSWORD)
                     whisper_model = self.global_utility.get_configuration_by_key_name(self.global_utility.cofigurations_data,CONFIG.WHISPER_MODEL)
-                    # success, error_message = self.authentication_service.get_ldap_authenticate(ldap_user, ldap_pwd)
-                    # is_authenticate = self.db_instance.get_token_based_authenticate(user_name)
-                    # if success:
                     is_validate_path = self.validate_folder(source_file_path, destination_path)
                     if is_validate_path:
                         file_collection = self.global_utility.get_all_files(source_file_path)
@@ -106,14 +97,6 @@ class StartTranscribe:
                         # Premium, Normal, Small
                     else:
                         self.logger.info('There is no container at the specified path.')
-                    # else:
-                    #     log_info = Logs(ClientId=client_id, LogSummary=error_message, LogDetails=error_message,
-                    #                     LogType=self.logger.error_level_critical,
-                    #                     ModulName='start_transcribe_process',
-                    #                     Severity=self.logger.severity_level_critical)
-                    #     self.logger.save_log_table_entry(db_server_name, database_name, log_info)
-                    #     self.logger.info(
-                    #         'You are not authenticate with the proper credentials.please try with other credentials')
             else:
                 self.logger.info(
                     'You are not authenticate with the proper credentials.please try with other credentials')
