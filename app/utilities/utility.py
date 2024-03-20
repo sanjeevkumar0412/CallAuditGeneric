@@ -358,3 +358,14 @@ class GlobalUtility:
     def get_values_from_json_array(self,json_array, key_name):
         values = [elem[key_name] for elem in json_array if key_name in elem]
         return values[0]
+
+    def validate_folder(self, source_file_path, destination_folder):
+        try:
+            is_source_path_exist = os.path.exists(source_file_path)
+            is_destination_path_exist = os.path.exists(destination_folder)
+            if is_source_path_exist and is_destination_path_exist:
+                return True
+            else:
+                return False
+        except Exception as e:
+            self.logger.error('validate_folder', e)

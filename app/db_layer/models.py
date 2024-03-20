@@ -274,7 +274,7 @@ class AudioTranscribeTracker(Base):
     ChunkFilePath = Column(String, unique=False, nullable=True)
     ChunkTranscribeStart = Column(DateTime, unique=False, nullable=True)
     ChunkTranscribeEnd = Column(DateTime, unique=False, nullable=True)
-    ChunkCreatedDate = Column(DateTime, unique=False, nullable=True)
+    ChunkCreatedDate = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, unique=False, default=True, nullable=True)

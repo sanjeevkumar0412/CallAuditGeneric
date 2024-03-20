@@ -105,8 +105,10 @@ class DataBaseClass:
 
     def create_audio_file_entry(self, model_info):
         try:
-            db_server = self.global_utility.get_database_server_name()
-            db_name = self.global_utility.get_database_name()
+            # db_server = self.global_utility.get_database_server_name()
+            # db_name = self.global_utility.get_database_name()
+            db_server = 'FLM-VM-COGAIDEV'
+            db_name = 'AudioTrans'
             dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)

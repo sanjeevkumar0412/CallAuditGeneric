@@ -4,7 +4,9 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
+from datetime import datetime
 import jwt
+import os
 import datetime
 import secrets
 from constants.constant import CONSTANT
@@ -153,24 +155,11 @@ def save_log_table_entry(server_name, database):
         session.close()
 
 
-def create_audio_file_entry(model_info):
-    try:
-        db_server = global_utility.get_database_server_name()
-        db_name = global_utility.get_database_name()
-        dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        record_model = model_info
-        session.add(record_model)
-        session.commit()
-        logger.info(f"Record inserted successfully. ID: {record_model.Id}")
-        return record_model
-    except Exception as e:
-        session.close()
-        logger.error(f"An error occurred in save_log_table_entry: ", {e})
-    finally:
-        session.close()
+def create_audio_file_entry(session, model_info):
+    record_model = model_info
+    session.add(record_model)
+    session.commit()
+    return record_model
 
 
 def update_transcribe_text(record_id, update_values, is_child_thread=True):
@@ -608,4 +597,113 @@ def get_app_configurations(server_name, database_name, client_id):
         return get_json_format([], False, str(e))
     finally:
         session.close()
+
+def copy_audio_files_process(server_name, database_name, client_id):
+    try:
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
+        results_config = session.query(Configurations).filter((Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
+        result_config_array = []
+        if len(results_config) > 0:
+            for result_elm in results_config:
+                result_config_array.append(result_elm.toDict())
+
+        results_file_type = session.query(FileTypesInfo).filter((FileTypesInfo.ClientId == client_id) & (FileTypesInfo.IsActive)).all()
+        result_file_type_array = []
+        if len(results_file_type) > 0:
+            for result_elm in results_file_type:
+                result_file_type_array.append(result_elm.toDict())
+
+        results_status = session.query(JobStatus).filter((JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
+        result_status_array = []
+        if len(results_status) > 0:
+            for result_elm in results_status:
+                result_status_array.append(result_elm.toDict())
+        if len(result_config_array) > 0:
+            source_file_path = global_utility.get_configuration_by_key_name(result_config_array,CONFIG.AUDIO_SOURCE_FOLDER_PATH)
+            destination_path = global_utility.get_configuration_by_key_name(result_config_array,CONFIG.AUDIO_DESTINATION_FOLDER_PATH)
+            audio_file_size = int(global_utility.get_configuration_by_key_name(result_config_array,CONFIG.AUDIO_FILE_SIZE))
+            is_validate_path = global_utility.validate_folder(source_file_path, destination_path)
+            if is_validate_path:
+                file_collection = global_utility.get_all_files(source_file_path)
+                for file in file_collection:
+                    file_url = source_file_path + "/" + file
+                    file_name, extension = global_utility.get_file_extension(file)
+                    file_type_id = global_utility.get_file_type_by_key_name(result_file_type_array, extension)
+                    # if extension == ".wav" or extension == ".mp3":
+                    if file_type_id > 0:
+                        name_file = file_url.split('/')[-1].split('.')[0]
+                        dir_folder_url = os.path.join(destination_path, name_file)
+                        is_folder_created = global_utility.create_folder_structure(file, dir_folder_url,destination_path)
+                        status_id = global_utility.get_status_by_key_name(result_status_array, 'PreProcessing')
+                        if is_folder_created:
+                            is_copied_files = global_utility.copy_file(file_url, dir_folder_url)
+                            if is_copied_files:
+                                audio_file_path = os.path.join(dir_folder_url, file)
+                                file_size = os.path.getsize(audio_file_path)
+                                file_size_mb = int(file_size / (1024 * 1024))
+                                if file_size_mb > audio_file_size:
+                                    logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                    audio_transcribe_model = AudioTranscribe(ClientId=client_id,
+                                                                             AudioFileName=file, JobStatus=status_id,
+                                                                             FileType=file_type_id,
+                                                                             TranscribeFilePath=audio_file_path)
+                                    parent_record = create_audio_file_entry(session,audio_transcribe_model)
+                                    audio_chunk_process(session,client_id, parent_record,status_id,result_file_type_array, audio_file_path,
+                                                                             dir_folder_url)
+                                else:
+                                    audio_transcribe_model = AudioTranscribe(ClientId=client_id,
+                                                                             AudioFileName=file, JobStatus=status_id,
+                                                                             FileType=file_type_id,
+                                                                             TranscribeFilePath=audio_file_path)
+                                    parent_record = create_audio_file_entry(session,audio_transcribe_model)
+                                    if parent_record is not None:
+                                        logger.info(f'New Item Created ID is {parent_record.Id}')
+                                    chunk_transcribe_model = AudioTranscribeTracker(
+                                        ClientId=client_id,
+                                        AudioId=parent_record.Id,
+                                        ChunkFileType=file_type_id,
+                                        ChunkFileName=file, ChunkSequence=1, ChunkText='',
+                                        ChunkFilePath=audio_file_path, ChunkStatus=status_id,
+                                        ChunkCreatedDate=datetime.utcnow())
+                                    child_record = create_audio_file_entry(session, chunk_transcribe_model)
+                            else:
+                                return get_json_format([], False, f"{file} is not copied  in the destination folder {dir_folder_url}")
+                        else:
+                            return get_json_format([], False, f"Folder is not created for the file {file}")
+                    else:
+                        return get_json_format([], False, f"{file} is not supported.")
+                return get_json_format([], True, "All files copied and created Successfully.")
+            else:
+                return get_json_format([], False, 'There is no container at the specified path.')
+        else:
+            return get_json_format([],False,'There is no configuration found in the table')
+    except Exception as e:
+        return get_json_format([], False, str(e))
+    finally:
+        session.close()
+
+def audio_chunk_process(session,client_id,parent_record,status_id,result_file_type_array, audio_file_path, dir_folder_url ):
+    chunks = global_utility.split_audio_chunk_files(audio_file_path, dir_folder_url)
+    chunks_files = chunks[0]
+    counter = 0
+    for filename in os.listdir(dir_folder_url):
+        if filename.endswith(".wav"):  # Replace ".wav" with your audio format
+            counter += 1
+            filepath = os.path.join(dir_folder_url, filename)
+            file_name, extension = global_utility.get_file_extension(filename)
+            file_type_id = global_utility.get_file_type_by_key_name(result_file_type_array, extension)
+            chunk_transcribe_model = AudioTranscribeTracker(ClientId=client_id,
+                                                            AudioId=parent_record.Id,
+                                                            ChunkFileName=filename, ChunkSequence=counter,
+                                                            ChunkText='',
+                                                            ChunkFileType=file_type_id,
+                                                            ChunkFilePath=filepath, ChunkStatus=status_id
+                                                            # ChunkCreatedDate=datetime.utcnow()
+                                                            )
+            child_record = create_audio_file_entry(session,chunk_transcribe_model)
+            logger.info(f'Chunk New Item Created ID is {child_record.Id}')
+
+
+
 

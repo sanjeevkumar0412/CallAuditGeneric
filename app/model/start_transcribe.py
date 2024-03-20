@@ -92,7 +92,7 @@ class StartTranscribe:
                     is_validate_path = self.validate_folder(source_file_path, destination_path)
                     if is_validate_path:
                         file_collection = self.global_utility.get_all_files(source_file_path)
-                        self.start_recording_transcribe_process(file_collection, source_file_path, destination_path,
+                        self.start_recording_transcribe_process(client_id,file_collection, source_file_path, destination_path,
                                                                 whisper_model)
                         # Premium, Normal, Small
                     else:
@@ -107,7 +107,7 @@ class StartTranscribe:
             self.logger.save_log_table_entry(db_server_name, database_name, log_info)
             self.logger.error('start_transcribe_process', e)
 
-    def start_recording_transcribe_process(self, file_collection, source_file_path, destination_path,
+    def start_recording_transcribe_process(self, client_id,file_collection, source_file_path, destination_path,
                                            subscription_model):
         try:
             transcribe_files = []
@@ -134,12 +134,12 @@ class StartTranscribe:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
                                 status_id = self.global_utility.get_status_by_key_name(
                                     self.global_utility.get_job_status_data(), 'PreProcessing')
-                                audio_transcribe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
+                                audio_transcribe_model = AudioTranscribe(ClientId=client_id,
                                                                         AudioFileName=file, JobStatus=status_id,
                                                                         FileType=file_type_id,
                                                                         TranscribeFilePath=audio_file_path)
                                 parent_record = self.database_class.create_audio_file_entry(audio_transcribe_model)
-                                self.start_process_recordings_large_file(parent_record, audio_file_path, dir_folder_url,
+                                self.start_process_recordings_large_file(client_id,parent_record, audio_file_path, dir_folder_url,
                                                                          name_file,
                                                                          subscription_model, transcribe_files)
                             else:
@@ -147,7 +147,7 @@ class StartTranscribe:
                                 self.logger.info(f'file {name_file} Starting with size :- {file_size}')
                                 status_id = self.global_utility.get_status_by_key_name(
                                     self.global_utility.get_job_status_data(), 'PreProcessing')
-                                audio_transcribe_model = AudioTranscribe(ClientId=self.global_utility.get_client_id(),
+                                audio_transcribe_model = AudioTranscribe(ClientId=client_id,
                                                                         AudioFileName=file, JobStatus=status_id,
                                                                         FileType=file_type_id,
                                                                         TranscribeFilePath=audio_file_path)
@@ -155,7 +155,7 @@ class StartTranscribe:
                                 if parent_record is not None:
                                     self.logger.info(f'New Item Created ID is {parent_record.Id}')
                                 chunk_transcribe_model = AudioTranscribeTracker(
-                                    ClientId=self.global_utility.get_client_id(),
+                                    ClientId=client_id,
                                     AudioId=parent_record.Id,
                                     ChunkFileType=file_type_id,
                                     ChunkFileName=file, ChunkSequence=1, ChunkText='',
@@ -174,7 +174,7 @@ class StartTranscribe:
         except Exception as e:
             self.logger.error('start_recording_transcribe_process', f'Error while creating build_transcribe_model {e}')
 
-    def start_process_recordings_large_file(self, parent_record, audio_file_path, dir_folder_url, name_file,
+    def start_process_recordings_large_file(self, client_id,parent_record, audio_file_path, dir_folder_url, name_file,
                                             subscription_model,
                                             transcribe_files):
         try:
@@ -183,8 +183,10 @@ class StartTranscribe:
             # chunk_chunk_files_path = chunks[1]
             txt_file = os.path.join(dir_folder_url, name_file) + '.txt'
             transcribe_files.append(txt_file)
-            db_server_name = self.global_utility.get_database_server_name()
-            database_name = self.global_utility.get_database_name()
+            db_server_name = 'FLM-VM-COGAIDEV'
+            database_name = 'AudioTrans'
+            # db_server_name = self.global_utility.get_database_server_name()
+            # database_name = self.global_utility.get_database_name()
             status_id = self.global_utility.get_status_by_key_name(self.global_utility.get_job_status_data(),
                                                                    'PreProcessing')
             counter = 0
@@ -195,7 +197,7 @@ class StartTranscribe:
                     file_name, extension = self.global_utility.get_file_extension(filename)
                     file_type_id = self.global_utility.get_file_type_by_key_name(
                         self.global_utility.get_file_type_info_data(), extension)
-                    chunk_transcribe_model = AudioTranscribeTracker(ClientId=self.global_utility.get_client_id(),
+                    chunk_transcribe_model = AudioTranscribeTracker(ClientId=client_id,
                                                                     AudioId=parent_record.Id,
                                                                     ChunkFileName=filename, ChunkSequence=counter,
                                                                     ChunkText='',
@@ -203,29 +205,29 @@ class StartTranscribe:
                                                                     ChunkFilePath=filepath, ChunkStatus=status_id,
                                                                     ChunkCreatedDate=datetime.utcnow())
                     child_record = self.database_class.create_audio_file_entry(chunk_transcribe_model)
+                    self.start_process_recordings(self, child_record, audio_file_path,subscription_model)
                     self.logger.info(
                         f"Sql Table Entry Completed file chunk_{filename}.wav inside folder {dir_folder_url}")
         except Exception as e:
             self.logger.error('start_process_recordings_large_file', e)
 
-    def start_process_recordings(self, parent_record, child_record, audio_file_path, dir_folder_url, name_file,
-                                 subscription_model,
-                                 transcribe_files):
+    def start_process_recordings(self, child_record, audio_file_path, subscription_model):
         try:
             start_transcribe_time = datetime.utcnow()
-            txt_file = os.path.join(dir_folder_url, name_file) + '.txt'
             transcript = self.controller.build_transcribe_audio(audio_file_path, subscription_model)
             end_transcribe_time = datetime.utcnow()
-            update_values = {"TranscribeText": transcript['text'], "JobStatus": CONSTANT.STATUS_COMPLETED,
-                             "TranscribeStartTime": start_transcribe_time,
-                             "TranscribeEndTime": end_transcribe_time, 'TranscribeDate': end_transcribe_time}
-            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": CONSTANT.STATUS_COMPLETED,
+            # update_values = {"TranscribeText": transcript['text'], "JobStatus": CONSTANT.STATUS_COMPLETED,
+            #                  "TranscribeStartTime": start_transcribe_time,
+            #                  "TranscribeEndTime": end_transcribe_time, 'TranscribeDate': end_transcribe_time}
+            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": 1,
                                    "ChunkTranscribeStart": start_transcribe_time,
                                    "ChunkTranscribeEnd": end_transcribe_time}
-            db_server_name = self.global_utility.get_database_server_name()
-            database_name = self.global_utility.get_database_name()
-            self.database_class.update_audio_transcribe_table(db_server_name, database_name, parent_record.Id,
-                                                              update_values)
+            db_server_name = 'FLM-VM-COGAIDEV'
+            database_name = 'AudioTrans'
+            # db_server_name = self.global_utility.get_database_server_name()
+            # database_name = self.global_utility.get_database_name()
+            # self.database_class.update_audio_transcribe_table(db_server_name, database_name, parent_record.Id,
+            #                                                   update_values)
             self.database_class.update_audio_transcribe_tracker_table(db_server_name, database_name, child_record.Id,
                                                                       update_child_values)
         except Exception as e:

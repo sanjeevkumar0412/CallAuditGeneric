@@ -8,7 +8,7 @@ app = Flask(__name__)
 from database_query_utils import *
 from database_query_utils import DBRecord
 from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
-                           update_audio_transcribe_table, update_audio_transcribe_tracker_table, \
+                           update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table, \
                            get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, \
                            get_ldap_authentication, get_audio_transcribe_table_data, get_all_configurations_table)
 
@@ -212,6 +212,15 @@ def get_all_configurations():
     current_user = os.getlogin()
     print('Current login user:', current_user)
     json_result = get_all_configurations_table(server_name, database_name, client_id)
+    return json_result
+
+@app.route('/copy_audio_files', methods=['GET'])
+def copy_audio_files():
+    #  Dev Done
+    client_id = int(request.args.get('clientid'))
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    json_result = copy_audio_files_process(server_name, database_name, client_id)
     return json_result
 
 
