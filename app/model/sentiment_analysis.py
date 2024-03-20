@@ -8,7 +8,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
-# os.environ["OPENAI_API_KEY"] = "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"
 os.environ["OPENAI_API_KEY"] = ""
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
@@ -34,8 +33,8 @@ class SentimentAnalysisCreation:
             model="gpt-3.5-turbo",
             # model="gpt-4",
             messages=[
-                {"role": "system", "content": prompt},
-                # {"role": "user", "content": prompt}
+                # {"role": "system", "content": prompt},
+                {"role": "user", "content": prompt}
             ],
 
             max_tokens=500,
@@ -43,7 +42,7 @@ class SentimentAnalysisCreation:
             presence_penalty=0,
             stop=None,
             temperature=0.8
-            stop=["\n"]
+            # stop=["\n"]
         )
         # sentiment = response['choices'][0]['message']['content'].strip()
         sentiment = response.choices[0].message.content
