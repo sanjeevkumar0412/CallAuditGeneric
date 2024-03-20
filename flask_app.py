@@ -10,7 +10,7 @@ from database_query_utils import DBRecord
 from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
                            update_audio_transcribe_table, update_audio_transcribe_tracker_table, \
                            get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_audio_transcribe_table_data, \
-                           get_ldap_authentication,get_audio_transcribe_table_data)
+                           get_ldap_authentication,get_audio_transcribe_table_data,get_all_configurations_table)
 
 # Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
@@ -201,6 +201,16 @@ def get_sentiment_data():
     if data == None:
         data={"Error":"Invalid table/Data not available for this "+ audio_file_name}
     return {'data': data}
+
+@app.route('/get_all_configurations', methods=['GET'])
+def get_all_configurations():
+    #  Dev Done
+    client_id = int(request.args.get('clientid'))
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    json_result = get_all_configurations_table(server_name,database_name,client_id)
+    return json_result
+
 
 if __name__ == '__main__':
     app.run(debug=True)

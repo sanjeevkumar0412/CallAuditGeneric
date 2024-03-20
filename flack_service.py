@@ -73,12 +73,10 @@ def is_empty(value):
     return value is None or (isinstance(value, str) and not value.strip())
 
 
-def get_all_configurations(server, database, client_id):
+def get_all_configurations_table(server_name, database_name, client_id):
     try:
-        dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
         # Get data from Client table
         clients_data = session.query(Client).filter_by(ClientId=client_id).all()
         client_coll = []
@@ -113,24 +111,27 @@ def get_all_configurations(server, database, client_id):
         for subscriptions_plan_data in subscriptions_plan_data:
             subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
 
-        global_utility.set_client_data(client_coll)
-        global_utility.set_configurations_data(configuration_coll)
-        global_utility.set_file_type_info_data(filetype_info_coll)
-        global_utility.set_subscription_data(subscriptions_array)
-        global_utility.set_job_status_data(job_status_coll)
-        global_utility.set_subscription_plan_data(subscriptions_plan_coll)
+        # global_utility.set_client_data(client_coll)
+        # global_utility.set_configurations_data(configuration_coll)
+        # global_utility.set_file_type_info_data(filetype_info_coll)
+        # global_utility.set_subscription_data(subscriptions_array)
+        # global_utility.set_job_status_data(job_status_coll)
+        # global_utility.set_subscription_plan_data(subscriptions_plan_coll)
+        # final_result_set =[]
+        # final_result_set.append(client_coll)
         configurations = {
             'Client': client_coll,
             'Configurations': configuration_coll,
             'FileTypesInfo': filetype_info_coll,
             'Subscriptions': subscriptions_array,
-            'JobStatus': job_status_coll
+            'JobStatus': job_status_coll,
+            'SubscriptionsPlan': subscriptions_plan_coll
         }
-        return configurations
+        return get_json_format(configurations)
     except Exception as e:
         session.close()
         logger.error("connect_to_database", e)
-        raise
+        return get_json_format([], False, str(e))
     finally:
         session.close()
 
@@ -544,7 +545,7 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         elif len(results) == 0:
             return get_json_format([],True,'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, e)
+        return get_json_format([], False, str(e))
     finally:
         session.close()
 
@@ -570,7 +571,7 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
         elif len(results) == 0:
             return get_json_format([],True,'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, e)
+        return get_json_format([], False, str(e))
     finally:
         session.close()
 
