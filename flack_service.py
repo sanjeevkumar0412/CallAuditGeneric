@@ -44,15 +44,18 @@ def get_json_format(result, status=True, message=None):
 
 
 def set_json_format(result, status=True, message=None):
+    response_message = 'Record has been updated successfully..'
+    if message is not None:
+        response_message = message
     api_object = {
         "result": result,
-        "message": message == None if 'Record has been updated successfully.' else message,
+        "message": response_message,
         "status": 'success',
     }
     if not status:
         api_object = {
             "result": [],
-            "message": message,
+            "message": response_message,
             "status": 'failure',
         }
     return api_object
@@ -257,12 +260,10 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
         session.close()
 
 
-def update_audio_transcribe_table(server_name, database_name, record_id, update_values):
+def update_audio_transcribe_table(server_name, database_name,client_id, record_id, update_values):
     try:
-        dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
         record = session.query(AudioTranscribe).get(int(record_id))
         if record is not None:  # Check if the record exists
             for column, value in update_values.items():
@@ -280,12 +281,10 @@ def update_audio_transcribe_table(server_name, database_name, record_id, update_
         session.close()
 
 
-def update_audio_transcribe_tracker_table(server_name, database_name, record_id, update_values):
+def update_audio_transcribe_tracker_table(server_name, database_name,client_id, record_id, update_values):
     try:
-        dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
         record = session.query(AudioTranscribeTracker).get(int(record_id))
         if len(record) > 0:  # Check if the record exists
             for column, value in update_values.items():
@@ -374,11 +373,21 @@ def get_client_master_data(server, database, client_id):
         session.close()
 
 
-def get_ldap_authenticate(username, password):
+def get_ldap_authentication(server_name, database_name, client_id):
     success = True
     error_message = None
     # Establish connection with the LDAP server
-    server_address = 'ldap://10.9.32.17:389'
+    connection_string = get_connection_string(server_name, database_name, client_id)
+    session = get_database_session(connection_string)
+    records = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
+    record_coll = []
+    for result_elm in records:
+        record_coll.append(result_elm.toDict())
+    username = global_utility.get_values_from_json_array(record_coll,CONFIG.LDAP_USER_NAME)
+    password = global_utility.get_values_from_json_array(record_coll,CONFIG.LDAP_USER_PASSWORD)
+    server_address = global_utility.get_values_from_json_array(record_coll, CONFIG.LDAP_SERVER)
+
+    # server_address = 'ldap://10.9.32.17:389'
     server = Server(server_address, get_info=ALL, use_ssl=False)
     try:
         # Bind to the LDAP server with provided credentials
@@ -397,14 +406,12 @@ def get_ldap_authenticate(username, password):
         return success, error_message
 
 
-def get_token_based_authenticate(server, database, client_id, user_name):
+def get_token_based_authentication(server_name, database_name, client_id, user_name):
     try:
         success = True
         error_message = None
-        dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
         record = session.query(AuthTokenManagement).filter(
             (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
                 Client.IsActive)).all()
@@ -527,14 +534,14 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
             job_status_coll.append(status_result.toDict())
         status_id = global_utility.get_status_by_key_name(
             job_status_coll,CONSTANT.STATUS_COMPLETED)
-        audio_transcribe = session.query(AudioTranscribe).filter(
+        results = session.query(AudioTranscribe).filter(
             (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
-        if len(audio_transcribe) > 0:
-            audio_transcribe_array = []
-            for result in audio_transcribe:
-                audio_transcribe_array.append(result.toDict())
-            return get_json_format(audio_transcribe_array)
-        elif len(audio_transcribe) == 0:
+        if len(results) > 0:
+            result_array = []
+            for result_elm in results:
+                result_array.append(result_elm.toDict())
+            return get_json_format(result_array)
+        elif len(results) == 0:
             return get_json_format([],True,'There is no record found in the database')
     except Exception as e:
         return get_json_format([], False, e)
@@ -552,17 +559,52 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
             job_status_coll.append(status_result.toDict())
         status_id = global_utility.get_status_by_key_name(
             job_status_coll,CONSTANT.STATUS_COMPLETED)
-        audio_transcribe_tracker = session.query(AudioTranscribeTracker).filter(
+        results = session.query(AudioTranscribeTracker).filter(
             (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
                     AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
-        if len(audio_transcribe_tracker) > 0:
-            audio_transcribe_array = []
-            for result in audio_transcribe_tracker:
-                audio_transcribe_array.append(result.toDict())
-            return get_json_format(audio_transcribe_array)
-        elif len(audio_transcribe_tracker) == 0:
+        if len(results) > 0:
+            result_array = []
+            for result_elm in results:
+                result_array.append(result_elm.toDict())
+            return get_json_format(result_array)
+        elif len(results) == 0:
             return get_json_format([],True,'There is no record found in the database')
     except Exception as e:
         return get_json_format([], False, e)
     finally:
         session.close()
+
+def get_client_master_table_configurations(server_name, database_name, client_id):
+    try:
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
+        results = session.query(ClientMaster).filter((ClientMaster.ClientId == client_id) & (ClientMaster.IsActive)).all()
+        if len(results) > 0:
+            result_array = []
+            for result_elm in results:
+                result_array.append(result_elm.toDict())
+            return get_json_format(result_array)
+        elif len(results) == 0:
+            return get_json_format([],True,'There is no record found in the database')
+    except Exception as e:
+        return get_json_format([], False, str(e))
+    finally:
+        session.close()
+
+def get_app_configurations(server_name, database_name, client_id):
+    try:
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
+        results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
+        if len(results) > 0:
+            result_array = []
+            for result_elm in results:
+                result_array.append(result_elm.toDict())
+            return get_json_format(result_array)
+        elif len(results) == 0:
+            return get_json_format([],True,'There is no record found in the database')
+    except Exception as e:
+        return get_json_format([], False, str(e))
+    finally:
+        session.close()
+

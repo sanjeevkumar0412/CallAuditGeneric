@@ -7,10 +7,10 @@ app = Flask(__name__)
 
 from database_query_utils import *
 from database_query_utils import DBRecord
-from flack_service import (get_json_format, set_json_format, get_connection_string, get_all_configurations, \
+from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
                            update_audio_transcribe_table, update_audio_transcribe_tracker_table, \
-                           update_transcribe_text, get_audio_transcribe_tracker_table_data, get_audio_transcribe_table_data, \
-                           get_ldap_authenticate,get_audio_transcribe_table_data)
+                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_audio_transcribe_table_data, \
+                           get_ldap_authentication,get_audio_transcribe_table_data)
 
 # Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
@@ -108,38 +108,18 @@ def get_transcribe_sentiment():
 
 @app.route('/get_client_master_configurations', methods=['GET'])
 def get_client_master_configurations():
-    try:
-        client_id = int(request.args.get('clientid'))
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        results = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
-        if len(results) > 0:
-            audio_transcribe_array = []
-            for result in results:
-                audio_transcribe_array.append(result.toDict())
-            return get_json_format(audio_transcribe_array)
-        elif len(results) == 0:
-            return get_json_format([])
-    except Exception as e:
-        return get_json_format([], False, e)
+    # Done
+    client_id = int(request.args.get('clientid'))
+    json_result = get_client_master_table_configurations(server_name, database_name, client_id)
+    return json_result
 
 
 @app.route('/get_client_configurations', methods=['GET'])
 def get_client_configurations():
-    try:
-        client_id = int(request.args.get('clientid'))
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        results = session.query(Client).filter(
-            (Client.ClientId == client_id) & (
-                Client.IsActive)).all()
-        if len(results) > 0:
-            result_array = []
-            for result in results:
-                result_array.append(result.toDict())
-            return get_json_format(result_array)
-        elif len(results) == 0:
-            return get_json_format([])
-    except Exception as e:
-        return get_json_format([], False, e)
+    # Done
+    client_id = int(request.args.get('clientid'))
+    json_result = get_app_configurations(server_name, database_name, client_id)
+    return json_result
 
 
 @app.route('/get_audio_transcribe_data', methods=['GET'])
@@ -168,45 +148,49 @@ def get_audio_transcribe_tracker_data():
 
 @app.route('/add_update_transcribe', methods=['GET'])
 def add_update_transcribe():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = update_audio_transcribe_table(server_name, database_name, recored_id, updatevalues)
+    update_status = update_audio_transcribe_table(server_name, database_name,client_id, recored_id, updatevalues)
     return update_status
 
 
 @app.route('/add_update_transcribe_tracker', methods=['GET'])
 def add_update_transcribe_tracker():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = update_audio_transcribe_tracker_table(server_name, database_name, recored_id, updatevalues)
+    update_status = update_audio_transcribe_tracker_table(server_name, database_name,client_id, recored_id, updatevalues)
     return update_status
 
 
 @app.route('/get_token_based_authenticate', methods=['GET'])
 def get_token_based_authenticate():
+    #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
     user_name = request.args.get('username')
     current_user = os.getlogin()
-    connection_string = get_connection_string(server_name, database_name, client_id)
     print('Current login user:', current_user)
-    success, message = get_token_based_authenticate(server_name, database_name, client_id, user_name)
+    success, message = get_token_based_authentication(server_name, database_name, client_id, user_name)
     if success:
-        return set_json_format([], True, message)
+        return set_json_format([], True, str(message))
     else:
-        return set_json_format([], False, message)
+        return set_json_format([], False, str(message))
 
 
 @app.route('/get_ldap_based_authenticate', methods=['GET'])
 def get_ldap_based_authenticate():
-    user_name = request.args.get('username')
-    password = request.args.get('password')
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
     current_user = os.getlogin()
     print('Current login user:', current_user)
-    success, message = get_ldap_authenticate(user_name, password)
+    success, message = get_ldap_authentication(server_name,database_name,client_id)
     if success:
-        return set_json_format([], True, message)
+        return set_json_format([], True, str(message))
     else:
-        return set_json_format([], False, message)
+        return set_json_format([], False, str(message))
 
 
 if __name__ == '__main__':

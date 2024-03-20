@@ -286,7 +286,7 @@ class AudioTranscribeTracker(Base):
 class ClientMaster(Base):
     __tablename__ = 'ClientMaster'
 
-    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    Id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     ClientName = Column(String, unique=True, nullable=False)
     ClientUser = Column(String, unique=True, nullable=False)
@@ -304,7 +304,7 @@ class ClientMaster(Base):
 class DatabaseMaster(Base):
     __tablename__ = 'DatabaseMaster'
 
-    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    Id = Column(Integer, primary_key=True, unique=True, autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     DatabaseName = Column(String, unique=True, nullable=False)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
