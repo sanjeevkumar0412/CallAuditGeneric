@@ -1,18 +1,16 @@
 from app.services.logger import Logger
-from flask import json
 from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine import URL
 import jwt
 import datetime
 import secrets
-from sqlalchemy.sql import select
 from ldap3 import Server, Connection, ALL, SIMPLE
-from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe, ClientMaster, AuthTokenManagement,MasterConnectionString
+from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
+    AudioTranscribe, ClientMaster, AuthTokenManagement,JobStatus,SubscriptionPlan,MasterConnectionString, \
+                             MasterConnectionString)
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 engine = create_engine(dns)
@@ -67,33 +65,56 @@ class FlaskDBService:
 
     def get_all_configurations(self, server, database, client_id):
         try:
-            # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
             # Get data from Client table
             clients_data = session.query(Client).filter_by(ClientId=client_id).all()
-            clients_array = self.global_utility.get_configuration_by_column(clients_data)
+            client_coll = []
+            for client_result in clients_data:
+                client_coll.append(client_result.toDict())
+
             # Get data from Configuration table
             configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
-            configuration_array = self.global_utility.get_configuration_by_column(configuration_data)
-            # Get data from FileTypeInfo table
+            configuration_coll = []
+            for configuration_result in configuration_data:
+                configuration_coll.append(configuration_result.toDict())
             filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
-            filetype_info_array = self.global_utility.get_configuration_by_column(filetype_info_data)
+            filetype_info_coll = []
+            for status_result in filetype_info_data:
+                filetype_info_coll.append(status_result.toDict())
+
             # Get data from Subscription table
             subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-            subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
-            # Set the configuration data in utility variables
-            self.global_utility.set_client_data(clients_array)
-            self.global_utility.set_configurations_data(configuration_array)
-            self.global_utility.set_file_type_info_data(filetype_info_array)
+            subscriptions_array = []
+            for subscriptions_result in subscriptions_data:
+                subscriptions_array.append(subscriptions_result.toDict())
+
+                # Get data from Job Status table
+            job_status_data = session.query(JobStatus).filter_by(ClientId=client_id).all()
+            job_status_coll = []
+            for status_result in job_status_data:
+                job_status_coll.append(status_result.toDict())
+
+            # Get data from Subscription Plan table
+            subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
+            subscriptions_plan_coll = []
+            for subscriptions_plan_data in subscriptions_plan_data:
+                subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
+
+            self.global_utility.set_client_data(client_coll)
+            self.global_utility.set_configurations_data(configuration_coll)
+            self.global_utility.set_file_type_info_data(filetype_info_coll)
             self.global_utility.set_subscription_data(subscriptions_array)
+            self.global_utility.set_job_status_data(job_status_coll)
+            self.global_utility.set_subscription_plan_data(subscriptions_plan_coll)
             configurations = {
-                'Client': clients_array,
-                'Configurations': configuration_array,
-                'FileTypesInfo': filetype_info_array,
-                'Subscriptions': subscriptions_array
+                'Client': client_coll,
+                'Configurations': configuration_coll,
+                'FileTypesInfo': filetype_info_coll,
+                'Subscriptions': subscriptions_array,
+                'JobStatus': job_status_coll
             }
             return configurations
         except Exception as e:
@@ -267,15 +288,9 @@ class FlaskDBService:
                         for column, value in values.items():
                             setattr(parent_record, column, value)
                         session.commit()
-                        # return self.set_json_format([record_id])
                 return self.set_json_format([record_id])
             else:
                 return self.set_json_format([], False, f"The record ID, {record_id}, could not be found.")
-            # session.commit()
-
-            # self.logger.info(f"Record for ID '{parent_record}' updated successfully.")
-            # session.close()
-
         except Exception as e:
             session.close()
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
@@ -325,12 +340,6 @@ class FlaskDBService:
 
     def get_client_master_data(self, server, database, client_id):
         try:
-            # connection_string1 = "DRIVER={SQL Server Native Client 10.0};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=user;PWD=password"
-            # connection_string = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=agreeya\sudhir.kumar;PWD=Solenki1@#"
-            # connection_string2 = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans"
-            # connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
-
-            # engine = create_engine(connection_url)
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -350,7 +359,6 @@ class FlaskDBService:
         success = True
         error_message = None
         # Establish connection with the LDAP server
-        # server_address = 'LDAP://agreeya.local/DC=agreeya,DC=local'
         server_address = 'ldap://10.9.32.17:389'
         server = Server(server_address, get_info=ALL, use_ssl=False)
         try:
@@ -467,7 +475,6 @@ class FlaskDBService:
 
     def get_connection_string(self, server, database, client_id):
         try:
-            # dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)

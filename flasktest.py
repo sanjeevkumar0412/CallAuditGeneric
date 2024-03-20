@@ -1,15 +1,14 @@
 import os
-from flask import Flask, request, jsonify, json
+from flask import Flask, request
 from flask_swagger_ui import get_swaggerui_blueprint
-from alchemy_encoder import AlchemyEncoder
-from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
-    AudioTranscribe, ClientMaster, AuthTokenManagement
+from db_layer.models import Client,AudioTranscribeTracker, ClientMaster
 app = Flask(__name__)
 
 from database_query_utils import *
 from database_query_utils import DBRecord
 from flack_service import FlaskDBService
 
+# Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
 # API_URL = 'http://petstore.swagger.io/v2/swagger.json'  # Our API url (can of course be a local resource)
 API_URL = '/static/api_document.json'
@@ -31,6 +30,7 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 )
 
 app.register_blueprint(swaggerui_blueprint)
+# End swagger code from here
 
 db_instance = DBRecord()
 flask_service = FlaskDBService()
@@ -108,6 +108,7 @@ def get_transcribe_sentiment():
 def get_client_master_configurations():
     try:
         client_id = int(request.args.get('clientid'))
+        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
         results = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
         if len(results) > 0:
             audio_transcribe_array = []
@@ -123,6 +124,7 @@ def get_client_master_configurations():
 def get_client_configurations():
     try:
         client_id = int(request.args.get('clientid'))
+        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
         results = session.query(Client).filter(
                 (Client.ClientId == client_id) & (
                     Client.IsActive)).all()
@@ -161,6 +163,7 @@ def get_audio_transcribe_tracker_data():
         client_id = int(request.args.get('clientid'))
         audio_id = int(request.args.get('audioid'))
         current_user = os.getlogin()
+        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
         print('Current login user:', current_user)
         audio_transcribe = session.query(AudioTranscribeTracker).filter(
             (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
@@ -194,6 +197,7 @@ def get_token_based_authenticate():
     client_id = int(request.args.get('clientid'))
     user_name = request.args.get('username')
     current_user = os.getlogin()
+    connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
     print('Current login user:', current_user)
     success, message = flask_service.get_token_based_authenticate(server_name,database_name,client_id,user_name)
     if success:

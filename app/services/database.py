@@ -4,7 +4,6 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.engine import URL
 import jwt
 import datetime
 import secrets
@@ -28,7 +27,7 @@ class DataBaseClass:
 
     def get_all_configurations(self, server, database, client_id):
         try:
-            # dns = f'mssql+pyodbc://{server}/{database}?driver=SQL+Server'
+
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -38,38 +37,35 @@ class DataBaseClass:
             client_coll = []
             for client_result in clients_data:
                 client_coll.append(client_result.toDict())
-            # clients_array = self.global_utility.get_configuration_by_column(clients_data)
+
             # Get data from Configuration table
             configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
             configuration_coll = []
             for configuration_result in configuration_data:
                 configuration_coll.append(configuration_result.toDict())
-            # configuration_array = self.global_utility.get_configuration_by_column(configuration_data)
-            # Get data from FileTypeInfo table
             filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
             filetype_info_coll = []
             for status_result in filetype_info_data:
                 filetype_info_coll.append(status_result.toDict())
-            filetype_info_array = self.global_utility.get_configuration_by_column(filetype_info_data)
+
             # Get data from Subscription table
             subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
             subscriptions_array = []
             for subscriptions_result in subscriptions_data:
                 subscriptions_array.append(subscriptions_result.toDict())
-            # subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
 
+                # Get data from Job Status table
             job_status_data = session.query(JobStatus).filter_by(ClientId=client_id).all()
             job_status_coll = []
             for status_result in job_status_data:
                 job_status_coll.append(status_result.toDict())
-            # job_status_array = self.global_utility.get_configuration_by_column(job_status_data)
 
+            # Get data from Subscription Plan table
             subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
             subscriptions_plan_coll = []
             for subscriptions_plan_data in subscriptions_plan_data:
                 subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
-            # subscriptions_array = self.global_utility.get_configuration_by_column(subscriptions_data)
-            # Set the configuration data in utility variables
+
             self.global_utility.set_client_data(client_coll)
             self.global_utility.set_configurations_data(configuration_coll)
             self.global_utility.set_file_type_info_data(filetype_info_coll)
@@ -323,7 +319,6 @@ class DataBaseClass:
             record_coll = []
             for result in records:
                 record_coll.append(result.toDict())
-            # client_result = self.global_utility.get_configuration_by_column(records)
             self.global_utility.set_client_data(record_coll)
             return record_coll
         except Exception as e:
@@ -335,12 +330,6 @@ class DataBaseClass:
 
     def get_client_master_data(self, server, database, client_id):
         try:
-            connection_string1 = "DRIVER={SQL Server Native Client 10.0};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=user;PWD=password"
-            connection_string = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans;UID=agreeya\sudhir.kumar;PWD=Solenki1@#"
-            connection_string2 = "DRIVER={ODBC+Driver+17+for+SQL+Server};SERVER=FLM-VM-COGAIDEV;DATABASE=AudioTrans"
-            connection_url = URL.create("mssql+pyodbc", query={"odbc_connect": connection_string})
-
-            # engine = create_engine(connection_url)
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
