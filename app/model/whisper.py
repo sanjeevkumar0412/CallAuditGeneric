@@ -14,7 +14,7 @@ class WhisperModel:
             cls._instance = super().__new__(cls)
         return cls._instance
     
-    def whisper_transcribe_audio(self,file_path,model_name ="tiny"):
+    def whisper_transcribe_audio(self,file_path,model_name ="basic"):
         try:
             model = whisper.load_model(model_name)
             result = model.transcribe(file_path)

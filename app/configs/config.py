@@ -18,6 +18,7 @@ class CONFIG:
     CLIENT_USER_NAME = 'ClientUserName'
     CLIENT_PASSWORD = 'ClientPassword'
     CLIENT_USER = 'ClientUser'
+    SUBSCRIPTION_TYPE ='SubscriptionType'
 
     # User
     LDAP_USER_NAME = 'LDAP_User'
@@ -35,3 +36,6 @@ class CONFIG:
     SECRETKEY = 'SecretKey'
 
     CONNECTION_STRING = 'ConnectionString'
+
+    # file
+    TRANSCRIBE_FILE_PATH = 'ChunkFilePath'

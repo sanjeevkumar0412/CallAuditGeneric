@@ -4,12 +4,16 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine, MetaData, Table
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
-from datetime import datetime
 import jwt
 import os
 import datetime
 import secrets
+import whisper
+import time
 from constants.constant import CONSTANT
+from app.model.open_ai import OpenAIModel
+from app.model.whisper import WhisperModel
+from app.model.subprocess_model import SubProcessModel
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
@@ -19,6 +23,9 @@ from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscr
 global_utility = GlobalUtility()
 logger = Logger()
 db_connection = DbConnection()
+open_ai_model = OpenAIModel()
+whisper_model = WhisperModel()
+sub_process_model = SubProcessModel()
 # dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
 # engine = create_engine(dns)
 # Session = sessionmaker(bind=engine)
@@ -665,12 +672,16 @@ def copy_audio_files_process(server_name, database_name, client_id):
                                         ChunkFileType=file_type_id,
                                         ChunkFileName=file, ChunkSequence=1, ChunkText='',
                                         ChunkFilePath=audio_file_path, ChunkStatus=status_id,
-                                        ChunkCreatedDate=datetime.utcnow())
+                                        # ChunkCreatedDate=datetime.utcnow()
+                                        )
                                     child_record = create_audio_file_entry(session, chunk_transcribe_model)
+                                    logger.info(f'Chunk New Item Created ID is {child_record.Id}')
                             else:
-                                return get_json_format([], False, f"{file} is not copied  in the destination folder {dir_folder_url}")
+                                logger.info(f"{file} is not copied  in the destination folder {dir_folder_url}")
+                                # return get_json_format([], False, f"{file} is not copied  in the destination folder {dir_folder_url}")
                         else:
-                            return get_json_format([], False, f"Folder is not created for the file {file}")
+                            logger.info(f"Folder is not created for the file {file}")
+                            # return get_json_format([], False, f"Folder is not created for the file {file}")
                     else:
                         return get_json_format([], False, f"{file} is not supported.")
                 return get_json_format([], True, "All files copied and created Successfully.")
@@ -684,6 +695,7 @@ def copy_audio_files_process(server_name, database_name, client_id):
         session.close()
 
 def audio_chunk_process(session,client_id,parent_record,status_id,result_file_type_array, audio_file_path, dir_folder_url ):
+    from datetime import datetime
     chunks = global_utility.split_audio_chunk_files(audio_file_path, dir_folder_url)
     chunks_files = chunks[0]
     counter = 0
@@ -703,6 +715,136 @@ def audio_chunk_process(session,client_id,parent_record,status_id,result_file_ty
                                                             )
             child_record = create_audio_file_entry(session,chunk_transcribe_model)
             logger.info(f'Chunk New Item Created ID is {child_record.Id}')
+
+def update_audio_transcribe_tracker_status(session, record_id,status_id, update_values):
+    # record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id == record_id).all()
+    # record = session.query(AudioTranscribeTracker).get(int(record_id))
+    record = session.query(AudioTranscribeTracker).filter_by(Id=record_id).update(update_values)
+    # record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id==record_id).all()
+    session.commit()
+    if record > 0:  # Check if the record exists
+        updated_record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id == record_id).all()
+        if len(updated_record) > 0:
+            updated_result_array = []
+            for result_elm in updated_record:
+                updated_result_array.append(result_elm.toDict())
+            logger.info(f"Child Record for ID '{record_id}' updated successfully.")
+            record_data = session.query(AudioTranscribeTracker).filter(
+                (AudioTranscribeTracker.ClientId == updated_result_array[0]['ClientId']) & (
+                        AudioTranscribeTracker.AudioId == updated_result_array[0]['AudioId']) & (
+                        AudioTranscribeTracker.ChunkStatus != status_id)).all()
+            if len(record_data) == 0:
+                values = {'JobStatus': status_id}
+                parent_record = session.query(AudioTranscribe).filter_by(Id=updated_result_array[0]['AudioId']).update(values)
+                session.commit()
+                # if record is not None:  # Check if the record exists
+                #     for column, value in values.items():
+                #         setattr(parent_record, column, value)
+
+            return set_json_format([], True, f"The record ID, {record_id} has been updated successfully.")
+    else:
+        return set_json_format([], False, f"The record ID, {record_id}, could not be found.")
+
+def retries_model(failed_file,model_name):
+        retries =3
+        model = whisper.load_model(model_name)
+        for attempt in range(retries):
+            try:
+                print('fialed file process start : ',failed_file)
+                time.sleep(2**attempt)
+                result = model.transcribe(failed_file)
+                return result
+                # break
+            except Exception as e:
+                print(f"Failed to transcribe {failed_file} even after {attempt+1} attempt(s): {e}")
+
+def whisper_transcribe_audio(file_path,model_name ="base"):
+    try:
+        model = whisper.load_model(model_name)
+        result = model.transcribe(file_path)
+        return result
+    except Exception as e:
+                    print(f"Error transcribing : {e}")
+                    retries_model(file_path,model_name)
+
+def retries_ai_model(client,failed_file):
+        retries =3
+        for attempt in range(retries):
+            try:
+                print('fialed file process start : ',failed_file)
+                time.sleep(2**attempt)
+                audio_file = open(failed_file, "rb")
+                transcript = client.audio.transcriptions.create(
+                                model="whisper-1",
+                                file=audio_file,
+                                response_format='text'
+                                )
+                return transcript
+                # break
+            except Exception as e:
+                print(f"Failed to transcribe {failed_file} even after {attempt+1} attempt(s): {e}")
+def open_ai_transcribe_audio(transcribe_file, model = "whisper-1"):
+    from openai import OpenAI
+    client = OpenAI()
+    try:
+        print(' Open Ai Audio File Path',transcribe_file)
+        audio_file = open(transcribe_file, "rb")
+        transcript = client.audio.transcriptions.create(
+                                model=model,
+                                file=audio_file
+                                )
+        return transcript
+    except Exception as e:
+                    print(f"Error transcribing : {e}")
+                    return retries_ai_model(client,transcribe_file)
+def update_transcribe_audio_text(server_name, database_name,client_id,file_id ):
+    transcript = None
+    from datetime import datetime
+    try:
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
+        results_config = session.query(Configurations).filter(
+            (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
+        result_config_array = []
+        if len(results_config) > 0:
+            for result_elm in results_config:
+                result_config_array.append(result_elm.toDict())
+        if len(result_config_array) > 0:
+            whisper_model = global_utility.get_configuration_by_key_name(result_config_array,CONFIG.WHISPER_MODEL)
+            subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,CONFIG.SUBSCRIPTION_TYPE)
+            job_status_data = session.query(JobStatus).filter((JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
+            job_status_coll = []
+            for status_result in job_status_data:
+                job_status_coll.append(status_result.toDict())
+            status_id = global_utility.get_status_by_key_name(
+                job_status_coll, CONSTANT.STATUS_COMPLETED)
+            audio_results = session.query(AudioTranscribeTracker).filter((AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
+            if len(audio_results) > 0:
+                audio_result_array = []
+                for result_elm in audio_results:
+                    audio_result_array.append(result_elm.toDict())
+                file_path = global_utility.get_values_from_json_array(audio_result_array,CONFIG.TRANSCRIBE_FILE_PATH)
+                # file_path = audio_result_array[0]['ChunkFilePath']
+            start_transcribe_time = datetime.utcnow()
+            if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
+                transcript = open_ai_transcribe_audio(file_path)
+            elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_SMALL.lower():
+                transcript = whisper_transcribe_audio(file_path,whisper_model.lower())
+            elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_NORMAL.lower():
+                transcript = whisper_transcribe_audio(file_path, whisper_model.lower())
+            else:
+                transcript = open_ai_model.open_ai_transcribe_large_audio(file_path, whisper_model.lower())
+            end_transcribe_time = datetime.utcnow()
+            update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": status_id,
+                                   "ChunkTranscribeStart": start_transcribe_time,
+                                   "ChunkTranscribeEnd": end_transcribe_time}
+            updated_result = update_audio_transcribe_tracker_status(session,file_id,status_id,update_child_values)
+            return updated_result
+    except Exception as e:
+        return set_json_format([], False, str(e))
+    finally:
+        session.close()
+
 
 
 
