@@ -22,6 +22,7 @@ class CONFIG:
     # User
     LDAP_USER_NAME = 'LDAP_User'
     LDAP_USER_PASSWORD = 'LDAP_User_Password'
+    LDAP_SERVER = 'LDAP_Server'
     OPENAI_API_KEY = 'OPENAI_API_KEY'
     DATABASE_SERVER = 'DatabaseServer'
     DATABASE_NAME = 'DatabaseName'
