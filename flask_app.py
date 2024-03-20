@@ -214,6 +214,15 @@ def get_ldap_based_authenticate():
         return flask_service.set_json_format([],False,message)
 
 
+@app.route('/get_data_from_sentiment_table')
+def get_sentiment_data():
+    from app.model.sentiment_analysis import SentimentAnalysisCreation
+    sentiment_instance = SentimentAnalysisCreation()
+    audio_file_name = request.args.get('audio_file')
+    data = sentiment_instance.get_sentiment_data_from_table(audio_file_name)
+    if data == None:
+        data={"Error":"Invalid table/Data not available for this "+ audio_file_name}
+    return {'data': data}
 
 if __name__ == '__main__':
     app.run(debug=True)
