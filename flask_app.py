@@ -9,8 +9,8 @@ from database_query_utils import *
 from database_query_utils import DBRecord
 from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
                            update_audio_transcribe_table, update_audio_transcribe_tracker_table, \
-                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_audio_transcribe_table_data, \
-                           get_ldap_authentication,get_audio_transcribe_table_data,get_all_configurations_table)
+                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, \
+                           get_ldap_authentication, get_audio_transcribe_table_data, get_all_configurations_table)
 
 # Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
@@ -127,7 +127,7 @@ def get_audio_transcribe_data():
     try:
         # Done
         client_id = int(request.args.get('clientid'))
-        json_result = get_audio_transcribe_table_data(server_name,database_name,client_id)
+        json_result = get_audio_transcribe_table_data(server_name, database_name, client_id)
         return json_result
     except Exception as e:
         return get_json_format([], False, e)
@@ -140,7 +140,7 @@ def get_audio_transcribe_tracker_data():
         client_id = int(request.args.get('clientid'))
         audio_id = int(request.args.get('audioid'))
         current_user = os.getlogin()
-        json_result = get_audio_transcribe_tracker_table_data(server_name,database_name,client_id,audio_id)
+        json_result = get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id)
         return json_result
     except Exception as e:
         return get_json_format([], False, e)
@@ -152,7 +152,7 @@ def add_update_transcribe():
     client_id = int(request.args.get('clientid'))
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = update_audio_transcribe_table(server_name, database_name,client_id, recored_id, updatevalues)
+    update_status = update_audio_transcribe_table(server_name, database_name, client_id, recored_id, updatevalues)
     return update_status
 
 
@@ -162,7 +162,8 @@ def add_update_transcribe_tracker():
     client_id = int(request.args.get('clientid'))
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = update_audio_transcribe_tracker_table(server_name, database_name,client_id, recored_id, updatevalues)
+    update_status = update_audio_transcribe_tracker_table(server_name, database_name, client_id, recored_id,
+                                                          updatevalues)
     return update_status
 
 
@@ -186,11 +187,12 @@ def get_ldap_based_authenticate():
     client_id = int(request.args.get('clientid'))
     current_user = os.getlogin()
     print('Current login user:', current_user)
-    success, message = get_ldap_authentication(server_name,database_name,client_id)
+    success, message = get_ldap_authentication(server_name, database_name, client_id)
     if success:
         return set_json_format([], True, str(message))
     else:
         return set_json_format([], False, str(message))
+
 
 @app.route('/get_data_from_sentiment_table')
 def get_sentiment_data():
@@ -199,8 +201,9 @@ def get_sentiment_data():
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_sentiment_data_from_table(audio_file_name)
     if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ audio_file_name}
+        data = {"Error": "Invalid table/Data not available for this " + audio_file_name}
     return {'data': data}
+
 
 @app.route('/get_all_configurations', methods=['GET'])
 def get_all_configurations():
@@ -208,7 +211,7 @@ def get_all_configurations():
     client_id = int(request.args.get('clientid'))
     current_user = os.getlogin()
     print('Current login user:', current_user)
-    json_result = get_all_configurations_table(server_name,database_name,client_id)
+    json_result = get_all_configurations_table(server_name, database_name, client_id)
     return json_result
 
 
