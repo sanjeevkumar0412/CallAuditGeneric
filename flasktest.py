@@ -1,12 +1,16 @@
 import os
 from flask import Flask, request
 from flask_swagger_ui import get_swaggerui_blueprint
-from db_layer.models import Client,AudioTranscribeTracker, ClientMaster
+from db_layer.models import Client, AudioTranscribeTracker, ClientMaster
+
 app = Flask(__name__)
 
 from database_query_utils import *
 from database_query_utils import DBRecord
-from flack_service import FlaskDBService
+from flack_service import (get_json_format, set_json_format, get_connection_string, get_all_configurations, \
+                           update_audio_transcribe_table, update_audio_transcribe_tracker_table, \
+                           update_transcribe_text, get_audio_transcribe_tracker_table_data, get_audio_transcribe_table_data, \
+                           get_ldap_authenticate,get_audio_transcribe_table_data)
 
 # Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
@@ -33,7 +37,6 @@ app.register_blueprint(swaggerui_blueprint)
 # End swagger code from here
 
 db_instance = DBRecord()
-flask_service = FlaskDBService()
 server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
@@ -42,8 +45,6 @@ database_name = 'AudioTrans'
 def get_record():
     table_name = request.args.get('table_name')
     data = db_instance.get_all_record(table_name.capitalize())
-    if data == None:
-        data = {"Error": "Invalid table/Data not available for this " + table_name}
     return data
 
 
@@ -84,15 +85,15 @@ def get_update_by_column_name():
 
 @app.route('/delete_record_by_id')
 def delete_recordby_id():
-
     table_name = request.args.get('table_name')
     itm_id = request.args.get('id')
-    data = db_instance.delete_record_by_id(table_name,itm_id)
+    data = db_instance.delete_record_by_id(table_name, itm_id)
 
     # data = db_instance.delete_record_by_id(table_name, itm_id)
     if data == None:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return {'data': data}
+
 
 @app.route('/get_data_from_transcribe_table')
 def get_transcribe_sentiment():
@@ -101,109 +102,99 @@ def get_transcribe_sentiment():
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_data_from_transcribe_table(audio_file_name)
     if data == None:
-        data={"Error":"Invalid table/Data not available for this "+ audio_file_name}
+        data = {"Error": "Invalid table/Data not available for this " + audio_file_name}
     return {'data': data}
+
 
 @app.route('/get_client_master_configurations', methods=['GET'])
 def get_client_master_configurations():
     try:
         client_id = int(request.args.get('clientid'))
-        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
+        connection_string = get_connection_string(server_name, database_name, client_id)
         results = session.query(ClientMaster).filter(Client.ClientId == client_id).all()
         if len(results) > 0:
             audio_transcribe_array = []
             for result in results:
                 audio_transcribe_array.append(result.toDict())
-            return flask_service.get_json_format(audio_transcribe_array)
+            return get_json_format(audio_transcribe_array)
         elif len(results) == 0:
-            return flask_service.get_json_format([])
+            return get_json_format([])
     except Exception as e:
-        return flask_service.get_json_format([], False, e)
+        return get_json_format([], False, e)
+
 
 @app.route('/get_client_configurations', methods=['GET'])
 def get_client_configurations():
     try:
         client_id = int(request.args.get('clientid'))
-        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
+        connection_string = get_connection_string(server_name, database_name, client_id)
         results = session.query(Client).filter(
-                (Client.ClientId == client_id) & (
-                    Client.IsActive)).all()
+            (Client.ClientId == client_id) & (
+                Client.IsActive)).all()
         if len(results) > 0:
             result_array = []
             for result in results:
                 result_array.append(result.toDict())
-            return flask_service.get_json_format(result_array)
+            return get_json_format(result_array)
         elif len(results) == 0:
-            return flask_service.get_json_format([])
+            return get_json_format([])
     except Exception as e:
-        return flask_service.get_json_format([], False, e)
+        return get_json_format([], False, e)
+
 
 @app.route('/get_audio_transcribe_data', methods=['GET'])
 def get_audio_transcribe_data():
     try:
+        # Done
         client_id = int(request.args.get('clientid'))
-        connection_string = flask_service.get_connection_string(server_name,database_name,client_id)
-        audio_transcribe = session.query(AudioTranscribe).filter(
-            (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
-        if len(audio_transcribe) > 0:
-            audio_transcribe_array = []
-            for result in audio_transcribe:
-                audio_transcribe_array.append(result.toDict())
-            return flask_service.get_json_format(audio_transcribe_array)
-        elif len(audio_transcribe) == 0:
-            return flask_service.get_json_format([])
-        # data_json = json.dumps(data, cls=AlchemyEncoder)
+        json_result = get_audio_transcribe_table_data(server_name,database_name,client_id)
+        return json_result
     except Exception as e:
-        return flask_service.get_json_format([], False, e)
+        return get_json_format([], False, e)
 
 
 @app.route('/get_audio_transcribe_tracker_data', methods=['GET'])
 def get_audio_transcribe_tracker_data():
     try:
+        # Done
         client_id = int(request.args.get('clientid'))
         audio_id = int(request.args.get('audioid'))
         current_user = os.getlogin()
-        connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
-        print('Current login user:', current_user)
-        audio_transcribe = session.query(AudioTranscribeTracker).filter(
-            (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
-        if len(audio_transcribe) > 0:
-            audio_transcribe_array = []
-            for result in audio_transcribe:
-                audio_transcribe_array.append(result.toDict())
-            return flask_service.get_json_format(audio_transcribe_array)
-        elif len(audio_transcribe) == 0:
-            return flask_service.get_json_format([])
-        # data_json = json.dumps(data, cls=AlchemyEncoder)
+        json_result = get_audio_transcribe_tracker_table_data(server_name,database_name,client_id,audio_id)
+        return json_result
     except Exception as e:
-            return flask_service.get_json_format([], False, e)
+        return get_json_format([], False, e)
+
 
 @app.route('/add_update_transcribe', methods=['GET'])
 def add_update_transcribe():
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = flask_service.update_audio_transcribe_table(server_name,database_name,recored_id,updatevalues)
+    update_status = update_audio_transcribe_table(server_name, database_name, recored_id, updatevalues)
     return update_status
+
 
 @app.route('/add_update_transcribe_tracker', methods=['GET'])
 def add_update_transcribe_tracker():
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
-    update_status = flask_service.update_audio_transcribe_tracker_table(server_name,database_name,recored_id,updatevalues)
+    update_status = update_audio_transcribe_tracker_table(server_name, database_name, recored_id, updatevalues)
     return update_status
+
 
 @app.route('/get_token_based_authenticate', methods=['GET'])
 def get_token_based_authenticate():
     client_id = int(request.args.get('clientid'))
     user_name = request.args.get('username')
     current_user = os.getlogin()
-    connection_string = flask_service.get_connection_string(server_name, database_name, client_id)
+    connection_string = get_connection_string(server_name, database_name, client_id)
     print('Current login user:', current_user)
-    success, message = flask_service.get_token_based_authenticate(server_name,database_name,client_id,user_name)
+    success, message = get_token_based_authenticate(server_name, database_name, client_id, user_name)
     if success:
-        return flask_service.set_json_format([],True,message)
+        return set_json_format([], True, message)
     else:
-        return flask_service.set_json_format([],False,message)
+        return set_json_format([], False, message)
+
 
 @app.route('/get_ldap_based_authenticate', methods=['GET'])
 def get_ldap_based_authenticate():
@@ -211,12 +202,11 @@ def get_ldap_based_authenticate():
     password = request.args.get('password')
     current_user = os.getlogin()
     print('Current login user:', current_user)
-    success, message = flask_service.get_ldap_authenticate(user_name,password)
+    success, message = get_ldap_authenticate(user_name, password)
     if success:
-        return flask_service.set_json_format([],True,message)
+        return set_json_format([], True, message)
     else:
-        return flask_service.set_json_format([],False,message)
-
+        return set_json_format([], False, message)
 
 
 if __name__ == '__main__':
