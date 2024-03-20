@@ -717,12 +717,10 @@ def audio_chunk_process(session,client_id,parent_record,status_id,result_file_ty
             logger.info(f'Chunk New Item Created ID is {child_record.Id}')
 
 def update_audio_transcribe_tracker_status(session, record_id,status_id, update_values):
-    # record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id == record_id).all()
-    # record = session.query(AudioTranscribeTracker).get(int(record_id))
+    from datetime import datetime
     record = session.query(AudioTranscribeTracker).filter_by(Id=record_id).update(update_values)
-    # record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id==record_id).all()
     session.commit()
-    if record > 0:  # Check if the record exists
+    if record > 0:
         updated_record = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.Id == record_id).all()
         if len(updated_record) > 0:
             updated_result_array = []
@@ -734,13 +732,9 @@ def update_audio_transcribe_tracker_status(session, record_id,status_id, update_
                         AudioTranscribeTracker.AudioId == updated_result_array[0]['AudioId']) & (
                         AudioTranscribeTracker.ChunkStatus != status_id)).all()
             if len(record_data) == 0:
-                values = {'JobStatus': status_id}
+                values = {'JobStatus': status_id,"TranscribeDate":  datetime.utcnow()}
                 parent_record = session.query(AudioTranscribe).filter_by(Id=updated_result_array[0]['AudioId']).update(values)
                 session.commit()
-                # if record is not None:  # Check if the record exists
-                #     for column, value in values.items():
-                #         setattr(parent_record, column, value)
-
             return set_json_format([], True, f"The record ID, {record_id} has been updated successfully.")
     else:
         return set_json_format([], False, f"The record ID, {record_id}, could not be found.")
