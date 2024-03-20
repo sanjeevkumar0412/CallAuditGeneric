@@ -1,12 +1,14 @@
 from app.services.logger import Logger
 import os
+import json
 from app.utilities.utility import GlobalUtility
 from datetime import datetime
-from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe
+from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,JobStatus
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
+# os.environ["OPENAI_API_KEY"] = "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"
 os.environ["OPENAI_API_KEY"] = ""
 
 dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
@@ -27,23 +29,26 @@ class SentimentAnalysisCreation:
 
     def get_sentiment(self,text):
 
-        prompt = f"{prompt_check_list.prompt_text}{text} The sentiment of this text is:"
+        prompt = f"{prompt_check_list.prompt_text}Please check the conversation and provide the aggregate Sentiment and Score vallue{text}"
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
+            # model="gpt-4",
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": ""}
+                # {"role": "user", "content": prompt}
             ],
-            temperature=1,
-            max_tokens=1,
-            top_p=1,
-            frequency_penalty=0,
+
+            max_tokens=500,
+            n=1,
             presence_penalty=0,
+            stop=None,
+            temperature=0.8
             stop=["\n"]
         )
         # sentiment = response['choices'][0]['message']['content'].strip()
-        sentiment = response.choices[0].message.content.strip()
-
+        sentiment = response.choices[0].message.content
+        aggregate_sentiment= json.loads(sentiment)["aggregate_sentiment"]
+        aggregate_score= json.loads(sentiment)["aggregate_score"]
         if "positive" in sentiment.lower():
             score = 1
         elif "negative" in sentiment.lower():
@@ -51,7 +56,7 @@ class SentimentAnalysisCreation:
         else:
             score = 0
 
-        data ={'sentiment':sentiment,'score':score}
+        data ={'sentiment':aggregate_sentiment,'score':aggregate_score}
         return data
 
     def dump_data_into_sentiment_database(self,transcribe_data):
@@ -75,20 +80,24 @@ class SentimentAnalysisCreation:
                 session.add(dump_data_into_table)
                 session.commit()
             else:
-                sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
-                                          "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
+                # sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
+                #                           "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
 
-                if len(sentiment_output_data) > 0:
+                sentiment_call_data=[self.get_sentiment(text) for text in transcribe_audio_data]
+                # sentiment_json_load=json.loads(sentiment_call_data[0]['sentiment'])
+                sentiment_output_data=sentiment_call_data[0]
 
-                    update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).all()[0]
+                if len(sentiment_call_data) > 0:
+
+                    update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).first()
                     modified_sentiment_date = datetime.utcnow()
 
                     if update_sentiment_record:
-                        update_sentiment_record.SentimentScore=sentiment_output_data[0]['score']
-                        update_sentiment_record.SentimentText=sentiment_output_data[0]['text']
+                        update_sentiment_record.SentimentScore=sentiment_output_data['score']
+                        update_sentiment_record.SentimentText=transcribe_audio_data[0]
                         update_sentiment_record.SentimentStatus=3
                         update_sentiment_record.Modified=modified_sentiment_date
-                        update_sentiment_record.Sentiment=sentiment_output_data[0]['sentiment']
+                        update_sentiment_record.Sentiment=sentiment_output_data['sentiment']
                         session.commit()
             result={"status":"200","message":"Sentiment Record successfully recorded !"}
             return result
@@ -176,13 +185,11 @@ class SentimentAnalysisCreation:
             # result.close()
 
     def get_sentiment_data_from_table(self, audio_file):
-        import json
         try:
             sentiment_dic={}
             data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
             sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,"AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,"Created":data[0].Created,"SentimentScore":data[0].SentimentScore,"SentimentStatus":data[0].SentimentStatus,"Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
             result = {"sentimentdata": sentiment_dic,"status": 200}
-            # json_data = json.dumps(result)
             return result
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
@@ -199,9 +206,9 @@ if __name__ == "__main__":
     audio_path='CallRecording111234.mp3'
 
     # re=sentiment_instance.get_data_from_transcribe_table(audio_path)
-    re=sentiment_instance.get_sentiment_data_from_table(audio_path)
-    # re=sentiment_instance.get_transcribe_data_for_sentiment(audio_path)
-    print("By File Name>>",re)
+    # re=sentiment_instance.get_sentiment_data_from_table(audio_path)
+    re=sentiment_instance.get_transcribe_data_for_sentiment(audio_path)
+    # print("By File Name>>",re)
 
 
     # print(">>>>>>>>>>>>audio_id_query query_results>>>>>>>>",re)
