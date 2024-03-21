@@ -6,7 +6,7 @@ from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,JobStatus
 from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
-os.environ["OPENAI_API_KEY"] = "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"
+os.environ["OPENAI_API_KEY"] = ""
 
 from openai import OpenAI
 client = OpenAI(
