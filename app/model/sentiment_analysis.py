@@ -4,17 +4,10 @@ import json
 from app.utilities.utility import GlobalUtility
 from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,JobStatus
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = ""
 
-# dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
-# engine = create_engine(dns)
-# Session = sessionmaker(bind=engine)
-#
-# session = Session()
 from openai import OpenAI
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),

@@ -5,17 +5,6 @@ from db_layer.models import AudioTranscribe
 from sqlalchemy.sql import select
 from app.utilities.utility import GlobalUtility
 
-# dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
-# engine = create_engine(dns)
-# inspector = Inspector.from_engine(engine)
-# Session = sessionmaker(bind=engine)
-#
-# session = Session()
-# conn = engine.raw_connection()
-# cursor = conn.cursor()
-#
-# tables_check = inspector.get_table_names()
-
 
 class DBRecord:
     _instance = None
@@ -28,7 +17,6 @@ class DBRecord:
             cls._instance = cls.__new__(cls)
         return cls._instance
     def get_sql_cursor(self,dns_string):
-        # dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns_string)
         inspector = Inspector.from_engine(engine)
         Session = sessionmaker(bind=engine)
@@ -54,29 +42,16 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
-            # if table_exists:
                 raw_sql = f"SELECT * FROM {table}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion(cursor)
                 if len(result) > 0:
                     api_object = self.global_utility.get_json_format(result)
-                    # {
-                    #     "result": result,
-                    #     "message": 'The data result set that the service provided.',
-                    #     "status": 'success',
-                    # }
                     return api_object
                 else:
                     api_object = self.global_utility.get_json_format(result,True,'There is no record in the database')
-                    # api_object = {
-                    #     "result": result,
-                    #     "message": 'The data result set that the service provided.',
-                    #     "status": 'success',
-                    # }
                     return api_object
             else:
                 api_object = {
@@ -100,9 +75,7 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
@@ -122,9 +95,7 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
                 check_column = inspector.get_columns(table_name)
                 column_exists = any(column['name'] == column_name for column in check_column)
@@ -165,9 +136,7 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
                 check_column = inspector.get_columns(table_name)
                 column_exists = any(column['name'] == column_to_update for column in check_column)
@@ -189,9 +158,7 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
@@ -208,9 +175,7 @@ class DBRecord:
         try:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
-            # session = self.global_utility.get_database_session(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            # table_exists = table_name in all_tables
             if table is not None:
                 combined_filter = AudioTranscribe.ClientId = id
                 query = select([AudioTranscribe]).where(combined_filter)
