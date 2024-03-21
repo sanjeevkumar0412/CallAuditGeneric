@@ -2,6 +2,9 @@ from pydub import AudioSegment
 from dotenv import load_dotenv
 import time
 from flask import json
+from sqlalchemy import create_engine, MetaData, Table
+from app.configs.config import CONFIG
+from sqlalchemy.orm import sessionmaker
 import shutil
 import os
 import jwt
@@ -9,6 +12,7 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
+from app.db_layer.models import (MasterConnectionString)
 
 load_dotenv()
 
@@ -35,6 +39,73 @@ class GlobalUtility:
             cls._instance = super().__new__(cls)
         return cls._instance
 
+    def get_json_format(self,result, status=True, message=None):
+        response_message = 'The data result set that the service provided.'
+        if message is not None:
+            response_message = message
+        api_object = {
+            "result": result,
+            "message": response_message,
+            "status": 'success',
+        }
+        if not status:
+            api_object = {
+                "result": [],
+                "message": response_message,
+                "status": 'failure',
+            }
+        return api_object
+
+    def set_json_format(self,result, status=True, message=None):
+        response_message = 'Record has been updated successfully..'
+        if message is not None:
+            response_message = message
+        api_object = {
+            "result": result,
+            "message": response_message,
+            "status": 'success',
+        }
+        if not status:
+            api_object = {
+                "result": [],
+                "message": response_message,
+                "status": 'failure',
+            }
+        return api_object
+
+    def get_table_name(self,tables,table_names):
+        table_name = None
+        for name in tables:
+            if name.lower() == table_names.lower():
+                table_name = name
+                break
+        return table_name
+
+    def get_database_session(self,connection_string):
+        try:
+            engine = create_engine(connection_string)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            return session
+        except Exception as e:
+            return self.get_json_format([], False, e)
+    def get_connection_string(self,server, database, client_id):
+        try:
+            dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
+            engine = create_engine(dns)
+            Session = sessionmaker(bind=engine)
+            session = Session()
+            records = session.query(MasterConnectionString).filter(
+                (MasterConnectionString.ClientId == client_id) & (
+                    MasterConnectionString.IsActive)).all()
+            record_coll = []
+            for result in records:
+                record_coll.append(result.toDict())
+            return self.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING)
+        except Exception as e:
+            return []
+        finally:
+            session.close()
     def get_key_config_value(self, key_name):
         return self.get_config_by_value(self.cofigurations_data, key_name)
 

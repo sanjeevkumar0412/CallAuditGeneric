@@ -10,11 +10,11 @@ from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = ""
 
-dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
-engine = create_engine(dns)
-Session = sessionmaker(bind=engine)
-
-session = Session()
+# dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
+# engine = create_engine(dns)
+# Session = sessionmaker(bind=engine)
+#
+# session = Session()
 from openai import OpenAI
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -27,7 +27,6 @@ class SentimentAnalysisCreation:
         self.global_utility = GlobalUtility()
 
     def get_sentiment(self,text):
-
         prompt = f"{prompt_check_list.prompt_text}Please check the conversation and provide the aggregate Sentiment and Score vallue{text}"
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -58,9 +57,10 @@ class SentimentAnalysisCreation:
         data ={'sentiment':aggregate_sentiment,'score':aggregate_score}
         return data
 
-    def dump_data_into_sentiment_database(self,transcribe_data):
-
+    def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
         try:
+            connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+            session = self.global_utility.get_database_session(connection_string)
             transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
             clientid=transcribe_data.get("ClientId")
             current_file=transcribe_data.get("filename")
@@ -103,13 +103,15 @@ class SentimentAnalysisCreation:
         except IntegrityError as e:
             session.rollback()
             print("Error:", e)
+        finally:
+            session.close()
 
-    def get_data_from_transcribe_table(self, audio_file):
+    def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
         try:
-
             audio_dictionary = {}
             transcribe_text = []
-
+            connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+            session = self.global_utility.get_database_session(connection_string)
             check_audio_id_exits = session.query(AudioTranscribe).filter(
                 AudioTranscribe.AudioFileName == audio_file).first()
             if len(check_audio_id_exits) > 0:
@@ -140,14 +142,17 @@ class SentimentAnalysisCreation:
             self.logger.error(f": Error {e}",e)
             print(e)
             # result.close()
+        finally:
+            session.close()
 
 
 
-    def get_transcribe_data_for_sentiment(self, audio_file):
+    def get_transcribe_data_for_sentiment(self,  server_name, database_name, client_id,audio_file):
         try:
-
             audio_dictionary = {}
             transcribe_text = []
+            connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+            session = self.global_utility.get_database_session(connection_string)
             check_audio_file_exits = session.query(AudioTranscribe).filter(
                 AudioTranscribe.AudioFileName == audio_file).all()
             # print("check_audio_id_exits", check_audio_file_exits)
@@ -182,10 +187,14 @@ class SentimentAnalysisCreation:
             # self.logger.error(f": Error {e}",e)
             print(e)
             # result.close()
+        finally:
+            session.close()
 
-    def get_sentiment_data_from_table(self, audio_file):
+    def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
         try:
             sentiment_dic={}
+            connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+            session = self.global_utility.get_database_session(connection_string)
             data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
             sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,"AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,"Created":data[0].Created,"SentimentScore":data[0].SentimentScore,"SentimentStatus":data[0].SentimentStatus,"Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
             result = {"sentimentdata": sentiment_dic,"status": 200}
@@ -193,6 +202,8 @@ class SentimentAnalysisCreation:
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
             print(e)
+        finally:
+            session.close()
 
 if __name__ == "__main__":
 
