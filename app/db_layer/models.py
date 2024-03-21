@@ -1,7 +1,7 @@
 from sqlalchemy.orm import declarative_base
 from datetime import datetime
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey,inspect
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey,inspect,Float
 
 
 Base = declarative_base()
@@ -222,8 +222,7 @@ class SentimentAnalysis(Base):
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
-    # TranscriptId = Column(Integer, ForeignKey('AudioTranscribe.Id'), nullable=False)
-    SentimentScore = Column(String, nullable=True)
+    SentimentScore = Column(Float, nullable=False)
     SentimentText = Column(String, nullable=True)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
     SentimentStatus = Column(String, nullable=True)
