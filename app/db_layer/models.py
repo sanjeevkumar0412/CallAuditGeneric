@@ -334,3 +334,18 @@ class MasterConnectionString(Base):
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+class AudioFileNamePattern(Base):
+    __tablename__ = 'AudioFileNamePattern'
+
+    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    PatternName = Column(String, ForeignKey('MasterAudioFileName.PatternName'), nullable=False)
+    Sequence = Column(Integer, unique=True, nullable=True)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True, nullable=True)
+    IsDeleted = Column(Boolean, unique=False, default=False, nullable=True)
+
+    def toDict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
