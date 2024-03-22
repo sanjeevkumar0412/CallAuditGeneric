@@ -106,7 +106,7 @@ class SentimentAnalysisCreation:
             audio_dictionary = {}
             transcribe_text = []
             check_audio_id_exits = session.query(AudioTranscribe).filter(
-                AudioTranscribe.AudioFileName == audio_file).first()
+                AudioTranscribe.AudioFileName == audio_file).all()
             if len(check_audio_id_exits) > 0:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
@@ -212,8 +212,9 @@ if __name__ == "__main__":
     database_name = 'AudioTrans'
     # re=sentiment_instance.get_data_from_transcribe_table(audio_path)
     # re=sentiment_instance.get_sentiment_data_from_table(audio_path)
-    re=sentiment_instance.get_transcribe_data_for_sentiment(server_name,database_name,1,audio_path)
-    # print("By File Name>>",re)
+    re=sentiment_instance.get_data_from_transcribe_table(server_name,database_name,1,audio_path)
+    # re=sentiment_instance.get_transcribe_data_for_sentiment(server_name,database_name,1,audio_path)
+    print("By File Name>>",re)
 
 
     # print(">>>>>>>>>>>>audio_id_query query_results>>>>>>>>",re)
