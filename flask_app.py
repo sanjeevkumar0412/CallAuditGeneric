@@ -9,7 +9,7 @@ from database_query_utils import *
 from database_query_utils import DBRecord
 from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
                            update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table, \
-                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, \
+                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern, \
                            get_ldap_authentication, get_audio_transcribe_table_data,update_transcribe_audio_text, get_all_configurations_table)
 
 # Start swagger code from here
@@ -238,6 +238,17 @@ def transcribe_audio_text():
     current_user = os.getlogin()
     print('Current login user:', current_user)
     json_result = update_transcribe_audio_text(server_name, database_name, client_id,record_id)
+    return json_result
+
+@app.route('/match_file_name_pettern', methods=['GET'])
+def match_file_name_pettern():
+    #  Dev Done
+    client_id = int(request.args.get('clientid'))
+    file_name = request.args.get('filename')
+    current_user = os.getlogin()
+    file_name = 'ABC-21March-AY-Noida-Call-Approva-Ashutosh'
+    print('Current login user:', current_user)
+    json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
 
