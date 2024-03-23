@@ -21,6 +21,7 @@ class SentimentAnalysisCreation:
 
     def get_sentiment(self,text):
         prompt = f"{prompt_check_list.prompt_text}Please check the conversation and provide the aggregate Sentiment and Score vallue{text}"
+        # sentiment = response['choices'][0]['message']['content'].strip()
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             # model="gpt-4",
@@ -32,11 +33,11 @@ class SentimentAnalysisCreation:
             max_tokens=500,
             n=1,
             presence_penalty=0,
-            stop=None,
-            temperature=0.8
+            temperature=0.8,
+            top_p=1.0,
+            stop=None
             # stop=["\n"]
         )
-        # sentiment = response['choices'][0]['message']['content'].strip()
         sentiment = response.choices[0].message.content
         aggregate_sentiment= json.loads(sentiment)["aggregate_sentiment"]
         aggregate_score= json.loads(sentiment)["aggregate_score"]
@@ -55,6 +56,7 @@ class SentimentAnalysisCreation:
         session = self.global_utility.get_database_session(connection_string)
         try:
             transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
+            transcribe_merged_string = '.'.join(transcribe_audio_data)
             clientid=transcribe_data.get("ClientId")
             current_file=transcribe_data.get("filename")
             transcribid=transcribe_data.get("TranscribeId")
@@ -63,35 +65,26 @@ class SentimentAnalysisCreation:
             analysis_sentiment_date = datetime.utcnow()
             file_entry_check = session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).all()
 
-            if file_entry_check is None:
+            if len(file_entry_check) == 0:
                 dump_data_into_table = SentimentAnalysis(ClientId=clientid,
                                                       AnalysisDateTime=analysis_sentiment_date, SentimentStatus=2,
-                                                      AudioFileName=current_file,Created=created_sentiment_date, \
-
-                                                      )
+                                                      AudioFileName=current_file,Created=created_sentiment_date,)
                 session.add(dump_data_into_table)
                 session.commit()
-            else:
-                # sentiment_output_data = [{"text": text.strip(), "sentiment": self.get_sentiment(text.strip())['sentiment'],
-                #                           "score": self.get_sentiment(text.strip())['score']} for text in transcribe_audio_data]
-
-                sentiment_call_data=[self.get_sentiment(text) for text in transcribe_audio_data]
-                # sentiment_json_load=json.loads(sentiment_call_data[0]['sentiment'])
-                sentiment_output_data=sentiment_call_data[0]
+                sentiment_call_data=self.get_sentiment(transcribe_merged_string)
 
                 if len(sentiment_call_data) > 0:
-
                     update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).first()
                     modified_sentiment_date = datetime.utcnow()
-
-                    if update_sentiment_record:
-                        update_sentiment_record.SentimentScore=sentiment_output_data['aggregate_score']
-                        update_sentiment_record.SentimentText=transcribe_audio_data[0]
-                        update_sentiment_record.SentimentStatus=3
-                        update_sentiment_record.Modified=modified_sentiment_date
-                        update_sentiment_record.Sentiment=sentiment_output_data['aggregate_sentiment']
-                        session.commit()
-            result={"status":"200","message":"Sentiment Record successfully recorded !"}
+                    update_sentiment_record.SentimentScore = sentiment_call_data['aggregate_score']
+                    update_sentiment_record.SentimentText = transcribe_merged_string
+                    update_sentiment_record.SentimentStatus = 3
+                    update_sentiment_record.Modified = modified_sentiment_date
+                    update_sentiment_record.Sentiment = sentiment_call_data['aggregate_sentiment']
+                    session.commit()
+                result = {"status": "200", "message": "Sentiment Record successfully recorded !"}
+            else:
+                result={"status":"200","message":f"Sentiment Record already available for this {current_file} !"}
             return result
         except IntegrityError as e:
             session.rollback()
@@ -110,7 +103,6 @@ class SentimentAnalysisCreation:
             if len(check_audio_id_exits) > 0:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
-                    # AudioTranscribeTracker.ChunkStatus == 'Completed')
                 query_audio_id_results = audio_id_query.all()
                 if len(query_audio_id_results) > 0:
                     query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
@@ -172,10 +164,7 @@ class SentimentAnalysisCreation:
             else:
                 self.logger.info(f":Record not found {audio_file}")
             # self.get_sentiment1(transcribe_text)
-            self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
-
-            result = {"transcribe_data": transcribe_text,"status": 200}
-            return result
+            return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
             print(e)
@@ -207,14 +196,15 @@ if __name__ == "__main__":
     # print("Single Sentiment",sentiment)
 
     # For FIle or DB
-    audio_path='CallRecording111234.mp3'
+    # audio_path='CallRecording111234.mp3'
+    # audio_path='DMV-85311-MU11.wav'
     server_name = 'FLM-VM-COGAIDEV'
     database_name = 'AudioTrans'
     # re=sentiment_instance.get_data_from_transcribe_table(audio_path)
     # re=sentiment_instance.get_sentiment_data_from_table(audio_path)
-    re=sentiment_instance.get_data_from_transcribe_table(server_name,database_name,1,audio_path)
+    # re=sentiment_instance.get_data_from_transcribe_table(server_name,database_name,1,audio_path)
     # re=sentiment_instance.get_transcribe_data_for_sentiment(server_name,database_name,1,audio_path)
-    print("By File Name>>",re)
+    # print("By File Name>>",re)
 
 
     # print(">>>>>>>>>>>>audio_id_query query_results>>>>>>>>",re)
