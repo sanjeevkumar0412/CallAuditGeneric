@@ -208,7 +208,7 @@ def get_sentiment_data():
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
     if data == None:
-        data = {"Error": "Invalid table/Data not available for this " + audio_file_name}
+        data = {"Error": f"File not exit {audio_file_name}"}
     return {'data': data}
 
 
@@ -251,6 +251,16 @@ def match_file_name_pettern():
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
+@app.route('/dump_data_into_sentiment')
+def dump_data_sentiment_table():
+    from app.model.sentiment_analysis import SentimentAnalysisCreation
+    sentiment_instance = SentimentAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name)
+    if data == None:
+        data = {"Error": "File not exit " + audio_file_name,'status':"400"}
+    return data
 
 if __name__ == '__main__':
     app.run(debug=True)
