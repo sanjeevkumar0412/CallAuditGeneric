@@ -51,13 +51,14 @@ class DBRecord:
                     api_object = self.global_utility.get_json_format(result)
                     return api_object
                 else:
-                    api_object = self.global_utility.get_json_format(result,True,'There is no record in the database')
+                    api_object = self.global_utility.get_json_format(result,400,True,'There is no record in the database')
                     return api_object
             else:
                 api_object = {
                     "result": [],
                     "message": f"Table {table_name} not found ! ",
                     "status": 'failure',
+                    'status_code': 400
                 }
                 return api_object
         except Exception as e:
@@ -65,6 +66,7 @@ class DBRecord:
                 "result": [],
                 "message": e,
                 "status": 'failure',
+                'status_code': 500
             }
             return api_object
         finally:
@@ -107,6 +109,7 @@ class DBRecord:
                         "result": result,
                         "message": 'The data result set that the service provided.',
                         "status": 'success',
+                        'status_code': 200
                     }
                     return api_object
                 else:
@@ -114,6 +117,7 @@ class DBRecord:
                         "result": [],
                         "message": f"Column  {column_name} not found!",
                         "status": 'failure',
+                        'status_code': 400
                     }
                     return api_object
             else:
@@ -121,6 +125,7 @@ class DBRecord:
                     "result": [],
                     "message": f"Column  {column_name} not found!",
                     "status": 'failure',
+                    'status_code': 400
                 }
                 return api_object
         except Exception as e:
@@ -128,6 +133,7 @@ class DBRecord:
                 "result": [],
                 "message": e,
                 "status": 'failure',
+                'status_code': 500
             }
             return api_object
 
@@ -152,7 +158,13 @@ class DBRecord:
             return {'data': result}
 
         except Exception as e:
-            print("Error function in update_record_by_column", e)
+            api_object = {
+                "result": [],
+                "message": e,
+                "status": 'failure',
+                'status_code': 500
+            }
+            return api_object
 
     def delete_record_by_id(self, server_name, database_name, client_id,table_name, id):
         try:
@@ -169,7 +181,13 @@ class DBRecord:
             return {'data': result}
 
         except Exception as e:
-            print("Error: delete_single_record", e)
+            api_object = {
+                "result": [],
+                "message": e,
+                "status": 'failure',
+                'status_code': 500
+            }
+            return api_object
 
     def get_master_data_by_id(self,server_name, database_name, client_id, table_name, id):
         try:
@@ -191,4 +209,10 @@ class DBRecord:
 
             return {'data': result}
         except Exception as e:
-            print(".........Error in get_record_by_id...........", e)
+            api_object = {
+                "result": [],
+                "message": e,
+                "status": 'failure',
+                'status_code': 500
+            }
+            return api_object
