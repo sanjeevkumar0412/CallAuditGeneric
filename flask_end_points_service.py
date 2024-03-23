@@ -13,9 +13,9 @@ import whisper
 import time
 from constants.constant import CONSTANT
 from ldap3 import Server, Connection, ALL, SIMPLE
-from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
+from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
-                             AudioFileNamePattern, \
+                             AudioFileNamePattern,
                              MasterConnectionString)
 
 global_utility = GlobalUtility()
