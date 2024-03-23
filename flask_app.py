@@ -1,16 +1,16 @@
 import os
 from flask import Flask, request
 from flask_swagger_ui import get_swaggerui_blueprint
-from db_layer.models import Client, AudioTranscribeTracker, ClientMaster
+
 
 app = Flask(__name__)
-
+print('App is running mode....')
 from database_query_utils import *
 from database_query_utils import DBRecord
-from flack_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations, \
-                           update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table, \
-                           get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern, \
-                           get_ldap_authentication, get_audio_transcribe_table_data,update_transcribe_audio_text, get_all_configurations_table)
+from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,
+                                      update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
+                                      get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,
+                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table)
 
 # Start swagger code from here
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
@@ -232,7 +232,7 @@ def copy_audio_files():
 
 @app.route('/transcribe_audio_text', methods=['GET'])
 def transcribe_audio_text():
-    #  Dev Done
+    #  Dev Dones
     client_id = int(request.args.get('clientid'))
     record_id = int(request.args.get('id'))
     current_user = os.getlogin()

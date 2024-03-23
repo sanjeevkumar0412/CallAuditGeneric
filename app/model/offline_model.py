@@ -11,10 +11,10 @@ def whisper_transcribe_audio(file_path, model_name="basic"):
         return result
     except Exception as e:
         print(f"Error transcribing : {e}")
-        retries_model(file_path, model_name)
+        retries_model_offline(file_path, model_name)
 
 
-def retries_model(failed_file, model_name):
+def retries_model_offline(failed_file, model_name):
     retries = 3
     model = whisper.load_model(model_name)
     for attempt in range(retries):

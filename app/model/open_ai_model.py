@@ -18,10 +18,10 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
         print(transcript)
     except Exception as e:
         print(f"Error transcribing : {e}")
-        return retries_model(transcribe_file)
+        return retries_model_open_ai(transcribe_file)
 
 
-def retries_model(failed_file):
+def retries_model_open_ai(failed_file):
         retries =3
         for attempt in range(retries):
             try:

@@ -2,7 +2,6 @@ import os
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.utilities.utility import GlobalUtility
-from app.controllers.controllers import Controller
 from services.logger import Logger
 from dotenv import load_dotenv
 from app.db_utils import DBRecord
@@ -18,7 +17,6 @@ class StartTranscribe:
 
     def __init__(self):
         self.global_utility = GlobalUtility()
-        self.controller = Controller()
         self.logger = Logger()
         self.db_connection = DbConnection()
         self.database_class = DataBaseClass()
@@ -216,18 +214,11 @@ class StartTranscribe:
             start_transcribe_time = datetime.utcnow()
             transcript = self.controller.build_transcribe_audio(audio_file_path, subscription_model)
             end_transcribe_time = datetime.utcnow()
-            # update_values = {"TranscribeText": transcript['text'], "JobStatus": CONSTANT.STATUS_COMPLETED,
-            #                  "TranscribeStartTime": start_transcribe_time,
-            #                  "TranscribeEndTime": end_transcribe_time, 'TranscribeDate': end_transcribe_time}
             update_child_values = {"ChunkText": transcript['text'], "ChunkStatus": 1,
                                    "ChunkTranscribeStart": start_transcribe_time,
                                    "ChunkTranscribeEnd": end_transcribe_time}
             db_server_name = 'FLM-VM-COGAIDEV'
             database_name = 'AudioTrans'
-            # db_server_name = self.global_utility.get_database_server_name()
-            # database_name = self.global_utility.get_database_name()
-            # self.database_class.update_audio_transcribe_table(db_server_name, database_name, parent_record.Id,
-            #                                                   update_values)
             self.database_class.update_audio_transcribe_tracker_table(db_server_name, database_name, child_record.Id,
                                                                       update_child_values)
         except Exception as e:

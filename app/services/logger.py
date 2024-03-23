@@ -21,16 +21,6 @@ class Logger:
     severity_level_error = '40'
     severity_level_critical = '50'
 
-    def __init__(self):
-        # self.db_class = DataBaseClass()
-        self._instance = logger
-        # self.global_state = GlobalState()
-
-    def __new__(cls):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
     def debug(self, message: str):
         logger.debug(f"Debug message : {message}")
 

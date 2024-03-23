@@ -23,8 +23,13 @@ logger = Logger()
 db_connection = DbConnection()
 
 from openai import OpenAI
+os.environ["OPENAI_API_KEY"] = "put the key here"
+client = OpenAI(
+    api_key=os.environ.get("OPENAI_API_KEY")
+)
 
-def get_json_format(result, status=True, message=None):
+
+def get_json_format(result=[], status_code=200, status=True, message=None):
     response_message = 'The data result set that the service provided.'
     if message is not None:
         response_message = message
@@ -32,17 +37,19 @@ def get_json_format(result, status=True, message=None):
         "result": result,
         "message": response_message,
         "status": 'success',
+        'status_code': status_code
     }
     if not status:
         api_object = {
-            "result": [],
+            "result": result,
             "message": response_message,
             "status": 'failure',
+            'status_code': status_code
         }
     return api_object
 
 
-def set_json_format(result, status=True, message=None):
+def set_json_format(result=[], status_code=200, status=True, message=None):
     response_message = 'Record has been updated successfully..'
     if message is not None:
         response_message = message
@@ -50,12 +57,14 @@ def set_json_format(result, status=True, message=None):
         "result": result,
         "message": response_message,
         "status": 'success',
+        'status_code': status_code
     }
     if not status:
         api_object = {
-            "result": [],
+            "result": result,
             "message": response_message,
             "status": 'failure',
+            'status_code': status_code
         }
     return api_object
 
@@ -137,78 +146,11 @@ def get_all_configurations_table(server_name, database_name, client_id):
         session.close()
 
 
-def save_log_table_entry(server_name, database):
-    try:
-        dns = f'mssql+pyodbc://{server_name}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        log_info = Logs(ClientId=1, LogSummary='Ldap Error', LogDetails='Ldap Error', LogType='Error',
-                        ModulName='Start up process', Severity='Error')
-        session.add(log_info)
-        session.commit()
-    except Exception as e:
-        session.close()
-        logger.error(f"An error occurred in save_log_table_entry: {e}")
-    finally:
-        session.close()
-
-
 def create_audio_file_entry(session, model_info):
     record_model = model_info
     session.add(record_model)
     session.commit()
     return record_model
-
-
-def update_transcribe_text(record_id, update_values, is_child_thread=True):
-    try:
-        db_server = global_utility.get_database_server_name()
-        db_name = global_utility.get_database_name()
-        model_updated = AudioTranscribe
-        if is_child_thread:
-            model_updated = AudioTranscribeTracker
-
-        dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        Session = sessionmaker(bind=engine)
-        session = Session()
-        record = session.query(model_updated).get(int(record_id))
-        if record is not None:  # Check if the record exists
-            for column, value in update_values.items():
-                setattr(record, column, value)
-            # session.commit()
-            print(f"Record for ID '{record_id}' updated successfully.")
-        else:
-            print(f"User with ID {record_id} not found.")
-        session.commit()
-        session.close()
-    except Exception as e:
-        session.close()
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
-    finally:
-        session.close()
-
-
-def get_data_from_table(table_name, client_id):
-    try:
-        db_server = global_utility.get_database_server_name()
-        db_name = global_utility.get_database_name()
-        dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
-        engine = create_engine(dns)
-        metadata = MetaData()
-        with engine.begin() as connection:
-            table = Table(table_name, metadata, autoload=False, autoload_with=engine)
-            query = table.select().where(table.ClientId == client_id)
-            result = connection.execute(query)
-            for row in result:
-                print(row)
-            result.close()
-    except Exception as e:
-        result.close()
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
-    finally:
-        result.close()
 
 
 def get_audio_transcribe_table_data(server, database, client_id):
@@ -258,14 +200,14 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
             for column, value in update_values.items():
                 setattr(record, column, value)
             session.commit()
-            return set_json_format([record_id])
+            return set_json_format([record_id],200)
         else:
-            return set_json_format([], False, f"The record ID, {record_id}, could not be found.")
+            return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
 
     except Exception as e:
         session.close()
         logger.error(f"An error occurred in update_transcribe_text: {e}")
-        return set_json_format([], False, e)
+        return set_json_format([],500, False, e)
     finally:
         session.close()
 
@@ -291,13 +233,13 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
                     for column, value in values.items():
                         setattr(parent_record, column, value)
                     session.commit()
-            return set_json_format([record_id])
+            return set_json_format([record_id],200)
         else:
-            return set_json_format([], False, f"The record ID, {record_id}, could not be found.")
+            return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
     except Exception as e:
         session.close()
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
-        return set_json_format([], False, e)
+        logger.error(f"An error occurred in update_transcribe_text: ",str(e))
+        return set_json_format([],500, False, str(e))
     finally:
         session.close()
 
@@ -316,8 +258,7 @@ def get_client_configurations(server, database, client_id, master_client_user):
         global_utility.set_client_data(client_result)
         return client_result
     except Exception as e:
-        session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
         return []
     finally:
         session.close()
@@ -337,8 +278,7 @@ def get_oauth_access_token(server, database, user_name, secret_key):
         global_utility.set_client_data(client_result)
         return client_result
     except Exception as e:
-        session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
         return []
     finally:
         session.close()
@@ -356,7 +296,7 @@ def get_client_master_data(server, database, client_id):
         return client_result
     except Exception as e:
         session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
         return []
     finally:
         session.close()
@@ -458,7 +398,7 @@ def generate_token(session, client_id, user_name):
         return record_model
         print("Generated token:", record_model.Id)
     except Exception as e:
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
+        logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
     finally:
         session.close()
 
@@ -486,7 +426,7 @@ def update_token(session, record_id, user_name):
         # return record
         print("Generated token:", record.Id)
     except Exception as e:
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
+        logger.error(f"An error occurred in update_transcribe_text: ",str(e))
     finally:
         session.close()
 
@@ -505,9 +445,10 @@ def get_connection_string(server, database, client_id):
             record_coll.append(result.toDict())
         return global_utility.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING)
     except Exception as e:
-        session.close()
-        logger.error("connect_to_database", e)
-        return []
+        error_array = []
+        error_array.append(str(e))
+        logger.error('Error in Method get_connection_string ', str(e))
+        return set_json_format(error_array, 500, False, str(e))
     finally:
         session.close()
 
@@ -533,7 +474,7 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         elif len(results) == 0:
             return get_json_format([], True, 'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([],500,  False, str(e))
     finally:
         session.close()
 
@@ -558,9 +499,9 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
                 result_array.append(result_elm.toDict())
             return get_json_format(result_array)
         elif len(results) == 0:
-            return get_json_format([], True, 'There is no record found in the database')
+            return get_json_format([],200, True, 'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([], 500, False, str(e))
     finally:
         session.close()
 
@@ -579,7 +520,7 @@ def get_client_master_table_configurations(server_name, database_name, client_id
         elif len(results) == 0:
             return get_json_format([], True, 'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([], 500, False, str(e))
     finally:
         session.close()
 
@@ -595,9 +536,9 @@ def get_app_configurations(server_name, database_name, client_id):
                 result_array.append(result_elm.toDict())
             return get_json_format(result_array)
         elif len(results) == 0:
-            return get_json_format([], True, 'There is no record found in the database')
+            return get_json_format([],200, True, 'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([],500,  False, str(e))
     finally:
         session.close()
 
@@ -688,13 +629,13 @@ def copy_audio_files_process(server_name, database_name, client_id):
                             # return get_json_format([], False, f"Folder is not created for the file {file}")
                     else:
                         return get_json_format([], False, f"{file} is not supported.")
-                return get_json_format([], True, "All files copied and created Successfully.")
+                return get_json_format([], 200,True, "All files copied and created Successfully.")
             else:
-                return get_json_format([], False, 'There is no container at the specified path.')
+                return get_json_format([],500,  False, 'There is no container at the specified path.')
         else:
-            return get_json_format([], False, 'There is no configuration found in the table')
+            return get_json_format([], 500, False, 'There is no configuration found in the table')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([], 500, False, str(e))
     finally:
         session.close()
 
@@ -743,9 +684,9 @@ def update_audio_transcribe_tracker_status(session, record_id, status_id, update
                 parent_record = session.query(AudioTranscribe).filter_by(Id=updated_result_array[0]['AudioId']).update(
                     values)
                 session.commit()
-            return set_json_format([], True, f"The record ID, {record_id} has been updated successfully.")
+            return set_json_format([],200, True, f"The record ID, {record_id} has been updated successfully.")
     else:
-        return set_json_format([], False, f"The record ID, {record_id}, could not be found.")
+        return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
 
 
 def retries_model(failed_file, model_name):
@@ -764,12 +705,18 @@ def retries_model(failed_file, model_name):
 
 def whisper_transcribe_audio(file_path, model_name="base"):
     try:
+        status = 'success'
         model = whisper.load_model(model_name)
         result = model.transcribe(file_path)
-        return result
+        return status,result
     except Exception as e:
+        status = 'failure'
+        logger.error('Error in Method whisper_transcribe_audio ',str(e))
         print(f"Error transcribing : {e}")
-        retries_model(file_path, model_name)
+        error_array = []
+        error_array.append(str(e))
+        return status,set_json_format(error_array, 500, False, str(e))
+        # retries_model(file_path, model_name)
 
 
 def retries_ai_model(client, failed_file):
@@ -792,6 +739,7 @@ def retries_ai_model(client, failed_file):
 
 def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
     try:
+        status = 'success'
         print(' Open Ai Audio File Path', transcribe_file)
         audio_file = open(transcribe_file, "rb")
         transcript = client.audio.transcriptions.create(
@@ -799,16 +747,22 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
             file=audio_file,
             response_format='text'
         )
-        return transcript
+        return status, transcript
     except Exception as e:
+        status = 'failure'
         print(f"Error transcribing : {e}")
-        return retries_ai_model(client, transcribe_file)
+        logger.error('Error in Method open_ai_transcribe_audio ', str(e))
+        error_array = []
+        error_array.append(str(e))
+        return status,set_json_format(error_array, 500, False, str(e))
+        # return retries_ai_model(client, transcribe_file)
 
 
 def update_transcribe_audio_text(server_name, database_name, client_id, file_id):
     transcript = None
     from datetime import datetime
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results_config = session.query(Configurations).filter(
@@ -835,18 +789,44 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 for result_elm in audio_results:
                     audio_result_array.append(result_elm.toDict())
                 file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
+                file_size = os.path.getsize(file_path)
+                file_size_mb = int(file_size / (1024 * 1024))
+                if file_size_mb > 10:
+                    msg = 'File size greater than 10 mb so we are processing this file'
+                    logger.info(msg)
+                    error_array = []
+                    error_array.append(msg)
+                    return set_json_format(error_array, 400, False, msg)
+            else:
+                msg = 'The file might have been deleted, renamed, moved to a different location.'
+                error_array = []
+                error_array.append(msg)
+                logger.info(msg)
+                return set_json_format(error_array, 400, False, msg)
                 # file_path = audio_result_array[0]['ChunkFilePath']
             start_transcribe_time = datetime.utcnow()
             if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
-                transcript = open_ai_transcribe_audio(file_path)
+                status,transcript = open_ai_transcribe_audio(file_path)
+                if status == 'failure':
+                    return transcript
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_SMALL.lower():
-                transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
-                transcript = transcript_whisper['text']
+                status, transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
+                if status == 'success':
+                    transcript = transcript_whisper['text']
+                else:
+                    return transcript_whisper
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_NORMAL.lower():
-                transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
-                transcript = transcript_whisper['text']
+                status,transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
+                if status == 'success':
+                    transcript = transcript_whisper['text']
+                else:
+                    return transcript_whisper
+
             else:
-                transcript = open_ai_transcribe_audio(file_path)
+                status, transcript = open_ai_transcribe_audio(file_path)
+                if status == 'failure':
+                    return transcript
+
             end_transcribe_time = datetime.utcnow()
             update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
                                    "ChunkTranscribeStart": start_transcribe_time,
@@ -854,7 +834,10 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             updated_result = update_audio_transcribe_tracker_status(session, file_id, status_id, update_child_values)
             return updated_result
     except Exception as e:
-        return set_json_format([], False, str(e))
+        error_array = []
+        error_array.append(str(e))
+        logger.error('Error in Method update_transcribe_audio_text ',str(e))
+        return set_json_format(error_array,500, False, str(e))
     finally:
         session.close()
 

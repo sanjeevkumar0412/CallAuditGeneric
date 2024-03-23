@@ -39,7 +39,7 @@ class GlobalUtility:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def get_json_format(self,result, status=True, message=None):
+    def get_json_format(self,result =[],status_code =200, status=True, message=None):
         response_message = 'The data result set that the service provided.'
         if message is not None:
             response_message = message
@@ -47,16 +47,18 @@ class GlobalUtility:
             "result": result,
             "message": response_message,
             "status": 'success',
+            'status_code':status_code
         }
         if not status:
             api_object = {
-                "result": [],
+                "result": result,
                 "message": response_message,
                 "status": 'failure',
+                'status_code': status_code
             }
         return api_object
 
-    def set_json_format(self,result, status=True, message=None):
+    def set_json_format(self,result =[],status_code =200, status=True, message=None):
         response_message = 'Record has been updated successfully..'
         if message is not None:
             response_message = message
@@ -64,12 +66,14 @@ class GlobalUtility:
             "result": result,
             "message": response_message,
             "status": 'success',
+            'status_code': status_code
         }
         if not status:
             api_object = {
-                "result": [],
+                "result": result,
                 "message": response_message,
                 "status": 'failure',
+                'status_code': status_code
             }
         return api_object
 
