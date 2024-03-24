@@ -856,13 +856,21 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
             for result_elm in results:
                 result_array.append(result_elm.toDict())
             for row in result_array:
-                pattern_parts.append(f"{row['PatternName']}")
-                final_string += row['PatternName'] + '_'
-            print(final_string)
-            return get_json_format(result_array)
+                # pattern_parts.append(f"{row['PatternName']}")
+                final_string += row['PatternName'] + '-'
+            file_name_pattern =final_string[:-1]
+            print(file_name_pattern)
+            # compiled_pattern = re.compile(file_name_pattern, re.IGNORECASE | re.VERBOSE)
+            # match1 = compiled_pattern.search(file_name)
+            # match = re.match(file_name_pattern, file_name)
+            if len(file_name_pattern.split('-')) == len(file_name.split('-')):
+                return get_json_format([],200,True,'Pattern matched with File Name')
+            else:
+                print(f"No match found for file: {file_name}")
+            return get_json_format([],400,True,'Pattern does not matched with File Name')
         elif len(results) == 0:
-            return get_json_format([], True, 'There is no record found in the database')
+            return get_json_format([],400, True, 'There is no record found in the database')
     except Exception as e:
-        return get_json_format([], False, str(e))
+        return get_json_format([],500, False, str(e))
     finally:
         session.close()

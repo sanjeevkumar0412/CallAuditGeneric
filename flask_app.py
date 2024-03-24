@@ -247,6 +247,7 @@ def match_file_name_pettern():
     file_name = request.args.get('filename')
     current_user = os.getlogin()
     file_name = 'ABC-21March-AY-Noida-Call-Approva-Ashutosh'
+    file_name = 'ABC-21March-AY-Noida-Call-Approva'
     print('Current login user:', current_user)
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
