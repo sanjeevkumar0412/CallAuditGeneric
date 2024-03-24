@@ -23,7 +23,7 @@ logger = Logger()
 db_connection = DbConnection()
 
 from openai import OpenAI
-os.environ["OPENAI_API_KEY"] = "put the key here"
+os.environ["OPENAI_API_KEY"] = "mention key here"
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY")
 )
@@ -745,7 +745,8 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
         transcript = client.audio.transcriptions.create(
             model=model,
             file=audio_file,
-            response_format='text'
+            response_format='text',
+            language='en'
         )
         return status, transcript
     except Exception as e:
