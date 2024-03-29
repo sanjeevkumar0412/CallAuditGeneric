@@ -93,6 +93,7 @@ class SentimentAnalysisCreation:
             session.close()
 
     def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
+        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         session = self.global_utility.get_database_session(connection_string)
         try:
@@ -128,11 +129,13 @@ class SentimentAnalysisCreation:
             print(e)
             # result.close()
         finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             session.close()
 
 
 
     def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file):
+        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         session = self.global_utility.get_database_session(connection_string)
         try:
@@ -170,9 +173,11 @@ class SentimentAnalysisCreation:
             print(e)
             # result.close()
         finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             session.close()
 
     def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
+        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         session = self.global_utility.get_database_session(connection_string)
 
@@ -186,6 +191,7 @@ class SentimentAnalysisCreation:
             # self.logger.error(f": Error {e}",e)
             print(e)
         finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             session.close()
 
 if __name__ == "__main__":

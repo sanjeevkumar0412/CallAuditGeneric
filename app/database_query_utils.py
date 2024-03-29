@@ -4,6 +4,7 @@ from sqlalchemy.engine.reflection import Inspector
 from db_layer.models import AudioTranscribe
 from sqlalchemy.sql import select
 from app.utilities.utility import GlobalUtility
+from app.services.logger import Logger
 
 
 class DBRecord:
@@ -11,6 +12,7 @@ class DBRecord:
 
     def __init__(self):
         self.global_utility = GlobalUtility()
+        self.logger = Logger()
     @classmethod
     def get_instance(cls):
         if cls._instance is None:
@@ -40,6 +42,7 @@ class DBRecord:
 
     def get_all_record(self, server_name, database_name, client_id,table_name):
         try:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
@@ -70,11 +73,13 @@ class DBRecord:
             }
             return api_object
         finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             cursor.close()
 
 
     def get_record_by_id(self, server_name, database_name, client_id,table_name, id):
         try:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
@@ -91,10 +96,13 @@ class DBRecord:
 
             return {'data': result}
         except Exception as e:
-            print(".........Error in get_record_by_id...........", e)
+            self.logger.error(".........Error in get_record_by_id...........", str(e))
+        finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
     def get_data_by_column_name(self,server_name, database_name, client_id, table_name, column_name, column_value):
         try:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
@@ -136,10 +144,13 @@ class DBRecord:
                 'status_code': 500
             }
             return api_object
+        finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
     def update_record_by_column(self,server_name, database_name, client_id, table_name, column_to_update, new_value, condition_column, condition_value):
 
         try:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
@@ -165,9 +176,12 @@ class DBRecord:
                 'status_code': 500
             }
             return api_object
+        finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
     def delete_record_by_id(self, server_name, database_name, client_id,table_name, id):
         try:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
@@ -188,6 +202,8 @@ class DBRecord:
                 'status_code': 500
             }
             return api_object
+        finally:
+            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
     def get_master_data_by_id(self,server_name, database_name, client_id, table_name, id):
         try:

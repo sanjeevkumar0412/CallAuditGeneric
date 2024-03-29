@@ -84,6 +84,7 @@ def is_empty(value):
 
 def get_all_configurations_table(server_name, database_name, client_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         # Get data from Client table
@@ -142,6 +143,7 @@ def get_all_configurations_table(server_name, database_name, client_id):
         logger.error("connect_to_database", e)
         return get_json_format([], False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
@@ -154,6 +156,7 @@ def create_audio_file_entry(session, model_info):
 
 def get_audio_transcribe_table_data(server, database, client_id):
     try:
+        logger.log_entry_into_sql_table(server, database, client_id, False)
         dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
@@ -169,11 +172,13 @@ def get_audio_transcribe_table_data(server, database, client_id):
         logger.error("connect_to_database", e)
         raise
     finally:
+        logger.log_entry_into_sql_table(server, database, client_id, True)
         session.close()
 
 
 def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_parent_id):
     try:
+        logger.log_entry_into_sql_table(server, database, client_id, False)
         dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
@@ -187,11 +192,13 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
         session.close()
         logger.error("connect_to_database", e)
     finally:
+        logger.log_entry_into_sql_table(server, database, client_id, True)
         session.close()
 
 
 def update_audio_transcribe_table(server_name, database_name, client_id, record_id, update_values):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AudioTranscribe).get(int(record_id))
@@ -208,11 +215,13 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
         logger.error(f"An error occurred in update_transcribe_text: {e}")
         return set_json_format([],500, False, e)
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
 def update_audio_transcribe_tracker_table(server_name, database_name, client_id, record_id, update_values):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AudioTranscribeTracker).get(int(record_id))
@@ -240,11 +249,13 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
         logger.error(f"An error occurred in update_transcribe_text: ",str(e))
         return set_json_format([],500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         session.close()
 
 
 def get_client_configurations(server, database, client_id, master_client_user):
     try:
+        logger.log_entry_into_sql_table(server, database, client_id, False)
         dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
@@ -260,6 +271,7 @@ def get_client_configurations(server, database, client_id, master_client_user):
         logger.error("connect_to_database", str(e))
         return []
     finally:
+        logger.log_entry_into_sql_table(server, database, client_id, True)
         session.close()
 
 
@@ -285,6 +297,7 @@ def get_oauth_access_token(server, database, user_name, secret_key):
 
 def get_client_master_data(server, database, client_id):
     try:
+        logger.log_entry_into_sql_table(server, database, client_id, False)
         dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
@@ -298,6 +311,7 @@ def get_client_master_data(server, database, client_id):
         logger.error("connect_to_database", str(e))
         return []
     finally:
+        logger.log_entry_into_sql_table(server, database, client_id, True)
         session.close()
 
 
@@ -305,6 +319,7 @@ def get_ldap_authentication(server_name, database_name, client_id):
     success = True
     error_message = None
     # Establish connection with the LDAP server
+    logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
     connection_string = get_connection_string(server_name, database_name, client_id)
     session = get_database_session(connection_string)
     records = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
@@ -332,12 +347,15 @@ def get_ldap_authentication(server_name, database_name, client_id):
         success = False
         error_message = str(e)
         return success, error_message
+    finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
 
 def get_token_based_authentication(server_name, database_name, client_id, user_name):
     try:
         success = True
         error_message = None
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AuthTokenManagement).filter(
@@ -374,6 +392,8 @@ def get_token_based_authentication(server_name, database_name, client_id, user_n
         success = False
         error_message = str(e)
         return success, error_message
+    finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
 
 def generate_token(session, client_id, user_name):
@@ -454,6 +474,7 @@ def get_connection_string(server, database, client_id):
 
 def get_audio_transcribe_table_data(server_name, database_name, client_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         job_status_data = session.query(JobStatus).filter(
@@ -475,11 +496,13 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([],500,  False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
 def get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         job_status_data = session.query(JobStatus).filter(
@@ -502,11 +525,13 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
     except Exception as e:
         return get_json_format([], 500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
 def get_client_master_table_configurations(server_name, database_name, client_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(ClientMaster).filter(
@@ -521,11 +546,13 @@ def get_client_master_table_configurations(server_name, database_name, client_id
     except Exception as e:
         return get_json_format([], 500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
 def get_app_configurations(server_name, database_name, client_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
@@ -539,11 +566,13 @@ def get_app_configurations(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([],500,  False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
 def copy_audio_files_process(server_name, database_name, client_id):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results_config = session.query(Configurations).filter(
@@ -636,6 +665,7 @@ def copy_audio_files_process(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([], 500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 
@@ -860,6 +890,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
 
 def get_file_name_pattern(server_name, database_name, client_id, file_name):
     try:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(AudioFileNamePattern).filter(
@@ -889,4 +920,5 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
     except Exception as e:
         return get_json_format([],500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
