@@ -207,20 +207,13 @@ def copy_audio_files():
 @app.route('/transcribe_audio_text', methods=['POST'])
 def transcribe_audio_text():
     #  Dev Dones
-    if request.method == "POST":
-        client_id = int(request.args.get('clientid'))
-        record_id = int(request.args.get('id'))
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
-        json_result = update_transcribe_audio_text(server_name, database_name, client_id, record_id)
-        return json_result
-    else:
-        client_id = int(request.args.get('clientid'))
-        record_id = int(request.args.get('id'))
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
-        json_result = update_transcribe_audio_text(server_name, database_name, client_id,record_id)
-        return json_result
+    client_id = int(request.args.get('clientid'))
+    record_id = int(request.args.get('id'))
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    json_result = update_transcribe_audio_text(server_name, database_name, client_id, record_id)
+    return json_result
+
 
 @app.route('/match_file_name_pettern', methods=['POST'])
 def match_file_name_pettern():

@@ -22,7 +22,7 @@ logger = Logger()
 db_connection = DbConnection()
 
 from openai import OpenAI
-os.environ["OPENAI_API_KEY"] = "mention key here"
+os.environ["OPENAI_API_KEY"] = "open key here"
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY")
 )
@@ -688,52 +688,61 @@ def update_audio_transcribe_tracker_status(session, record_id, status_id, update
         return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
 
 
-def retries_model(failed_file, model_name):
+def retries_open_source_transcribe_audio_model(failed_file, model_name):
     retries = 3
+    status = 'success'
     model = whisper.load_model(model_name)
     for attempt in range(retries):
         try:
-            print('fialed file process start : ', failed_file)
+            logger.info(f'fialed file process start : {failed_file}')
             time.sleep(2 ** attempt)
             result = model.transcribe(failed_file)
-            return result
-            # break
+            return status, result
         except Exception as e:
-            print(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}")
+            status = 'failure'
+            error_array = []
+            error_array.append(str(e))
+            logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): ",str(e))
+            if retries == 3:
+                return status, set_json_format(error_array, 500, False, str(e))
 
 
-def whisper_transcribe_audio(file_path, model_name="base"):
+def open_source_transcribe_audio(file_path, model_name="base"):
     try:
         status = 'success'
         model = whisper.load_model(model_name)
         result = model.transcribe(file_path)
         return status,result
     except Exception as e:
-        status = 'failure'
-        logger.error('Error in Method whisper_transcribe_audio ',str(e))
-        print(f"Error transcribing : {e}")
-        error_array = []
-        error_array.append(str(e))
-        return status,set_json_format(error_array, 500, False, str(e))
-        # retries_model(file_path, model_name)
+        logger.error('Error in Method open_source_transcribe_audio ',str(e))
+        retries_open_source_transcribe_audio_model(file_path, model_name)
+        # return status,set_json_format(error_array, 500, False, str(e))
+        # return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
-def retries_ai_model(client, failed_file):
+
+def retries_open_ai_model(client, failed_file, model):
     retries = 3
+    status = 'success'
     for attempt in range(retries):
         try:
-            print('fialed file process start : ', failed_file)
+            logger.info(f'Failed file process start : {failed_file}')
             time.sleep(2 ** attempt)
             audio_file = open(failed_file, "rb")
             transcript = client.audio.transcriptions.create(
-                model="whisper-1",
+                model=model,
                 file=audio_file,
-                response_format='text'
+                response_format='text',
+                language='en'
             )
-            return transcript
-            # break
+            return status, transcript
         except Exception as e:
-            print(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}")
+            status = 'failure'
+            error_array = []
+            error_array.append(str(e))
+            logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}")
+            if retries == 3:
+                return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
 def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
@@ -754,7 +763,11 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
         logger.error('Error in Method open_ai_transcribe_audio ', str(e))
         error_array = []
         error_array.append(str(e))
-        return status,set_json_format(error_array, 500, False, str(e))
+        if isinstance(e, ConnectionError) or "429" in str(e):  # Check for connection or 429 error
+            retries_open_ai_model(client, transcribe_file, model)
+        else:
+            return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+        # return status,set_json_format(error_array, 500, False, str(e))
         # return retries_ai_model(client, transcribe_file)
 
 
@@ -763,6 +776,8 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
     from datetime import datetime
     try:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        #applied sleep for each thread
+        time.sleep(10)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results_config = session.query(Configurations).filter(
@@ -791,12 +806,12 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
                 file_size = os.path.getsize(file_path)
                 file_size_mb = int(file_size / (1024 * 1024))
-                # if file_size_mb > 15:
-                #     msg = 'File size greater than 10 mb so we are processing this file'
-                #     logger.info(msg)
-                #     error_array = []
-                #     error_array.append(msg)
-                #     return set_json_format(error_array, 400, False, msg)
+                if file_size_mb > 15:
+                    msg = 'File size greater than 10 mb so we are processing this file'
+                    logger.info(msg)
+                    error_array = []
+                    error_array.append(msg)
+                    return set_json_format(error_array, 400, False, msg)
             else:
                 msg = 'The file might have been deleted, renamed, moved to a different location.'
                 error_array = []
@@ -810,13 +825,13 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 if status == 'failure':
                     return transcript
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_SMALL.lower():
-                status, transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
+                status, transcript_whisper = open_source_transcribe_audio(file_path, whisper_model.lower())
                 if status == 'success':
                     transcript = transcript_whisper['text']
                 else:
                     return transcript_whisper
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_NORMAL.lower():
-                status,transcript_whisper = whisper_transcribe_audio(file_path, whisper_model.lower())
+                status,transcript_whisper = open_source_transcribe_audio(file_path, whisper_model.lower())
                 if status == 'success':
                     transcript = transcript_whisper['text']
                 else:
