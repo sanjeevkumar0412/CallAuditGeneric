@@ -1,10 +1,9 @@
 from app.services.logger import Logger
 from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
-from sqlalchemy import create_engine, MetaData, Table
+from sqlalchemy import create_engine
 from app.configs.config import CONFIG
 from sqlalchemy.orm import sessionmaker
-import re
 import jwt
 import os
 import datetime
@@ -13,7 +12,7 @@ import whisper
 import time
 from constants.constant import CONSTANT
 from ldap3 import Server, Connection, ALL, SIMPLE
-from db_layer.models import (Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
+from db_layer.models import (Client, Configurations, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
                              AudioFileNamePattern,
                              MasterConnectionString)
@@ -792,12 +791,12 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
                 file_size = os.path.getsize(file_path)
                 file_size_mb = int(file_size / (1024 * 1024))
-                if file_size_mb > 10:
-                    msg = 'File size greater than 10 mb so we are processing this file'
-                    logger.info(msg)
-                    error_array = []
-                    error_array.append(msg)
-                    return set_json_format(error_array, 400, False, msg)
+                # if file_size_mb > 15:
+                #     msg = 'File size greater than 10 mb so we are processing this file'
+                #     logger.info(msg)
+                #     error_array = []
+                #     error_array.append(msg)
+                #     return set_json_format(error_array, 400, False, msg)
             else:
                 msg = 'The file might have been deleted, renamed, moved to a different location.'
                 error_array = []
@@ -840,6 +839,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
         logger.error('Error in Method update_transcribe_audio_text ',str(e))
         return set_json_format(error_array,500, False, str(e))
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
 
 

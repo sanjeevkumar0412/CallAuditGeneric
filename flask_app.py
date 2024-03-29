@@ -1,47 +1,21 @@
 import os
 from flask import Flask, request
-from flask_swagger_ui import get_swaggerui_blueprint
-
 
 app = Flask(__name__)
-print('App is running mode....')
-from database_query_utils import *
+
 from database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
                                       get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,open_ai_transcribe_audio,
                                       get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table)
 
-# Start swagger code from here
-SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
-# API_URL = 'http://petstore.swagger.io/v2/swagger.json'  # Our API url (can of course be a local resource)
-API_URL = '/static/api_document.json'
-# Call factory function to create our blueprint
-swaggerui_blueprint = get_swaggerui_blueprint(
-    SWAGGER_URL,  # Swagger UI static files will be mapped to '{SWAGGER_URL}/dist/'
-    API_URL,
-    config={  # Swagger UI config overrides
-        'app_name': "Test application"
-    },
-    # oauth_config={  # OAuth config. See https://github.com/swagger-api/swagger-ui#oauth2-configuration .
-    #    'clientId': "your-client-id",
-    #    'clientSecret': "your-client-secret-if-required",
-    #    'realm': "your-realms",
-    #    'appName': "your-app-name",
-    #    'scopeSeparator': " ",
-    #    'additionalQueryStringParams': {'test': "hello"}
-    # }
-)
-
-app.register_blueprint(swaggerui_blueprint)
-# End swagger code from here
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
 
-@app.route('/get_all_data', methods=['GET'])
+@app.route('/get_all_data', methods=['POST'])
 def get_record():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -70,7 +44,7 @@ def get_recordby_column_name():
     return data
 
 
-@app.route('/update_record_by_column', methods=['GET'])
+@app.route('/update_record_by_column', methods=['POST'])
 def get_update_by_column_name():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -87,7 +61,7 @@ def get_update_by_column_name():
     return data
 
 
-@app.route('/delete_record_by_id')
+@app.route('/delete_record_by_id', methods=['DELETE'])
 def delete_recordby_id():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -100,7 +74,7 @@ def delete_recordby_id():
     return {'data': data}
 
 
-@app.route('/merge_chunk_transcribe_text')
+@app.route('/merge_chunk_transcribe_text', methods=['POST'])
 def get_transcribe_sentiment():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -152,7 +126,7 @@ def get_audio_transcribe_tracker_data():
         return get_json_format([], False, e)
 
 
-@app.route('/add_update_transcribe', methods=['GET'])
+@app.route('/add_update_transcribe', methods=['POST'])
 def add_update_transcribe():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -162,7 +136,7 @@ def add_update_transcribe():
     return update_status
 
 
-@app.route('/add_update_transcribe_tracker', methods=['GET'])
+@app.route('/add_update_transcribe_tracker', methods=['POST'])
 def add_update_transcribe_tracker():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -173,7 +147,7 @@ def add_update_transcribe_tracker():
     return update_status
 
 
-@app.route('/get_token_based_authenticate', methods=['GET'])
+@app.route('/get_token_based_authenticate', methods=['POST'])
 def get_token_based_authenticate():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -187,7 +161,7 @@ def get_token_based_authenticate():
         return set_json_format([], False, str(message))
 
 
-@app.route('/get_ldap_based_authenticate', methods=['GET'])
+@app.route('/get_ldap_based_authenticate', methods=['POST'])
 def get_ldap_based_authenticate():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -200,7 +174,7 @@ def get_ldap_based_authenticate():
         return set_json_format([], False, str(message))
 
 
-@app.route('/get_data_from_sentiment_table')
+@app.route('/get_data_from_sentiment_table', methods=['GET'])
 def get_sentiment_data():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -221,7 +195,7 @@ def get_all_configurations():
     json_result = get_all_configurations_table(server_name, database_name, client_id)
     return json_result
 
-@app.route('/copy_audio_files', methods=['GET'])
+@app.route('/copy_audio_files', methods=['POST'])
 def copy_audio_files():
     #  Dev Done
     client_id = int(request.args.get('clientid'))
@@ -230,17 +204,25 @@ def copy_audio_files():
     json_result = copy_audio_files_process(server_name, database_name, client_id)
     return json_result
 
-@app.route('/transcribe_audio_text', methods=['GET'])
+@app.route('/transcribe_audio_text', methods=['POST'])
 def transcribe_audio_text():
     #  Dev Dones
-    client_id = int(request.args.get('clientid'))
-    record_id = int(request.args.get('id'))
-    current_user = os.getlogin()
-    print('Current login user:', current_user)
-    json_result = update_transcribe_audio_text(server_name, database_name, client_id,record_id)
-    return json_result
+    if request.method == "POST":
+        client_id = int(request.args.get('clientid'))
+        record_id = int(request.args.get('id'))
+        current_user = os.getlogin()
+        print('Current login user:', current_user)
+        json_result = update_transcribe_audio_text(server_name, database_name, client_id, record_id)
+        return json_result
+    else:
+        client_id = int(request.args.get('clientid'))
+        record_id = int(request.args.get('id'))
+        current_user = os.getlogin()
+        print('Current login user:', current_user)
+        json_result = update_transcribe_audio_text(server_name, database_name, client_id,record_id)
+        return json_result
 
-@app.route('/match_file_name_pettern', methods=['GET'])
+@app.route('/match_file_name_pettern', methods=['POST'])
 def match_file_name_pettern():
     #  Dev Done
     client_id = int(request.args.get('clientid'))
@@ -252,7 +234,7 @@ def match_file_name_pettern():
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
-@app.route('/dump_data_into_sentiment')
+@app.route('/dump_data_into_sentiment', methods=['POST'])
 def dump_data_sentiment_table():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -263,7 +245,7 @@ def dump_data_sentiment_table():
         data = {"Error": "File not exit " + audio_file_name,'status':"400"}
     return data
 
-@app.route('/open_ai_transcribe_audio_text', methods=['GET'])
+@app.route('/open_ai_transcribe_audio_text', methods=['POST'])
 def open_ai_transcribe_audio_text():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
