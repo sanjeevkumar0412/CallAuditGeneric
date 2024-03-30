@@ -19,7 +19,7 @@ class SentimentAnalysisCreation:
         self.logger = Logger()
         self.global_utility = GlobalUtility()
 
-    def get_sentiment(self,text):
+    def get_sentiment(self,text,calulated_max_tokens):
         prompt = f"{prompt_check_list.prompt1}{text}  @@ need above output in dictionary key value pair.Please follows these key only Summary,Topics,FoulLanguage,ActionItems,Owners,Score and AggregateSentiment."
         # sentiment = response['choices'][0]['message']['content'].strip()
         response = client.chat.completions.create(
@@ -30,7 +30,7 @@ class SentimentAnalysisCreation:
                 {"role": "user", "content": prompt}
             ],
 
-            max_tokens=1500,
+            max_tokens=calulated_max_tokens,
             n=1,
             presence_penalty=0.8,
             temperature=0.3,
@@ -98,7 +98,8 @@ class SentimentAnalysisCreation:
                                                       AudioFileName=current_file,Created=created_sentiment_date,)
                 session.add(dump_data_into_table)
                 session.commit()
-                sentiment_call_data=self.get_sentiment(transcribe_merged_string)
+                calulated_max_tokens=self.calculate_max_tokens(transcribe_merged_string,token_size=1)
+                sentiment_call_data=self.get_sentiment(transcribe_merged_string,calulated_max_tokens)
 
                 if len(sentiment_call_data) > 0:
                     update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).first()
@@ -231,6 +232,13 @@ class SentimentAnalysisCreation:
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             session.close()
+
+    def calculate_max_tokens(self, text, token_size=1):
+
+        words = text.split()
+        tokens_count = len(words) * token_size
+
+        return tokens_count
 
 if __name__ == "__main__":
 
