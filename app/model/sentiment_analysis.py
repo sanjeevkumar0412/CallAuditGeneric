@@ -6,7 +6,7 @@ from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,JobStatus
 from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
-os.environ["OPENAI_API_KEY"] = ""
+os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
 
 from openai import OpenAI
 client = OpenAI(
@@ -20,7 +20,7 @@ class SentimentAnalysisCreation:
         self.global_utility = GlobalUtility()
 
     def get_sentiment(self,text):
-        prompt = f"{prompt_check_list.prompt_text}Please check the conversation and provide the aggregate Sentiment and Score vallue{text}"
+        prompt = f"{prompt_check_list.prompt1}{text}  @@ need above output in dictionary key value pair.Please follows these key only Summary,Topics,FoulLanguage,ActionItems,Owners,Score and AggregateSentiment."
         # sentiment = response['choices'][0]['message']['content'].strip()
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -30,25 +30,52 @@ class SentimentAnalysisCreation:
                 {"role": "user", "content": prompt}
             ],
 
-            max_tokens=500,
+            max_tokens=1500,
             n=1,
-            presence_penalty=0,
-            temperature=0.8,
+            presence_penalty=0.8,
+            temperature=0.3,
             top_p=1.0,
             stop=None
             # stop=["\n"]
         )
         sentiment = response.choices[0].message.content
-        aggregate_sentiment= json.loads(sentiment)["aggregate_sentiment"]
-        aggregate_score= json.loads(sentiment)["aggregate_score"]
-        if "positive" in sentiment.lower():
-            score = 1
-        elif "negative" in sentiment.lower():
-            score = -1
+        results = json.loads(sentiment)
+        if 'Summary' in results:
+            summary_report = results['Summary']
         else:
-            score = 0
+            summary_report = 'key not Summary not found'
 
-        data ={'aggregate_sentiment':aggregate_sentiment,'aggregate_score':aggregate_score,'score':score}
+        if 'Topics' in results:
+            topics = results['Topics']
+        else:
+            topics = 'key Topics not found'
+        if 'FoulLanguage' in results:
+            foul_language = results['FoulLanguage']
+        else:
+            foul_language = 'key Foul Language not found'
+
+        if 'ActionItems' in results:
+            action_items = results['ActionItems']
+        else:
+            action_items = 'key Action Items not found'
+
+        if 'Owners' in results:
+            owners = results['Owners']
+        else:
+            owners = 'key Owners not found'
+        if 'Score' in results:
+            sentiment_score = results['Score']
+        else:
+            sentiment_score = 'key Score not found'
+
+        if 'AggregateSentiment' in results:
+            average_sentiment = results['AggregateSentiment']
+        else:
+            average_sentiment = 'key Aggregate Sentiment not found'
+
+        data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
+                'action_items': action_items, 'owners': owners, 'sentiment_score': sentiment_score,
+                'average_sentiment': average_sentiment}
         return data
 
     def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
@@ -76,11 +103,16 @@ class SentimentAnalysisCreation:
                 if len(sentiment_call_data) > 0:
                     update_sentiment_record = session.query(SentimentAnalysis).filter(SentimentAnalysis.AudioFileName == current_file).first()
                     modified_sentiment_date = datetime.utcnow()
-                    update_sentiment_record.SentimentScore = sentiment_call_data['aggregate_score']
+                    update_sentiment_record.SentimentScore = sentiment_call_data['sentiment_score']
                     update_sentiment_record.SentimentText = transcribe_merged_string
                     update_sentiment_record.SentimentStatus = 3
                     update_sentiment_record.Modified = modified_sentiment_date
-                    update_sentiment_record.Sentiment = sentiment_call_data['aggregate_sentiment']
+                    update_sentiment_record.Sentiment = str(sentiment_call_data['average_sentiment'])
+                    update_sentiment_record.Summary = str(sentiment_call_data['summary_report'])
+                    update_sentiment_record.Topics = str(sentiment_call_data['topics'])
+                    update_sentiment_record.FoulLanguage = str(sentiment_call_data['foul_language'])
+                    update_sentiment_record.ActionItems = str(sentiment_call_data['action_items'])
+                    update_sentiment_record.Owners = str(sentiment_call_data['owners'])
                     session.commit()
                 result = {"status": "200", "message": "Sentiment Record successfully recorded !"}
             else:
@@ -184,7 +216,13 @@ class SentimentAnalysisCreation:
         try:
             sentiment_dic={}
             data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
-            sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,"AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,"Created":data[0].Created,"SentimentScore":data[0].SentimentScore,"SentimentStatus":data[0].SentimentStatus,"Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
+            sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,
+                                  "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
+                                  "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
+                                  "FoulLanguage":data[0].FoulLanguage,"ActionItems":data[0].ActionItems,
+                                  "Owners":data[0].Owners,"SentimentScore":data[0].SentimentScore,
+                                  "SentimentStatus":data[0].SentimentStatus,
+                                  "Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
             result = {"sentimentdata": sentiment_dic,"status": 200}
             return result
         except Exception as e:
