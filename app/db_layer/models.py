@@ -232,11 +232,15 @@ class SentimentAnalysis(Base):
     IsDeleted = Column(Boolean, unique=False, default=False)
     Sentiment = Column(String, nullable=True)
     AudioFileName = Column(String, nullable=True)
-
+    Summary = Column(String, nullable=False)
+    Topics = Column(String, nullable=False)
+    FoulLanguage = Column(String, nullable=False)
+    ActionItems = Column(String, nullable=False)
+    Owners = Column(String, nullable=False)
 
     def __repr__(self):
         return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}')>"
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}')>"
 
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
