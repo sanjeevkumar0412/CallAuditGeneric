@@ -839,9 +839,10 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 if file_size_mb > 15:
                     msg = 'File size greater than 10 mb so we are processing this file'
                     logger.info(msg)
-                    error_array = []
-                    error_array.append(msg)
-                    return set_json_format(error_array, 400, False, msg)
+                    #Need to debug this code on the server
+                    # error_array = []
+                    # error_array.append(msg)
+                    # return set_json_format(error_array, 400, False, msg)
             else:
                 msg = 'The file might have been deleted, renamed, moved to a different location.'
                 error_array = []
