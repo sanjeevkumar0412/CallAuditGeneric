@@ -23,7 +23,7 @@ def get_record():
     return data
 
 
-@app.route('/get_record_by_id', methods=['GET'])
+@app.route('/get_record_by_id', methods=['POST'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -34,7 +34,7 @@ def get_recordby_id():
     return data
 
 
-@app.route('/get_record_by_column_name', methods=['GET'])
+@app.route('/get_record_by_column_name', methods=['POST'])
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -113,7 +113,7 @@ def get_audio_transcribe_data():
         return get_json_format([], False, e)
 
 
-@app.route('/get_audio_transcribe_tracker_data', methods=['GET'])
+@app.route('/get_audio_transcribe_tracker_data', methods=['POST'])
 def get_audio_transcribe_tracker_data():
     try:
         # Done
@@ -174,7 +174,7 @@ def get_ldap_based_authenticate():
         return set_json_format([], False, str(message))
 
 
-@app.route('/get_data_from_sentiment_table', methods=['GET'])
+@app.route('/get_data_from_sentiment_table', methods=['POST'])
 def get_sentiment_data():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
