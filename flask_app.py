@@ -227,7 +227,7 @@ def match_file_name_pettern():
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
-@app.route('/dump_data_into_sentiment', methods=['GET'])
+@app.route('/dump_data_into_sentiment', methods=['GET','POST'])
 def dump_data_sentiment_table():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()

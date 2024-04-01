@@ -157,13 +157,15 @@ def create_audio_file_entry(session, model_info):
 
 def get_audio_transcribe_table_data(server, database, client_id):
     try:
+        completed_status = JobStatusEnum.CompletedTranscript
+        status_id = completed_status.value
         logger.log_entry_into_sql_table(server, database, client_id, False)
         dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
         session = Session()
         audio_transcribe = session.query(AudioTranscribe).filter(
-            (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != 'Completed')).all()
+            (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != status_id)).all()
         audio_transcribe_array = []
         for contact in audio_transcribe:
             audio_transcribe_array.append(contact.toDict())
@@ -237,7 +239,9 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
                         AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
             if len(record_data) == 0:
                 parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
-                values = {'JobStatus': 'Drafted'}
+                status_draft = JobStatusEnum.Draft
+                status_id = status_draft.value
+                values = {'JobStatus': status_id}
                 if record is not None:  # Check if the record exists
                     for column, value in values.items():
                         setattr(parent_record, column, value)
@@ -478,12 +482,14 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        job_status_coll = []
-        for status_result in job_status_data:
-            job_status_coll.append(status_result.toDict())
-        status_id = global_utility.get_status_by_key_name(
-            job_status_coll, CONSTANT.STATUS_COMPLETED)
+        # job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
+        # job_status_coll = []
+        # for status_result in job_status_data:
+        #     job_status_coll.append(status_result.toDict())
+        # status_id = global_utility.get_status_by_key_name(
+        #     job_status_coll, CONSTANT.STATUS_COMPLETED)
+        status_completed = JobStatusEnum.CompletedTranscript
+        status_id = status_completed.value
         results = session.query(AudioTranscribe).filter(
             (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
         if len(results) > 0:
@@ -505,12 +511,14 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        job_status_coll = []
-        for status_result in job_status_data:
-            job_status_coll.append(status_result.toDict())
-        status_id = global_utility.get_status_by_key_name(
-            job_status_coll, CONSTANT.STATUS_COMPLETED)
+        # job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
+        # job_status_coll = []
+        # for status_result in job_status_data:
+        #     job_status_coll.append(status_result.toDict())
+        # status_id = global_utility.get_status_by_key_name(
+        #     job_status_coll, CONSTANT.STATUS_COMPLETED)
+        status_completed = JobStatusEnum.CompletedTranscript
+        status_id = status_completed.value
         results = session.query(AudioTranscribeTracker).filter(
             (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
                     AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
@@ -588,11 +596,11 @@ def copy_audio_files_process(server_name, database_name, client_id):
             for result_elm in results_file_type:
                 result_file_type_array.append(result_elm.toDict())
 
-        results_status = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        result_status_array = []
-        if len(results_status) > 0:
-            for result_elm in results_status:
-                result_status_array.append(result_elm.toDict())
+        # results_status = session.query(JobStatus).filter(JobStatus.IsActive).all()
+        # result_status_array = []
+        # if len(results_status) > 0:
+        #     for result_elm in results_status:
+        #         result_status_array.append(result_elm.toDict())
         if len(result_config_array) > 0:
             source_file_path = global_utility.get_configuration_by_key_name(result_config_array,
                                                                             CONFIG.AUDIO_SOURCE_FOLDER_PATH)
@@ -613,7 +621,9 @@ def copy_audio_files_process(server_name, database_name, client_id):
                         dir_folder_url = os.path.join(destination_path, name_file)
                         is_folder_created = global_utility.create_folder_structure(file, dir_folder_url,
                                                                                    destination_path)
-                        status_id = global_utility.get_status_by_key_name(result_status_array, 'PreProcessing')
+                        status_processing = JobStatusEnum.Processing
+                        status_id = status_processing.value
+                        # status_id = global_utility.get_status_by_key_name(result_status_array, 'PreProcessing')
                         if is_folder_created:
                             is_copied_files = global_utility.copy_file(file_url, dir_folder_url)
                             if is_copied_files:
