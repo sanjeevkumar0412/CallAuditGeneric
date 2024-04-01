@@ -3,6 +3,7 @@ from app.db_connection import DbConnection
 from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine
 from app.configs.config import CONFIG
+from app.configs.job_status_enum import JobStatusEnum
 from sqlalchemy.orm import sessionmaker
 import jwt
 import os
@@ -22,7 +23,7 @@ logger = Logger()
 db_connection = DbConnection()
 
 from openai import OpenAI
-os.environ["OPENAI_API_KEY"] = "open key here"
+os.environ["OPENAI_API_KEY"] = "mention open key here"
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY")
 )
@@ -110,7 +111,7 @@ def get_all_configurations_table(server_name, database_name, client_id):
             subscriptions_array.append(subscriptions_result.toDict())
 
             # Get data from Job Status table
-        job_status_data = session.query(JobStatus).filter_by(ClientId=client_id).all()
+        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
         job_status_coll = []
         for status_result in job_status_data:
             job_status_coll.append(status_result.toDict())
@@ -477,8 +478,7 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        job_status_data = session.query(JobStatus).filter(
-            (JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
+        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
         job_status_coll = []
         for status_result in job_status_data:
             job_status_coll.append(status_result.toDict())
@@ -505,8 +505,7 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        job_status_data = session.query(JobStatus).filter(
-            (JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
+        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
         job_status_coll = []
         for status_result in job_status_data:
             job_status_coll.append(status_result.toDict())
@@ -589,7 +588,7 @@ def copy_audio_files_process(server_name, database_name, client_id):
             for result_elm in results_file_type:
                 result_file_type_array.append(result_elm.toDict())
 
-        results_status = session.query(JobStatus).filter((JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
+        results_status = session.query(JobStatus).filter(JobStatus.IsActive).all()
         result_status_array = []
         if len(results_status) > 0:
             for result_elm in results_status:
@@ -820,13 +819,14 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             whisper_model = global_utility.get_configuration_by_key_name(result_config_array, CONFIG.WHISPER_MODEL)
             subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,
                                                                                CONFIG.SUBSCRIPTION_TYPE)
-            job_status_data = session.query(JobStatus).filter(
-                (JobStatus.ClientId == client_id) & (JobStatus.IsActive)).all()
-            job_status_coll = []
-            for status_result in job_status_data:
-                job_status_coll.append(status_result.toDict())
-            status_id = global_utility.get_status_by_key_name(
-                job_status_coll, CONSTANT.STATUS_COMPLETED)
+            # job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
+            # job_status_coll = []
+            processing_status = JobStatusEnum.CompletedTranscript
+            status_id= processing_status.value
+            # for status_result in job_status_data:
+            #     job_status_coll.append(status_result.toDict())
+            # status_id = global_utility.get_status_by_key_name(
+            #     job_status_coll, CONSTANT.STATUS_COMPLETED)
             audio_results = session.query(AudioTranscribeTracker).filter(
                 (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
             if len(audio_results) > 0:

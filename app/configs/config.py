@@ -1,5 +1,6 @@
 # Database settings
 
+
 class CONFIG:
     ID = 'Id'
     CLIENT_ID = 'ClientId',

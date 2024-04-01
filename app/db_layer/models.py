@@ -138,7 +138,7 @@ class JobStatus(Base):
     __tablename__ = 'JobStatus'
 
     Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
-    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    # ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     StatusName = Column(String, unique=False, default=True)
     Created = Column(DateTime, default=datetime.utcnow())
     Modified = Column(DateTime, default=datetime.utcnow())
