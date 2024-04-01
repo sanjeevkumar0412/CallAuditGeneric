@@ -253,4 +253,4 @@ def open_ai_transcribe_audio_text():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(threaded=True)
