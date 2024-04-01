@@ -15,7 +15,7 @@ server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
 
-@app.route('/get_all_data', methods=['POST'])
+@app.route('/get_all_data', methods=['GET'])
 def get_record():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -23,7 +23,7 @@ def get_record():
     return data
 
 
-@app.route('/get_record_by_id', methods=['POST'])
+@app.route('/get_record_by_id', methods=['GET'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -34,7 +34,7 @@ def get_recordby_id():
     return data
 
 
-@app.route('/get_record_by_column_name', methods=['POST'])
+@app.route('/get_record_by_column_name', methods=['GET'])
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -44,7 +44,7 @@ def get_recordby_column_name():
     return data
 
 
-@app.route('/update_record_by_column', methods=['POST'])
+@app.route('/update_record_by_column', methods=['GET'])
 def get_update_by_column_name():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
@@ -74,7 +74,7 @@ def delete_recordby_id():
     return {'data': data}
 
 
-@app.route('/merge_chunk_transcribe_text', methods=['POST'])
+@app.route('/merge_chunk_transcribe_text', methods=['GET'])
 def get_transcribe_sentiment():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -113,7 +113,7 @@ def get_audio_transcribe_data():
         return get_json_format([], False, e)
 
 
-@app.route('/get_audio_transcribe_tracker_data', methods=['POST'])
+@app.route('/get_audio_transcribe_tracker_data', methods=['GET'])
 def get_audio_transcribe_tracker_data():
     try:
         # Done
@@ -126,7 +126,7 @@ def get_audio_transcribe_tracker_data():
         return get_json_format([], False, e)
 
 
-@app.route('/add_update_transcribe', methods=['POST'])
+@app.route('/add_update_transcribe', methods=['GET'])
 def add_update_transcribe():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -136,7 +136,7 @@ def add_update_transcribe():
     return update_status
 
 
-@app.route('/add_update_transcribe_tracker', methods=['POST'])
+@app.route('/add_update_transcribe_tracker', methods=['GET'])
 def add_update_transcribe_tracker():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -147,7 +147,7 @@ def add_update_transcribe_tracker():
     return update_status
 
 
-@app.route('/get_token_based_authenticate', methods=['POST'])
+@app.route('/get_token_based_authenticate', methods=['GET'])
 def get_token_based_authenticate():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -161,7 +161,7 @@ def get_token_based_authenticate():
         return set_json_format([], False, str(message))
 
 
-@app.route('/get_ldap_based_authenticate', methods=['POST'])
+@app.route('/get_ldap_based_authenticate', methods=['GET'])
 def get_ldap_based_authenticate():
     #  Dev Done, testing pending
     client_id = int(request.args.get('clientid'))
@@ -174,7 +174,7 @@ def get_ldap_based_authenticate():
         return set_json_format([], False, str(message))
 
 
-@app.route('/get_data_from_sentiment_table', methods=['POST'])
+@app.route('/get_data_from_sentiment_table', methods=['GET'])
 def get_sentiment_data():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -195,7 +195,7 @@ def get_all_configurations():
     json_result = get_all_configurations_table(server_name, database_name, client_id)
     return json_result
 
-@app.route('/copy_audio_files', methods=['POST'])
+@app.route('/copy_audio_files', methods=['GET'])
 def copy_audio_files():
     #  Dev Done
     client_id = int(request.args.get('clientid'))
@@ -204,7 +204,7 @@ def copy_audio_files():
     json_result = copy_audio_files_process(server_name, database_name, client_id)
     return json_result
 
-@app.route('/transcribe_audio_text', methods=['POST'])
+@app.route('/transcribe_audio_text', methods=['GET'])
 def transcribe_audio_text():
     #  Dev Dones
     client_id = int(request.args.get('clientid'))
@@ -215,7 +215,7 @@ def transcribe_audio_text():
     return json_result
 
 
-@app.route('/match_file_name_pettern', methods=['POST'])
+@app.route('/match_file_name_pettern', methods=['GET'])
 def match_file_name_pettern():
     #  Dev Done
     client_id = int(request.args.get('clientid'))
@@ -227,7 +227,7 @@ def match_file_name_pettern():
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
-@app.route('/dump_data_into_sentiment', methods=['POST'])
+@app.route('/dump_data_into_sentiment', methods=['GET'])
 def dump_data_sentiment_table():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
@@ -238,7 +238,7 @@ def dump_data_sentiment_table():
         data = {"Error": "File not exit " + audio_file_name,'status':"400"}
     return data
 
-@app.route('/open_ai_transcribe_audio_text', methods=['POST'])
+@app.route('/open_ai_transcribe_audio_text', methods=['GET'])
 def open_ai_transcribe_audio_text():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
