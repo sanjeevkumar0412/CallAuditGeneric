@@ -234,8 +234,6 @@ def dump_data_sentiment_table():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name)
-    if data == None:
-        data = {"Error": "File not exit " + audio_file_name,'status':"400"}
     return data
 
 @app.route('/open_ai_transcribe_audio_text', methods=['GET'])
