@@ -12,6 +12,7 @@ import secrets
 import whisper
 import time
 from constants.constant import CONSTANT
+from app import prompt_check_list
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import (Client, Configurations, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
@@ -23,7 +24,8 @@ logger = Logger()
 db_connection = DbConnection()
 
 from openai import OpenAI
-os.environ["OPENAI_API_KEY"] = "mention open key here"
+os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
+# os.environ["OPENAI_API_KEY"] = "Update the open AI Key here"
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY")
 )
@@ -141,7 +143,7 @@ def get_all_configurations_table(server_name, database_name, client_id):
         return get_json_format(configurations)
     except Exception as e:
         session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
         return get_json_format([], False, str(e))
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
@@ -172,7 +174,7 @@ def get_audio_transcribe_table_data(server, database, client_id):
         return audio_transcribe_array
     except Exception as e:
         session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
         raise
     finally:
         logger.log_entry_into_sql_table(server, database, client_id, True)
@@ -193,7 +195,7 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
         return records
     except Exception as e:
         session.close()
-        logger.error("connect_to_database", e)
+        logger.error("connect_to_database", str(e))
     finally:
         logger.log_entry_into_sql_table(server, database, client_id, True)
         session.close()
@@ -215,7 +217,7 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
 
     except Exception as e:
         session.close()
-        logger.error(f"An error occurred in update_transcribe_text: {e}")
+        logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
         return set_json_format([],500, False, e)
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
@@ -779,7 +781,7 @@ def retries_open_ai_model(client, failed_file, model):
             status = 'failure'
             error_array = []
             error_array.append(str(e))
-            logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}")
+            logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}",str(e))
             if retries == 3:
                 return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
@@ -803,9 +805,10 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
         error_array = []
         error_array.append(str(e))
         if isinstance(e, ConnectionError) or "429" in str(e):  # Check for connection or 429 error
-            retries_open_ai_model(client, transcribe_file, model)
+            return retries_open_ai_model(client, transcribe_file, model)
         else:
-            return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+            return retries_open_ai_model(client, transcribe_file, model)
+            # return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
         # return status,set_json_format(error_array, 500, False, str(e))
         # return retries_ai_model(client, transcribe_file)
 
