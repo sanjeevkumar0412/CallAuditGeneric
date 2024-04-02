@@ -346,6 +346,8 @@ class AudioFileNamePattern(Base):
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     PatternName = Column(String, ForeignKey('MasterAudioFileName.PatternName'), nullable=False)
     Sequence = Column(Integer, unique=True, nullable=True)
+    Separator = Column(String, unique=True, nullable=True)
+    IsRequired = Column(Boolean, default=False, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, unique=False, default=True, nullable=True)

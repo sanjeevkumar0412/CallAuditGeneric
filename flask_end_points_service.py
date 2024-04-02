@@ -913,18 +913,23 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
         result_array = []
         pattern_parts = []
         final_string = ''
+        separator = '-'
         if len(results) > 0:
             for result_elm in results:
                 result_array.append(result_elm.toDict())
             for row in result_array:
                 # pattern_parts.append(f"{row['PatternName']}")
-                final_string += row['PatternName'] + '-'
+                if row['IsRequired']:
+                    separator = row['Separator']
+                    final_string += row['PatternName'] + '-'
             file_name_pattern =final_string[:-1]
             print(file_name_pattern)
             # compiled_pattern = re.compile(file_name_pattern, re.IGNORECASE | re.VERBOSE)
             # match1 = compiled_pattern.search(file_name)
             # match = re.match(file_name_pattern, file_name)
-            if len(file_name_pattern.split('-')) == len(file_name.split('-')):
+            file_name_length = len(file_name.split(separator))
+            file_name_pattern_length = len(file_name_pattern.split(separator)) +1
+            if file_name_length > file_name_pattern_length:
                 return get_json_format([],200,True,'Pattern matched with File Name')
             else:
                 print(f"No match found for file: {file_name}")
