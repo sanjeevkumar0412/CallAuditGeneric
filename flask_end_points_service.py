@@ -917,11 +917,18 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
         if len(results) > 0:
             for result_elm in results:
                 result_array.append(result_elm.toDict())
-            for row in result_array:
+            separator = result_array[0]['Separator']
+            # separator ='_'
+            file_parts = file_name.split(separator)
+            for i in range(len(result_array)):
+            # for row in result_array:
                 # pattern_parts.append(f"{row['PatternName']}")
-                if row['IsRequired']:
-                    separator = row['Separator']
-                    final_string += row['PatternName'] + '-'
+                # if row['IsRequired']:
+                row = result_array[i];
+                if is_index_found(file_parts, i):
+                    # if row['PatternName'] != 'Caseid':
+                        # separator = row['Separator']
+                    final_string += row['PatternName'] + separator
             file_name_pattern =final_string[:-1]
             print(file_name_pattern)
             # compiled_pattern = re.compile(file_name_pattern, re.IGNORECASE | re.VERBOSE)
@@ -929,8 +936,27 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
             # match = re.match(file_name_pattern, file_name)
             file_name_length = len(file_name.split(separator))
             file_name_pattern_length = len(file_name_pattern.split(separator)) +1
-            if file_name_length > file_name_pattern_length:
-                return get_json_format([],200,True,'Pattern matched with File Name')
+            if file_name_length >= file_name_pattern_length:
+                # file_parts = file_name.split(separator)
+                file_pattern_parts = file_name_pattern.split(separator)
+                key_value_pairs = []
+                # for i in range(0, len(file_pattern_parts), 2):
+                is_caseid_passed =False
+                for i in range(len(file_pattern_parts)):
+                    # key, value = file_parts[i], file_parts[i + 1]
+                    if file_pattern_parts[i] == 'Caseid' and separator == '-':
+                        is_caseid_passed = True
+                        value_file = file_parts[i] +'-'+ file_parts[i+1]
+                        key, value = file_pattern_parts[i], value_file
+                        key_value_pairs.append((key, value))
+                    else:
+                        value_file = file_parts[i]
+                        if is_caseid_passed:
+                            value_file =  file_parts[i+1]
+                        key, value = file_pattern_parts[i], value_file
+                        key_value_pairs.append((key, value))
+                data = dict(key_value_pairs)
+                return get_json_format(data,200,True,'Pattern matched with File Name')
             else:
                 print(f"No match found for file: {file_name}")
             return get_json_format([],400,True,'Pattern does not matched with File Name')
@@ -941,3 +967,9 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
+def is_index_found(array, index):
+    try:
+        return array[index] is not None
+    except IndexError:
+        return False
+

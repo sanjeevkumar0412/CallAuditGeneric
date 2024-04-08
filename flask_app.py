@@ -15,6 +15,7 @@ server_name = 'FLM-VM-COGAIDEV'
 database_name = 'AudioTrans'
 
 
+
 @app.route('/get_all_data', methods=['GET'])
 def get_record():
     table_name = request.args.get('table_name')
@@ -221,8 +222,9 @@ def match_file_name_pettern():
     client_id = int(request.args.get('clientid'))
     file_name = request.args.get('filename')
     current_user = os.getlogin()
-    file_name = 'ABC-21March-AY-Noida-Call-Approva-Ashutosh'
-    file_name = 'ABC-21March-AY-Noida-Call-Approva'
+    file_name = '24-10003-douglas-21March-AY-Noida-Call-Approva-Ashutosh'
+    file_name = '24-10003_tomous_25April_CTS_Mumbai_Outbound_Ritesh_Manish'
+    # file_name = 'ABC-21March-AY-Noida-Call-Approva'
     print('Current login user:', current_user)
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result

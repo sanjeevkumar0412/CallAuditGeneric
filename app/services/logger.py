@@ -117,7 +117,7 @@ class Logger:
                     session.add(log_entry)
                     session.commit()
                 except Exception as e:
-                    logger.error("An error occurred while connecting to the SQL database:", e)
+                    print("During log entries, there was a problem connecting to the SQL database.", str(e))
                 finally:
                     session.close()
 
@@ -128,4 +128,4 @@ class Logger:
             else:
                 logger.add(log_to_sql, level='DEBUG', serialize=True)
         except Exception as e:
-            logger.error("An error occurred while connecting to the SQL database:", e)
+            print("When trying to connect to the Logger SQL database, an error occurred.", str(e))
