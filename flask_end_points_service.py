@@ -4,6 +4,7 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine
 from app.configs.config import CONFIG
 from app.configs.job_status_enum import JobStatusEnum
+from app.configs.error_code_enum import ErrorCodeEnum
 from sqlalchemy.orm import sessionmaker
 import jwt
 import os
@@ -861,7 +862,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 error_array = []
                 error_array.append(msg)
                 logger.info(msg)
-                return set_json_format(error_array, 400, False, msg)
+                return set_json_format(error_array, 400, False, msg),ErrorCodeEnum.RESOURCE_NOT_FOUND
                 # file_path = audio_result_array[0]['ChunkFilePath']
             start_transcribe_time = datetime.utcnow()
             if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
