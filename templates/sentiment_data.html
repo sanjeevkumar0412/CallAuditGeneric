@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sentiment Analysis</title>
+    <script src="../static/jquery-3.6.js"></script>
+    <script src="../static/common.js"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            width: 45%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-spacing: 0;
+            margin-bottom: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        .btn-submit {
+            display: block;
+{#            width: 100%;#}
+            padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left:44%;
+        }
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+        .loader {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+        .loader img {
+            margin-top: 20%;
+            margin-left:-180px;
+            margin-bottom: 26px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="backsentiment" style="float: right"><a href="/sentiment">click here to Sentiment Form</a> </div>
+        <h2>Sentiment Analysis</h2>
+         <div class="loader">
+    Sentiment data is prepearing.... <img src="../static/loader-large.gif" alt="Loader">
+</div>
+        <div class="form-group">
+            <label for="clientId">Client ID:</label>
+            <input type="text" id="clientId" placeholder="Enter Client ID">
+        </div>
+        <div class="form-group">
+            <label for="audioFileName">Audio File Name:</label>
+            <input type="text" id="audioFileName" placeholder="Enter Audio File Name">
+        </div>
+        <button class="btn-submit" id="submitButton">Submit</button>
+        <table id="sentimentTable">
+            <thead>
+			<div id="head_id">
+                <tr>
+                    <th>Attribute</th>
+                    <th>Value</th>
+                </tr>
+				</div>
+            </thead>
+            <tbody id="sentimentData">
+                <!-- Table body will be populated dynamically using jQuery -->
+            </tbody>
+        </table>
+    </div>
+
+</body>
+    <script> $('#sentimentTable').hide();$('.loader').hide();$('#backsentiment').hide()</script>
+
+</html>

@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request,render_template
 
 app = Flask(__name__)
 
@@ -251,6 +251,13 @@ def open_ai_transcribe_audio_text():
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript
 
+@app.route('/sentiment',methods=['GET'])
+def index():
+    return render_template('sentiment_data.html')
+
+@app.route('/transcribe',methods=['GET'])
+def merge_transcribe():
+    return render_template('merged_chunk_data.html')
 
 
 if __name__ == '__main__':
