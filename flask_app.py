@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
 app = Flask(__name__)
 
@@ -12,6 +12,7 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
+# server_name = '10.9.91.137'
 database_name = 'AudioTrans'
 
 
@@ -28,8 +29,9 @@ def get_recordby_id():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
     id = request.args.get('id')
-    data = db_instance.get_record_by_id(server_name, database_name, client_id,table_name, id)
-    if data == None:
+    data = db_instance.get_record_by_id(server_name, database_name, client_id,
+                table_name, id)
+    if not data:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return data
 
@@ -40,7 +42,8 @@ def get_recordby_column_name():
     client_id = int(request.args.get('clientid'))
     column_name = request.args.get('column_name')
     column_value = request.args.get('column_value')
-    data = db_instance.get_data_by_column_name(server_name, database_name, client_id,table_name, column_name, column_value)
+    data = db_instance.get_data_by_column_name(server_name, database_name,
+        client_id,table_name, column_name, column_value)
     return data
 
 
@@ -53,8 +56,10 @@ def get_update_by_column_name():
     condition_column = request.args.get('condition_column')
     condition_value = request.args.get('condition_value')
 
-    data = db_instance.update_record_by_column(server_name, database_name, client_id,table_name, column_to_update, new_value, condition_column,
-                                               condition_value)
+    data = db_instance.update_record_by_column(server_name, database_name, client_id,
+            table_name, column_to_update, new_value, condition_column,
+            condition_value
+    )
 
     if data == None:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
@@ -69,7 +74,7 @@ def delete_recordby_id():
     data = db_instance.delete_record_by_id(server_name, database_name, client_id,table_name, itm_id)
 
     # data = db_instance.delete_record_by_id(table_name, itm_id)
-    if data == None:
+    if not data:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
     return {'data': data}
 
@@ -81,7 +86,7 @@ def get_transcribe_sentiment():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name)
-    if data == None:
+    if not data:
         data = {"Error": "Invalid table/Data not available for this " + audio_file_name}
     return {'data': data}
 
@@ -143,7 +148,7 @@ def add_update_transcribe_tracker():
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
     update_status = update_audio_transcribe_tracker_table(server_name, database_name, client_id, recored_id,
-                                                          updatevalues)
+        updatevalues)
     return update_status
 
 
@@ -181,7 +186,7 @@ def get_sentiment_data():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
-    if data == None:
+    if not data:
         data = {"Error": f"File not exit {audio_file_name}"}
     return {'data': data}
 
@@ -241,13 +246,14 @@ def open_ai_transcribe_audio_text():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     # file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/DMV-85311-MU11_Chunk_6.wav'
+    # need to change these hardcoded values
     file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/Outbound_FollowUpCall-Z1.wav'
     status, transcript = open_ai_transcribe_audio(file)
     if status == 'success':
-        data = {"text": transcript,'status':"200"}
-        return transcript
+        data = {"text": transcript, 'status':"200"}
+        return jsonify(data), 200
     return_data = {"text": 'no transcript', 'status': "500"}
-    return transcript
+    return jsonify(return_data), 500
 
 
 

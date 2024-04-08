@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
 from flask_end_points_service import set_json_format
+from flask import jsonify
 from openai import OpenAI
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
@@ -187,7 +188,7 @@ class SentimentAnalysisCreation:
             check_audio_file_exits = session.query(AudioTranscribe).filter(
                 AudioTranscribe.AudioFileName == audio_file).all()
             # print("check_audio_id_exits", check_audio_file_exits)
-            if len(check_audio_file_exits) > 0:
+            if check_audio_file_exits:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
                 # AudioTranscribeTracker.ChunkStatus == 'Completed')
@@ -212,11 +213,11 @@ class SentimentAnalysisCreation:
                 else:
                     self.logger.info(f":Transcribe Job Status is pending")
                     data= {"status":204,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
-                    return data
+                    return jsonify(data), 204
             else:
                 self.logger.info(f":Record not found {audio_file}")
                 data= {"status":404,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
-                return data
+                return jsonify(data), 404
             return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
         except Exception as e:
             # self.logger.error(f": Error {e}",e)

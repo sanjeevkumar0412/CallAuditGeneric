@@ -83,7 +83,7 @@ class DBRecord:
             connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
             cursor, all_tables = self.get_sql_cursor(connection_string)
             table = self.global_utility.get_table_name(all_tables, table_name)
-            if table is not None:
+            if table:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion(cursor)
@@ -91,7 +91,7 @@ class DBRecord:
             else:
                 result = {"status": "404", "Info": f"Table {table_name} not found !"}
 
-            if result == []:
+            if not result:
                 result = {"status": '204', "Info": f"Information is not available for {table_name} Id {id} !"}
 
             return {'data': result}
