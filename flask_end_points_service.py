@@ -4,7 +4,8 @@ from app.utilities.utility import GlobalUtility
 from sqlalchemy import create_engine
 from app.configs.config import CONFIG
 from app.configs.job_status_enum import JobStatusEnum
-from app.configs.error_code_enum import ErrorCodeEnum
+from app.configs.error_code_enum import *
+
 from sqlalchemy.orm import sessionmaker
 import jwt
 import os
@@ -725,39 +726,42 @@ def update_audio_transcribe_tracker_status(session, record_id, status_id, update
                 parent_record = session.query(AudioTranscribe).filter_by(Id=updated_result_array[0]['AudioId']).update(
                     values)
                 session.commit()
-            return set_json_format([],200, True, f"The record ID, {record_id} has been updated successfully.")
+            return set_json_format([],200, True, f"The record ID, {record_id} has been updated successfully."),SUCCESS
     else:
-        return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
+        return set_json_format([],500, False, f"The record ID, {record_id}, could not be found."),RESOURCE_NOT_FOUND
 
 
 def retries_open_source_transcribe_audio_model(failed_file, model_name):
     retries = 3
-    status = 'success'
+    # status = 'success'
+    status = SUCCESS
     model = whisper.load_model(model_name)
     for attempt in range(retries):
         try:
             logger.info(f'fialed file process start : {failed_file}')
             time.sleep(2 ** attempt)
             result = model.transcribe(failed_file)
-            return status, result
+            return result,status
         except Exception as e:
-            status = 'failure'
+            # status = 'failure'
+            status = RESOURCE_NOT_FOUND
             error_array = []
             error_array.append(str(e))
             logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): ",str(e))
             if retries == 3:
-                return status, set_json_format(error_array, 500, False, str(e))
+                return set_json_format(error_array, 500, False, str(e)),status
 
 
 def open_source_transcribe_audio(file_path, model_name="base"):
     try:
-        status = 'success'
+        # status = 'success'
+        status = SUCCESS
         model = whisper.load_model(model_name)
         result = model.transcribe(file_path)
-        return status,result
+        return result,status
     except Exception as e:
         logger.error('Error in Method open_source_transcribe_audio ',str(e))
-        retries_open_source_transcribe_audio_model(file_path, model_name)
+        return retries_open_source_transcribe_audio_model(file_path, model_name)
         # return status,set_json_format(error_array, 500, False, str(e))
         # return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
@@ -765,7 +769,8 @@ def open_source_transcribe_audio(file_path, model_name="base"):
 
 def retries_open_ai_model(client, failed_file, model):
     retries = 3
-    status = 'success'
+    # status = 'success'
+    status = SUCCESS
     for attempt in range(retries):
         try:
             logger.info(f'Failed file process start : {failed_file}')
@@ -777,19 +782,21 @@ def retries_open_ai_model(client, failed_file, model):
                 response_format='text',
                 language='en'
             )
-            return status, transcript
+            return transcript,status
         except Exception as e:
-            status = 'failure'
+            # status = 'failure'
+            status = RESOURCE_NOT_FOUND
             error_array = []
             error_array.append(str(e))
             logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}",str(e))
             if retries == 3:
-                return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),status
 
 
 def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
     try:
-        status = 'success'
+        # status = 'success'
+        status = SUCCESS
         print(' Open Ai Audio File Path', transcribe_file)
         audio_file = open(transcribe_file, "rb")
         transcript = client.audio.transcriptions.create(
@@ -798,10 +805,10 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
             response_format='text',
             language='en'
         )
-        return status, transcript
+        return transcript,status
     except Exception as e:
-        status = 'failure'
-        print(f"Error transcribing : {e}")
+        # status = 'failure'
+        status = RESOURCE_NOT_FOUND
         logger.error('Error in Method open_ai_transcribe_audio ', str(e))
         error_array = []
         error_array.append(str(e))
@@ -862,30 +869,30 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 error_array = []
                 error_array.append(msg)
                 logger.info(msg)
-                return set_json_format(error_array, 400, False, msg),ErrorCodeEnum.RESOURCE_NOT_FOUND
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, msg),RESOURCE_NOT_FOUND
                 # file_path = audio_result_array[0]['ChunkFilePath']
             start_transcribe_time = datetime.utcnow()
             if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
-                status,transcript = open_ai_transcribe_audio(file_path)
-                if status == 'failure':
-                    return transcript
+                ranscript,status = open_ai_transcribe_audio(file_path)
+                if status != 200:
+                    return ranscript,status
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_SMALL.lower():
-                status, transcript_whisper = open_source_transcribe_audio(file_path, whisper_model.lower())
-                if status == 'success':
+                transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
+                if status == 200:
                     transcript = transcript_whisper['text']
                 else:
-                    return transcript_whisper
+                    return transcript_whisper,status
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_NORMAL.lower():
-                status,transcript_whisper = open_source_transcribe_audio(file_path, whisper_model.lower())
-                if status == 'success':
+                transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
+                if status == 200:
                     transcript = transcript_whisper['text']
                 else:
-                    return transcript_whisper
+                    return transcript_whisper,status
 
             else:
-                status, transcript = open_ai_transcribe_audio(file_path)
-                if status == 'failure':
-                    return transcript
+                transcript,status = open_ai_transcribe_audio(file_path)
+                if status != 200:
+                    return transcript,status
 
             end_transcribe_time = datetime.utcnow()
             update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
