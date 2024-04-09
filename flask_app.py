@@ -1,5 +1,6 @@
 import os
 from flask import Flask, request,render_template
+from app.configs.error_code_enum import *
 
 app = Flask(__name__)
 
@@ -240,12 +241,12 @@ def open_ai_transcribe_audio_text():
     audio_file_name = request.args.get('audio_file')
     # file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/DMV-85311-MU11_Chunk_6.wav'
     file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/Outbound_FollowUpCall-Z1.wav'
-    status, transcript = open_ai_transcribe_audio(file)
-    if status == 'success':
-        data = {"text": transcript,'status':"200"}
-        return transcript
+    transcript, status,  = open_ai_transcribe_audio(file)
+    if status == SUCCESS:
+        data = {"text": transcript,'status': SUCCESS}
+        return transcript,status
     return_data = {"text": 'no transcript', 'status': "500"}
-    return transcript
+    return transcript,status
 
 @app.route('/sentiment',methods=['GET'])
 def index():
