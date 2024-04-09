@@ -126,14 +126,6 @@ def get_all_configurations_table(server_name, database_name, client_id):
         for subscriptions_plan_data in subscriptions_plan_data:
             subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
 
-        # global_utility.set_client_data(client_coll)
-        # global_utility.set_configurations_data(configuration_coll)
-        # global_utility.set_file_type_info_data(filetype_info_coll)
-        # global_utility.set_subscription_data(subscriptions_array)
-        # global_utility.set_job_status_data(job_status_coll)
-        # global_utility.set_subscription_plan_data(subscriptions_plan_coll)
-        # final_result_set =[]
-        # final_result_set.append(client_coll)
         configurations = {
             'Client': client_coll,
             'Configurations': configuration_coll,
@@ -142,11 +134,11 @@ def get_all_configurations_table(server_name, database_name, client_id):
             'JobStatus': job_status_coll,
             'SubscriptionsPlan': subscriptions_plan_coll
         }
-        return get_json_format(configurations)
+        return get_json_format(configurations,SUCCESS),SUCCESS
     except Exception as e:
         session.close()
         logger.error("connect_to_database", str(e))
-        return get_json_format([], False, str(e))
+        return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -213,14 +205,14 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
             for column, value in update_values.items():
                 setattr(record, column, value)
             session.commit()
-            return set_json_format([record_id],200)
+            return set_json_format([record_id],SUCCESS),SUCCESS
         else:
-            return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
+            return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
 
     except Exception as e:
         session.close()
         logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
-        return set_json_format([],500, False, e)
+        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -250,13 +242,13 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
                     for column, value in values.items():
                         setattr(parent_record, column, value)
                     session.commit()
-            return set_json_format([record_id],200)
+            return set_json_format([record_id],SUCCESS),SUCCESS
         else:
-            return set_json_format([],500, False, f"The record ID, {record_id}, could not be found.")
+            return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
     except Exception as e:
         session.close()
         logger.error(f"An error occurred in update_transcribe_text: ",str(e))
-        return set_json_format([],500, False, str(e))
+        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         session.close()
@@ -486,12 +478,6 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        # job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        # job_status_coll = []
-        # for status_result in job_status_data:
-        #     job_status_coll.append(status_result.toDict())
-        # status_id = global_utility.get_status_by_key_name(
-        #     job_status_coll, CONSTANT.STATUS_COMPLETED)
         status_completed = JobStatusEnum.CompletedTranscript
         status_id = status_completed.value
         results = session.query(AudioTranscribe).filter(
@@ -500,11 +486,11 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
             result_array = []
             for result_elm in results:
                 result_array.append(result_elm.toDict())
-            return get_json_format(result_array)
+            return get_json_format(result_array,SUCCESS),SUCCESS
         elif len(results) == 0:
-            return get_json_format([], True, 'There is no record found in the database')
+            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
     except Exception as e:
-        return get_json_format([],500,  False, str(e))
+        return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -515,12 +501,6 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
         logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        # job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        # job_status_coll = []
-        # for status_result in job_status_data:
-        #     job_status_coll.append(status_result.toDict())
-        # status_id = global_utility.get_status_by_key_name(
-        #     job_status_coll, CONSTANT.STATUS_COMPLETED)
         status_completed = JobStatusEnum.CompletedTranscript
         status_id = status_completed.value
         results = session.query(AudioTranscribeTracker).filter(
@@ -530,11 +510,11 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
             result_array = []
             for result_elm in results:
                 result_array.append(result_elm.toDict())
-            return get_json_format(result_array)
+            return get_json_format(result_array,SUCCESS),SUCCESS
         elif len(results) == 0:
-            return get_json_format([],200, True, 'There is no record found in the database')
+            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
     except Exception as e:
-        return get_json_format([], 500, False, str(e))
+        return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -551,11 +531,11 @@ def get_client_master_table_configurations(server_name, database_name, client_id
             result_array = []
             for result_elm in results:
                 result_array.append(result_elm.toDict())
-            return get_json_format(result_array)
+            return get_json_format(result_array,SUCCESS),SUCCESS
         elif len(results) == 0:
-            return get_json_format([], True, 'There is no record found in the database')
+            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
     except Exception as e:
-        return get_json_format([], 500, False, str(e))
+        return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -571,11 +551,11 @@ def get_app_configurations(server_name, database_name, client_id):
             result_array = []
             for result_elm in results:
                 result_array.append(result_elm.toDict())
-            return get_json_format(result_array)
+            return get_json_format(result_array,SUCCESS),SUCCESS
         elif len(results) == 0:
-            return get_json_format([],200, True, 'There is no record found in the database')
+            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
     except Exception as e:
-        return get_json_format([],500,  False, str(e))
+        return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -669,14 +649,14 @@ def copy_audio_files_process(server_name, database_name, client_id):
                             logger.info(f"Folder is not created for the file {file}")
                             # return get_json_format([], False, f"Folder is not created for the file {file}")
                     else:
-                        return get_json_format([], False, f"{file} is not supported.")
-                return get_json_format([], 200,True, "All files copied and created Successfully.")
+                        return get_json_format([],RESOURCE_NOT_FOUND, False, f"{file} is not supported."),RESOURCE_NOT_FOUND
+                return get_json_format([], SUCCESS,True, "All files copied and created Successfully."),SUCCESS
             else:
-                return get_json_format([],500,  False, 'There is no container at the specified path.')
+                return get_json_format([],INTERNAL_SERVER_ERROR,  False, 'There is no container at the specified path.'),INTERNAL_SERVER_ERROR
         else:
-            return get_json_format([], 500, False, 'There is no configuration found in the table')
+            return get_json_format([], INTERNAL_SERVER_ERROR, False, 'There is no configuration found in the table'),INTERNAL_SERVER_ERROR
     except Exception as e:
-        return get_json_format([], 500, False, str(e))
+        return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()
@@ -964,14 +944,13 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
                         key, value = file_pattern_parts[i], value_file
                         key_value_pairs.append((key, value))
                 data = dict(key_value_pairs)
-                return get_json_format(data,200,True,'Pattern matched with File Name')
+                return get_json_format(data,SUCCESS,True,'Pattern matched with File Name'),SUCCESS
             else:
-                print(f"No match found for file: {file_name}")
-            return get_json_format([],400,True,'Pattern does not matched with File Name')
+                return get_json_format([],RESOURCE_NOT_FOUND,True,'Pattern does not matched with File Name'),RESOURCE_NOT_FOUND
         elif len(results) == 0:
-            return get_json_format([],400, True, 'There is no record found in the database')
+            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
     except Exception as e:
-        return get_json_format([],500, False, str(e))
+        return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
         logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
         session.close()

@@ -5,6 +5,7 @@ from db_layer.models import AudioTranscribe
 from sqlalchemy.sql import select
 from app.utilities.utility import GlobalUtility
 from app.services.logger import Logger
+from app.configs.error_code_enum import *
 
 
 class DBRecord:
@@ -51,27 +52,27 @@ class DBRecord:
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion(cursor)
                 if len(result) > 0:
-                    api_object = self.global_utility.get_json_format(result)
-                    return api_object
+                    api_object = self.global_utility.get_json_format(result,SUCCESS)
+                    return api_object,SUCCESS
                 else:
-                    api_object = self.global_utility.get_json_format(result,400,True,'There is no record in the database')
+                    api_object = self.global_utility.get_json_format(result,RESOURCE_NOT_FOUND,True,'There is no record in the database'),RESOURCE_NOT_FOUND
                     return api_object
             else:
                 api_object = {
                     "result": [],
                     "message": f"Table {table_name} not found ! ",
                     "status": 'failure',
-                    'status_code': 400
+                    'status_code': RESOURCE_NOT_FOUND
                 }
-                return api_object
+                return api_object,RESOURCE_NOT_FOUND
         except Exception as e:
             api_object = {
                 "result": [],
-                "message": e,
+                "message": str(e),
                 "status": 'failure',
-                'status_code': 500
+                'status_code': INTERNAL_SERVER_ERROR
             }
-            return api_object
+            return api_object,INTERNAL_SERVER_ERROR
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
             cursor.close()
@@ -87,16 +88,23 @@ class DBRecord:
                 raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
                 result = self.list_of_dictionary_conversion(cursor)
-                result = {"status": "200", "result": result}
+                result = {"status": SUCCESS, "result": result},SUCCESS
             else:
-                result = {"status": "404", "Info": f"Table {table_name} not found !"}
+                result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
 
             if result == []:
-                result = {"status": '204', "Info": f"Information is not available for {table_name} Id {id} !"}
+                result = {"status": RESOURCE_NOT_FOUND, "Info": f"Information is not available for {table_name} Id {id} !"},RESOURCE_NOT_FOUND
 
             return {'data': result}
         except Exception as e:
             self.logger.error(".........Error in get_record_by_id...........", str(e))
+            api_object = {
+                "result": [],
+                "message": str(e),
+                "status": 'failure',
+                'status_code': INTERNAL_SERVER_ERROR
+            }
+            return api_object, INTERNAL_SERVER_ERROR
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
@@ -117,33 +125,33 @@ class DBRecord:
                         "result": result,
                         "message": 'The data result set that the service provided.',
                         "status": 'success',
-                        'status_code': 200
+                        'status_code': SUCCESS
                     }
-                    return api_object
+                    return api_object,SUCCESS
                 else:
                     api_object = {
                         "result": [],
                         "message": f"Column  {column_name} not found!",
                         "status": 'failure',
-                        'status_code': 400
+                        'status_code': RESOURCE_NOT_FOUND
                     }
-                    return api_object
+                    return api_object,RESOURCE_NOT_FOUND
             else:
                 api_object = {
                     "result": [],
                     "message": f"Column  {column_name} not found!",
                     "status": 'failure',
-                    'status_code': 400
+                    'status_code': RESOURCE_NOT_FOUND
                 }
-                return api_object
+                return api_object,RESOURCE_NOT_FOUND
         except Exception as e:
             api_object = {
                 "result": [],
-                "message": e,
+                "message": str(e),
                 "status": 'failure',
-                'status_code': 500
+                'status_code': INTERNAL_SERVER_ERROR
             }
-            return api_object
+            return api_object,INTERNAL_SERVER_ERROR
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
@@ -160,22 +168,22 @@ class DBRecord:
                 if column_exists:
                     raw_sql = f"UPDATE {table_name} SET {column_to_update} = '{new_value}' WHERE {condition_column} = '{condition_value}'"
                     cursor.execute(raw_sql)
-                    result = {"status": '200', "msg": f"Successfully updated the record"}
+                    result = {"status":SUCCESS, "msg": f"Successfully updated the record"},SUCCESS
                 else:
-                    result = {"status": "404", "Info": f"Column  {column_to_update} not found!"}
+                    result = {"status": RESOURCE_NOT_FOUND, "Info": f"Column  {column_to_update} not found!"},RESOURCE_NOT_FOUND
             else:
-                result = {"status": "404", "Info": f"Table {table_name} not found !"}
+                result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
 
             return {'data': result}
 
         except Exception as e:
             api_object = {
                 "result": [],
-                "message": e,
+                "message": str(e),
                 "status": 'failure',
-                'status_code': 500
+                'status_code': INTERNAL_SERVER_ERROR
             }
-            return api_object
+            return api_object,INTERNAL_SERVER_ERROR
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 
@@ -188,20 +196,20 @@ class DBRecord:
             if table is not None:
                 raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
                 cursor.execute(raw_sql)
-                result = {"status": '200', "msg": f"Successfully deleted record {id}"}
+                result = {"status": SUCCESS, "msg": f"Successfully deleted record {id}"},SUCCESS
             else:
-                result = {"status": "404", "Info": f"Table {table_name} not found !"}
+                result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
 
             return {'data': result}
 
         except Exception as e:
             api_object = {
                 "result": [],
-                "message": e,
+                "message": str(e),
                 "status": 'failure',
-                'status_code': 500
+                'status_code':INTERNAL_SERVER_ERROR
             }
-            return api_object
+            return api_object,INTERNAL_SERVER_ERROR
         finally:
             self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
 

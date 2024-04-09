@@ -123,7 +123,7 @@ def get_audio_transcribe_tracker_data():
         json_result = get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id)
         return json_result
     except Exception as e:
-        return get_json_format([], False, e)
+        return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
 
 
 @app.route('/add_update_transcribe', methods=['GET'])
@@ -156,9 +156,9 @@ def get_token_based_authenticate():
     print('Current login user:', current_user)
     success, message = get_token_based_authentication(server_name, database_name, client_id, user_name)
     if success:
-        return set_json_format([], True, str(message))
+        return set_json_format([],SUCCESS, True, str(message)),SUCCESS
     else:
-        return set_json_format([], False, str(message))
+        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
 
 
 @app.route('/get_ldap_based_authenticate', methods=['GET'])
@@ -169,9 +169,9 @@ def get_ldap_based_authenticate():
     print('Current login user:', current_user)
     success, message = get_ldap_authentication(server_name, database_name, client_id)
     if success:
-        return set_json_format([], True, str(message))
+        return set_json_format([],SUCCESS, True, str(message)),SUCCESS
     else:
-        return set_json_format([], False, str(message))
+        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
 
 
 @app.route('/get_data_from_sentiment_table', methods=['GET'])
