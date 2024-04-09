@@ -251,8 +251,7 @@ def open_ai_transcribe_audio_text():
 def open_source_transcribe():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
-    # file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/DMV-85311-MU11_Chunk_6.wav'
-    file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/Outbound_FollowUpCall-Z1.wav'
+    file = 'D:/Cogent_AI_Audio_Repo/Outbound_DebtDispute/Outbound_DebtDispute.mp3'
     transcript, status  = open_source_transcribe_audio(file)
     if status == SUCCESS:
         data = {"text": transcript,'status': SUCCESS}
