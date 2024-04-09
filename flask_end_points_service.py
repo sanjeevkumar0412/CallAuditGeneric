@@ -579,12 +579,6 @@ def copy_audio_files_process(server_name, database_name, client_id):
         if len(results_file_type) > 0:
             for result_elm in results_file_type:
                 result_file_type_array.append(result_elm.toDict())
-
-        # results_status = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        # result_status_array = []
-        # if len(results_status) > 0:
-        #     for result_elm in results_status:
-        #         result_status_array.append(result_elm.toDict())
         if len(result_config_array) > 0:
             source_file_path = global_utility.get_configuration_by_key_name(result_config_array,
                                                                             CONFIG.AUDIO_SOURCE_FOLDER_PATH)
@@ -616,6 +610,7 @@ def copy_audio_files_process(server_name, database_name, client_id):
                                 file_size_mb = int(file_size / (1024 * 1024))
                                 if file_size_mb > audio_file_size:
                                     logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                    # AudioTranscribe(ClientId=client_id,
                                     audio_transcribe_model = AudioTranscribe(ClientId=client_id,
                                                                              AudioFileName=file, JobStatus=status_id,
                                                                              FileType=file_type_id,
@@ -712,7 +707,7 @@ def update_audio_transcribe_tracker_status(session, record_id, status_id, update
 
 
 def retries_open_source_transcribe_audio_model(failed_file, model_name):
-    retries = 3
+    retries = 2
     # status = 'success'
     status = SUCCESS
     model = whisper.load_model(model_name)
@@ -724,12 +719,12 @@ def retries_open_source_transcribe_audio_model(failed_file, model_name):
             return result,status
         except Exception as e:
             # status = 'failure'
-            status = RESOURCE_NOT_FOUND
+            status = INTERNAL_SERVER_ERROR
             error_array = []
             error_array.append(str(e))
             logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): ",str(e))
-            if retries == 3:
-                return set_json_format(error_array, 500, False, str(e)),status
+            if retries == 2:
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
 
 
 def open_source_transcribe_audio(file_path, model_name="base"):
@@ -748,7 +743,7 @@ def open_source_transcribe_audio(file_path, model_name="base"):
 
 
 def retries_open_ai_model(client, failed_file, model):
-    retries = 3
+    retries = 2
     # status = 'success'
     status = SUCCESS
     for attempt in range(retries):
@@ -765,12 +760,14 @@ def retries_open_ai_model(client, failed_file, model):
             return transcript,status
         except Exception as e:
             # status = 'failure'
-            status = RESOURCE_NOT_FOUND
+            status = INTERNAL_SERVER_ERROR
             error_array = []
             error_array.append(str(e))
             logger.error(f"Failed to transcribe {failed_file} even after {attempt + 1} attempt(s): {e}",str(e))
-            if retries == 3:
-                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),status
+            if retries == 2:
+                return set_json_format(error_array, status, False,
+                                       str(e)), status
+                # return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),status
 
 
 def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
@@ -795,8 +792,9 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
         if isinstance(e, ConnectionError) or "429" in str(e):  # Check for connection or 429 error
             return retries_open_ai_model(client, transcribe_file, model)
         else:
-            return retries_open_ai_model(client, transcribe_file, model)
+            # return retries_open_ai_model(client, transcribe_file, model)
             # return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+            return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
         # return status,set_json_format(error_array, 500, False, str(e))
         # return retries_ai_model(client, transcribe_file)
 

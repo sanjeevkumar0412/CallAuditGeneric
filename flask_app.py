@@ -8,7 +8,7 @@ from database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
                                       get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,open_ai_transcribe_audio,
-                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table)
+                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio)
 
 
 db_instance = DBRecord()
@@ -247,7 +247,18 @@ def open_ai_transcribe_audio_text():
         return transcript,status
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript,status
-
+@app.route('/open_source_transcribe', methods=['GET'])
+def open_source_transcribe():
+    client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    # file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/DMV-85311-MU11_Chunk_6.wav'
+    file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/Outbound_FollowUpCall-Z1.wav'
+    transcript, status  = open_source_transcribe_audio(file)
+    if status == SUCCESS:
+        data = {"text": transcript,'status': SUCCESS}
+        return transcript,status
+    return_data = {"text": 'no transcript', 'status': "500"}
+    return transcript,status
 @app.route('/sentiment',methods=['GET'])
 def index():
     return render_template('sentiment_data.html')
