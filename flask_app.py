@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request
+from flask import Flask, request,render_template
 
 app = Flask(__name__)
 
@@ -82,9 +82,7 @@ def get_transcribe_sentiment():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name)
-    if data == None:
-        data = {"Error": "Invalid table/Data not available for this " + audio_file_name}
-    return {'data': data}
+    return data
 
 
 @app.route('/get_client_master_configurations', methods=['GET'])
@@ -182,9 +180,7 @@ def get_sentiment_data():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
-    if data == None:
-        data = {"Error": f"File not exit {audio_file_name}"}
-    return {'data': data}
+    return data
 
 
 @app.route('/get_all_configurations', methods=['GET'])
@@ -251,6 +247,13 @@ def open_ai_transcribe_audio_text():
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript
 
+@app.route('/sentiment',methods=['GET'])
+def index():
+    return render_template('sentiment_data.html')
+
+@app.route('/transcribe',methods=['GET'])
+def merge_transcribe():
+    return render_template('merged_chunk_data.html')
 
 
 if __name__ == '__main__':

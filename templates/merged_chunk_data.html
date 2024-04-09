@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transcribe Data</title>
+    <script src="../static/jquery-3.6.js"></script>
+    <style>
+        .container {
+            width: 70%;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #dddddd;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .attribute {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #dddddd;
+            padding: 10px 0;
+        }
+
+        .attribute:last-child {
+            border-bottom: none;
+        }
+
+        .attribute label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .attribute-value {
+            flex-grow: 1;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .form-group input {
+            width: 30%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .btn-submit {
+            display: block;
+        {#            width: 100%;#} padding: 10px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        {#            margin-left:44%;#}
+        }
+
+        .btn-submit:hover {
+            background-color: #0056b3;
+        }
+
+        .loader {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.7);
+            text-align: center;
+        }
+
+        .loader img {
+            margin-top: 20%;
+            margin-left: -180px;
+            margin-bottom: 26px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div id="backsentiment" style="float: right"><a href="/transcribe">Click here to Transcribe</a></div>
+    <h2 style="text-align: center!important;text-decoration: underline;">Transcribe merged Data</h2>
+    <div class="loader">
+        Transcribe data is prepearing.... <img src="../static/loader-large.gif" alt="Loader">
+    </div>
+    <div id="form-id">
+        <div class="form-group">
+            <label for="clientId">Client ID:</label>
+            <input type="text" id="clientId" placeholder="Enter Client ID">
+        </div>
+        <div class="form-group">
+            <label for="audioFileName">Audio File Name:</label>
+            <input type="text" id="audioFileName" placeholder="Enter Audio File Name"><br/>
+
+            <button class="btn-submit" id="submitButton">Submit</button>
+        </div>
+    </div>
+    <script>
+        $(document).ready(function () {
+            $('#submitButton').click(function () {
+                var clientId = $('#clientId').val();
+                var audioFileName = $('#audioFileName').val();
+                // Show loader
+                if (clientId.trim() === '' || audioFileName.trim() === '') {
+                    alert('Please fill in all fields');
+                    return; // Exit function if fields are empty
+                }
+                $('.loader').show();
+
+                // Make AJAX call to retrieve sentiment data
+                $.ajax({
+                    url: '/merge_chunk_transcribe_text',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: {
+                        clientid: clientId,
+                        audio_file: audioFileName
+                    },
+                    success: function (data) {
+						console.log(11111111111,data);
+                        // Hide loader
+                        $('.loader').hide();
+                        $('#form-id').hide();
+                        $('.attribute').show()
+                        $('#backsentiment').show();
+                        sentimentData = data.message;
+                        //var tableBody = $('#sentimentData');
+                        $(".attribute-value").text(sentimentData);
+                    },
+                    error: function (xhr, status, error) {
+                        console.error('Error fetching sentiment data:', error);
+						
+                        // Hide loader
+                        $('.loader').hide();
+                    }
+                });
+            });
+        });
+    </script>
+    <div class="attribute">
+        <span class="attribute-value">Record not Found </span>
+    </div>
+</div>
+</body>
+<script>$('.attribute').hide();
+$('.loader').hide();
+$('#backsentiment').hide()</script>
+</html>
