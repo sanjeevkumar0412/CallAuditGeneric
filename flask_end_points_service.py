@@ -854,19 +854,12 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 ranscript,status = open_ai_transcribe_audio(file_path)
                 if status != 200:
                     return ranscript,status
-            elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_SMALL.lower():
+            elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
                 transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
                 if status == 200:
                     transcript = transcript_whisper['text']
                 else:
                     return transcript_whisper,status
-            elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_NORMAL.lower():
-                transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
-                if status == 200:
-                    transcript = transcript_whisper['text']
-                else:
-                    return transcript_whisper,status
-
             else:
                 transcript,status = open_ai_transcribe_audio(file_path)
                 if status != 200:
