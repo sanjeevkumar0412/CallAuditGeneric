@@ -5,6 +5,7 @@ from app.utilities.utility import GlobalUtility
 from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,JobStatus
 from sqlalchemy.exc import IntegrityError
+from app.configs.error_code_enum import *
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
 from flask_end_points_service import set_json_format
@@ -112,20 +113,20 @@ class SentimentAnalysisCreation:
                                                              ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']))
                     session.add(dump_data_into_table)
                     session.commit()
-                    result=set_json_format([], 200, True, f"Sentiment Record successfully recorded for the file {current_file}")
-                    return result
+                    result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
+                    return result,SUCCESS
                 else:
-                    return sentiment_call_data
+                    return sentiment_call_data,RESOURCE_NOT_FOUND
             else:
-                result={"status":"200","message":f"Sentiment Record already available for this {current_file}"}
-                return result
+                result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
+                return result,SUCCESS
 
         except IntegrityError as e:
             self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment",str(e))
             error_array = []
             error_array.append(str(e))
             self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-            return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+            return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),RESOURCE_NOT_FOUND
         except Exception as e:
             self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment", str(e))
             error_array = []
@@ -152,7 +153,6 @@ class SentimentAnalysisCreation:
                 query_audio_id_results = audio_id_query.all()
                 check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
                     AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                # blank_emails = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.ChunkText == '').all()
                 chunk_results_check = check_chunk_exist.all()
                 if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
                     query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
@@ -168,15 +168,15 @@ class SentimentAnalysisCreation:
                                                  "ChunkSequence": row.ChunkSequence,
                                                  "TranscribeMergeText": transcribe_text})
                 else:
-                    self.logger.info(f":Transcribe Job Status is pending")
-                    data = {"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
-                    return data
+                    self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
+                    data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                    return data,RESOURCE_NOT_FOUND
             else:
-                self.logger.info(f":Record not found {audio_file}")
-                data = {"message": f"Record not found {audio_file} in AudioTranscribe Table"}
-                return data
-            result = {"message": ''.join(transcribe_text), "status": 200}
-            return result
+                self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
+                data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
+                return data,RESOURCE_NOT_FOUND
+            result = {"message": ''.join(transcribe_text), "status": SUCCESS}
+            return result,SUCCESS
         except Exception as e:
             self.logger.error(f": get_data_from_transcribe_table {e}",e)
             error_array = []
@@ -198,11 +198,9 @@ class SentimentAnalysisCreation:
             transcribe_text = []
             check_audio_file_exits = session.query(AudioTranscribe).filter(
                 AudioTranscribe.AudioFileName == audio_file).all()
-            # print("check_audio_id_exits", check_audio_file_exits)
             if len(check_audio_file_exits) > 0:
                 audio_id_query = session.query(AudioTranscribe.Id).filter(
                     AudioTranscribe.AudioFileName == audio_file)
-                # AudioTranscribeTracker.ChunkStatus == 'Completed')
                 query_audio_id_results = audio_id_query.all()
                 check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
                     AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
@@ -223,12 +221,12 @@ class SentimentAnalysisCreation:
                                                  "TranscribeMergeText": transcribe_text,"filename":audio_file})
                 else:
                     self.logger.info(f":Transcribe Job Status is pending")
-                    data= {"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
-                    return data,404
+                    data= {"status":RESOURCE_NOT_FOUND,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                    return data,RESOURCE_NOT_FOUND
             else:
                 self.logger.info(f":Record not found {audio_file}")
                 data= {"message":f":Record not found {audio_file} in AudioTranscribe Table"}
-                return data,404
+                return data,RESOURCE_NOT_FOUND
             return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
         except Exception as e:
             # self.logger.error(f": Error {e}",e)
@@ -244,6 +242,7 @@ class SentimentAnalysisCreation:
     def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
         self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+
         session = self.global_utility.get_database_session(connection_string)
         check_audio_file_exits = session.query(SentimentAnalysis).filter(
             SentimentAnalysis.AudioFileName == audio_file).all()
@@ -261,10 +260,10 @@ class SentimentAnalysisCreation:
                                       "Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
                 # result = {"sentimentdata": sentiment_dic}
                 result = sentiment_dic
-                return result,200
+                return result,SUCCESS
             else:
                 data = {"message": f"Record not found {audio_file} in AudioTranscribe Table"}
-                return data,404
+                return data,RESOURCE_NOT_FOUND
         except Exception as e:
             self.logger.error(f"Found error in get_sentiment_data_from_table", str(e))
             error_array = []
