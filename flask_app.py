@@ -1,9 +1,9 @@
 import os
 from flask import Flask, request,render_template
 from app.configs.error_code_enum import *
-
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)
 from database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
@@ -266,6 +266,14 @@ def index():
 def merge_transcribe():
     return render_template('merged_chunk_data.html')
 
+
+@app.route('/get_prohibited_data_from_table', methods=['GET'])
+def get_prohibited_data():
+    from app.model.sentiment_analysis import SentimentAnalysisCreation
+    sentiment_instance = SentimentAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
+    return data
 
 if __name__ == '__main__':
     # app.run(debug=True)

@@ -355,3 +355,13 @@ class AudioFileNamePattern(Base):
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+class ProhibitedKeyword(Base):
+    __tablename__ = 'ProhibitedKeyword'
+
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    ClientID = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    Keywords = Column(String, nullable=False)
+
+    def __repr__(self):
+        return f"<ProhibitedKeyword(ClientID={self.ClientID},Keywords='{self.Keywords}')>"
