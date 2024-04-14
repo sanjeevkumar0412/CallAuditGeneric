@@ -731,6 +731,7 @@ def open_source_transcribe_audio(file_path, model_name="base"):
     try:
         # status = 'success'
         status = SUCCESS
+        logger.info(f"Loading from Economy Model {model_name}")
         model = whisper.load_model(model_name)
         result = model.transcribe(file_path)
         return result,status
@@ -851,9 +852,9 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 # file_path = audio_result_array[0]['ChunkFilePath']
             start_transcribe_time = datetime.utcnow()
             if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
-                ranscript,status = open_ai_transcribe_audio(file_path)
+                transcript,status = open_ai_transcribe_audio(file_path)
                 if status != 200:
-                    return ranscript,status
+                    return transcript,status
             elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
                 transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
                 if status == 200:
