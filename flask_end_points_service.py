@@ -317,19 +317,19 @@ def get_client_master_data(server, database, client_id):
 
 
 def get_ldap_authentication(server_name, database_name, client_id):
-    success = True
-    error_message = None
+    # success = True
+    # error_message = None
     # Establish connection with the LDAP server
-    logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+    logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
     connection_string = get_connection_string(server_name, database_name, client_id)
     session = get_database_session(connection_string)
-    records = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
+    records = session.query(Configurations).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
     record_coll = []
     for result_elm in records:
         record_coll.append(result_elm.toDict())
-    username = global_utility.get_values_from_json_array(record_coll, CONFIG.LDAP_USER_NAME)
-    password = global_utility.get_values_from_json_array(record_coll, CONFIG.LDAP_USER_PASSWORD)
-    server_address = global_utility.get_values_from_json_array(record_coll, CONFIG.LDAP_SERVER)
+    username = global_utility.get_configuration_by_key_name(record_coll, CONFIG.LDAP_USER_NAME)
+    password = global_utility.get_configuration_by_key_name(record_coll, CONFIG.LDAP_USER_PASSWORD)
+    server_address = global_utility.get_configuration_by_key_name(record_coll, CONFIG.LDAP_SERVER)
 
     # server_address = 'ldap://10.9.32.17:389'
     server = Server(server_address, get_info=ALL, use_ssl=False)
@@ -337,26 +337,34 @@ def get_ldap_authentication(server_name, database_name, client_id):
         # Bind to the LDAP server with provided credentials
         conn = Connection(server, user=username, password=password, authentication=SIMPLE)
         if not conn.bind():
-            success = False
-            error_message = str("Invalid credentials")
-            return success, error_message
+            # success = False
+            # error_message = str("Invalid credentials")
+            message_info = str("LDAP a invalid set of credentials was sent to the server. Please reach out to the appropriate team member.")
+            msg_array = []
+            msg_array.append(message_info)
+            return set_json_format(msg_array, UNAUTHORIZED_ACCESS, True, message_info), UNAUTHORIZED_ACCESS
         # If bind is successful, credentials are valid
-        success = True
-        error_message = str("Credentials verified successfully")
-        return success, error_message
+        # success = True
+        message_info = str("LDAP credentials were successfully validated.")
+        msg_array = []
+        msg_array.append(message_info)
+        return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
+        # return success, error_message
     except Exception as e:
-        success = False
-        error_message = str(e)
-        return success, error_message
+        error_msg_array = []
+        error_msg_array.append(str(e))
+        return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True, logger_handler)
+        session.close()
 
 
 def get_token_based_authentication(server_name, database_name, client_id, user_name):
     try:
-        success = True
+        # success = True
+        success = SUCCESS
         error_message = None
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AuthTokenManagement).filter(
@@ -373,32 +381,54 @@ def get_token_based_authentication(server_name, database_name, client_id, user_n
                                                              CONFIG.SECRETKEY)
 
             decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
-            print("Decoded token:", decoded_token)
-            success = True
-            error_message = str("Token verified successfully")
-            return success, error_message
+            # print("Decoded token:", decoded_token)
+            # success = True
+            error_message = str("Authentication Token successfully validated")
+            msg_array = []
+            msg_array.append(error_message)
+            return set_json_format(msg_array, SUCCESS, True, error_message), SUCCESS
+            # return success, error_message
         else:
-            generate_token(session, client_id, user_name)
+            error_message = str(f"An authentication token is not currently accessible.Please give the token to the user{user_name}.")
+            msg_array = []
+            msg_array.append(error_message)
+            return set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, error_message), UNAUTHORIZED_ACCESS
+            # generate_token(session, client_id, user_name)
     except jwt.ExpiredSignatureError:
         print("Token has expired")
-        update_token(session, record_id, user_name)
-        success = True
-        error_message = str("Token has expired & updated successfully.")
-        return success, error_message
+        # update_token(session, record_id, user_name)
+        # success = True
+        # error_message = str("Token has expired & updated successfully.")
+        error_message = str("The token has lost its validity. Kindly update the token and try it again.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, UNAUTHORIZED_ACCESS, False, error_message), UNAUTHORIZED_ACCESS
+        # return error_message,success,
     except jwt.InvalidTokenError:
-        success = False
-        error_message = str("Invalid token")
-        return success, error_message
+        error_message = str("The token does not working. Please pass the working token and try again.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, UNAUTHORIZED_ACCESS, False, error_message), UNAUTHORIZED_ACCESS
+        # success = False
+        # error_message = str("Invalid token")
+        # return error_message,success,
     except Exception as e:
-        success = False
-        error_message = str(e)
-        return success, error_message
+        # success = False
+        # error_message = str(e)
+        # return error_message,success,
+        error_msg_array = []
+        error_msg_array.append(str(e))
+        return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+        session.close()
 
 
-def generate_token(session, client_id, user_name):
+def generate_authentication_token(server_name, database_name, client_id, user_name):
     try:
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
         secret_key = secrets.token_bytes(32)
         hex_key = secret_key.hex()
         print(f"Generated secret key: {hex_key}")
@@ -414,40 +444,81 @@ def generate_token(session, client_id, user_name):
                                            SecretKey=SECRET_KEY)
         session.add(record_model)
         session.commit()
-        logger.info(f"Record inserted successfully. ID: {record_model.Id}")
-        return record_model
-        print("Generated token:", record_model.Id)
+        logger.info(f"successfully generate a token for the new user {user_name}")
+        # logger.info(f"Record inserted successfully. ID: {record.Id}")
+        message_info = str(f"Generate Token successfully for the new user: {user_name}")
+        msg_array = []
+        msg_array.append(message_info)
+        return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
+        # return record_model
+        # print("Generated token:", record_model.Id)
     except Exception as e:
-        logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
+        logger.error(f"In generate_authentication_token, an error happened:",str(e))
+        msg_array = []
+        msg_array.append(str(e))
+        return set_json_format(msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True, logger_handler)
         session.close()
 
 
-def update_token(session, record_id, user_name):
+def update_authentication_token(server_name, database_name, client_id, user_name):
     try:
-        secret_key = secrets.token_bytes(32)
-        hex_key = secret_key.hex()
-        print(f"Generated secret key: {hex_key}")
-        SECRET_KEY = hex_key
-
-        # Generate a JWT token with an expiry time of 1 hour
-        payload = {
-            'user_id': user_name,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }
-        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-        update_values = {'Token': token, 'SecretKey': SECRET_KEY}
-        record = session.query(AudioTranscribeTracker).get(int(record_id))
-        if record is not None:  # Check if the record exists
-            for column, value in update_values.items():
-                setattr(record, column, value)
-            session.commit()
-        logger.info(f"Record inserted successfully. ID: {record.Id}")
-        # return record
-        print("Generated token:", record.Id)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        connection_string = get_connection_string(server_name, database_name, client_id)
+        session = get_database_session(connection_string)
+        record = session.query(AuthTokenManagement).filter(
+            (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                Client.IsActive)).all()
+        print(f"Records Length :- {len(record)}")
+        if len(record) > 0:
+            result = global_utility.get_configuration_by_column(record)
+            record_id = global_utility.get_list_array_value(result,
+                                                            CONFIG.ID)
+            secret_key = secrets.token_bytes(32)
+            hex_key = secret_key.hex()
+            # logger.info(f"Generated secret key: {hex_key}")
+            SECRET_KEY = hex_key
+            # Generate a JWT token with an expiry time of 1 hour
+            payload = {
+                'user_id': user_name,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            }
+            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+            update_values = {'Token': token, 'SecretKey': SECRET_KEY, 'Modified': datetime.datetime.utcnow()}
+            token_record = session.query(AuthTokenManagement).get(int(record_id))
+            # token_record = session.query(AuthTokenManagement).filter_by(Id=record_id).update(
+            #     update_values)
+            if token_record is not None:  # Check if the record exists
+                updated_record = session.query(AuthTokenManagement).filter_by(Id=record_id).update(update_values)
+                # for column, value in update_values.items():
+                #     setattr(token_record, column, value)
+                session.commit()
+                logger.info(f"successfully updated the user's {user_name} token.")
+                message_info = str(f"successfully updated the user's {user_name} token.")
+                msg_array = []
+                msg_array.append(message_info)
+                return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
+            else:
+                logger.info(f"{user_name}, the user, cannot locate any tokens. Please create a fresh token for the same user.")
+                message_info = str(f"{user_name}, the user, cannot locate any tokens. Please create a fresh token for the same user.")
+                msg_array = []
+                msg_array.append(message_info)
+                return set_json_format(msg_array, RESOURCE_NOT_FOUND, False, message_info), RESOURCE_NOT_FOUND
+            # return record
+        else:
+            message_info = str("There was no record to be found. Kindly get in touch with the relevant team member.")
+            msg_array = []
+            msg_array.append(message_info)
+            return set_json_format(msg_array, RESOURCE_NOT_FOUND, False, message_info), RESOURCE_NOT_FOUND
+        # print("Generated token:", record.Id)
     except Exception as e:
-        logger.error(f"An error occurred in update_transcribe_text: ",str(e))
+        logger.error(f"An update_authentication_token error occurred: ", str(e))
+        msg_array = []
+        msg_array.append(str(e))
+        return set_json_format(msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
     finally:
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True, logger_handler)
         session.close()
 
 
@@ -468,7 +539,7 @@ def get_connection_string(server, database, client_id):
         error_array = []
         error_array.append(str(e))
         logger.error('Error in Method get_connection_string ', str(e))
-        return set_json_format(error_array, 500, False, str(e))
+        return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
     finally:
         session.close()
 
@@ -803,7 +874,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
     transcript = None
     from datetime import datetime
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         #applied sleep for each thread
         time.sleep(10)
         connection_string = get_connection_string(server_name, database_name, client_id)
@@ -877,7 +948,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
         logger.error('Error in Method update_transcribe_audio_text ',str(e))
         return set_json_format(error_array,500, False, str(e))
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
