@@ -429,27 +429,37 @@ def generate_authentication_token(server_name, database_name, client_id, user_na
         logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
-        secret_key = secrets.token_bytes(32)
-        hex_key = secret_key.hex()
-        print(f"Generated secret key: {hex_key}")
-        SECRET_KEY = hex_key
+        record = session.query(AuthTokenManagement).filter(
+            (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                Client.IsActive)).all()
+        print(f"Records Length :- {len(record)}")
+        if len(record) == 0:
+            secret_key = secrets.token_bytes(32)
+            hex_key = secret_key.hex()
+            print(f"Generated secret key: {hex_key}")
+            SECRET_KEY = hex_key
 
-        # Generate a JWT token with an expiry time of 1 hour
-        payload = {
-            'user_id': user_name,
-            'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
-        }
-        token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
-        record_model = AuthTokenManagement(Token=token, UserName=user_name, ClientId=client_id,
-                                           SecretKey=SECRET_KEY)
-        session.add(record_model)
-        session.commit()
-        logger.info(f"successfully generate a token for the new user {user_name}")
-        # logger.info(f"Record inserted successfully. ID: {record.Id}")
-        message_info = str(f"Generate Token successfully for the new user: {user_name}")
-        msg_array = []
-        msg_array.append(message_info)
-        return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
+            # Generate a JWT token with an expiry time of 1 hour
+            payload = {
+                'user_id': user_name,
+                'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)
+            }
+            token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+            record_model = AuthTokenManagement(Token=token, UserName=user_name, ClientId=client_id,
+                                               SecretKey=SECRET_KEY)
+            session.add(record_model)
+            session.commit()
+            logger.info(f"successfully generate a token for the new user {user_name}")
+            # logger.info(f"Record inserted successfully. ID: {record.Id}")
+            message_info = str(f"Generate Token successfully for the new user: {user_name}")
+            msg_array = []
+            msg_array.append(message_info)
+            return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
+        else:
+            message_info = str(f"The token cannot be generated for this user. Since this user {user_name} has already registered.")
+            msg_array = []
+            msg_array.append(message_info)
+            return set_json_format(msg_array, BAD_REQUEST, True, message_info), BAD_REQUEST
         # return record_model
         # print("Generated token:", record_model.Id)
     except Exception as e:
