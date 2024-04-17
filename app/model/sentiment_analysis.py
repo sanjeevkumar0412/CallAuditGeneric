@@ -23,7 +23,7 @@ class SentimentAnalysisCreation:
     def get_sentiment(self,text,prompt_inject):
         try:
             status = 'success'
-            prompt = f'{prompt_check_list.prompt1} {prompt_inject}.The conversation text will be available between two @@@. For giving responses follows these JSON key value only in 1) Summary 2).Topics,3)FoulLanguage 4)ActionItems 5)ActionOwners 6)Score 7)AggregateSentiment 8)Compliance Score and 9)Good bye reminder message and date also.for JSON key Topics you will return subset in the format as follows "Topic": "<Topic Name>","Sentiment": "<Positive/Negative/Neutral>","FoulLanguage": "<Yes/NO>" ,"ActionItems": ["<List of Action items for the topic>"],"ActionOwners": ["<Owner of actions>"],"Score": "<Sentiment Score out of 10>".Be careful about future and past date and time predictions as they are associate about future actions items. For example if reminder is for after a month then you need to generate required date as SUM of Date Mentioned in transcription Plus 1 month and if it is for 1 week then it would be date discussed in transcription Plus 1 week. Transcribe text starts as follows @@@ {text}. @@@'
+            prompt = f'{prompt_check_list.sentiment_prompt} {prompt_inject}.The conversation text will be available between two @@@. For giving responses follows these JSON key value only in 1) Summary 2).Topics,3)FoulLanguage 4)ActionItems 5)ActionOwners 6)Score 7)AggregateSentiment 8)Compliance Score and 9)Good bye reminder message and date also.for JSON key Topics you will return subset in the format as follows "Topic": "<Topic Name>","Sentiment": "<Positive/Negative/Neutral>","FoulLanguage": "<Yes/NO>" ,"ActionItems": ["<List of Action items for the topic>"],"ActionOwners": ["<Owner of actions>"],"Score": "<Sentiment Score out of 10>".Be careful about future and past date and time predictions as they are associate about future actions items. For example if reminder is for after a month then you need to generate required date as SUM of Date Mentioned in transcription Plus 1 month and if it is for 1 week then it would be date discussed in transcription Plus 1 week. Transcribe text starts as follows @@@ {text}. @@@'
             # sentiment = response['choices'][0]['message']['content'].strip()
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
@@ -85,113 +85,122 @@ class SentimentAnalysisCreation:
             error_array = []
             error_array.append(str(e))
             self.logger.error(f" Sentiment Error in method get_sentiment",str(e))
-            return status, set_json_format(error_array, 500, False, str(e))
+            return status, set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
 
     def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        session = self.global_utility.get_database_session(connection_string)
-        try:
-            prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
-            transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
-            transcribe_merged_string = '.'.join(transcribe_audio_data)
-            clientid=transcribe_data.get("ClientId")
-            current_file=transcribe_data.get("filename")
-            created_sentiment_date = datetime.utcnow()
-            analysis_sentiment_date = datetime.utcnow()
-            modified_sentiment_date = datetime.utcnow()
-            calulated_max_tokens = self.calculate_max_tokens(transcribe_merged_string, token_size=1)
-            file_entry_check = session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).all()
-            if len(file_entry_check) == 0:
-                status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prompt_inject[0])
-                if status == 'success':
-                    dump_data_into_table = SentimentAnalysis(ClientId=clientid,
-                                                             AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
-                                                             AudioFileName=current_file,Created=created_sentiment_date,
-                                                             SentimentScore=str(sentiment_call_data['sentiment_score']),
-                                                             SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
-                                                             Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
-                                                             Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
-                                                             ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']))
-                    session.add(dump_data_into_table)
-                    session.commit()
-                    result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
-                    return result,SUCCESS
+        if len(connection_string) > 0:
+            session = self.global_utility.get_database_session(connection_string)
+            try:
+                prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
+                transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
+                transcribe_merged_string = '.'.join(transcribe_audio_data)
+                clientid=transcribe_data.get("ClientId")
+                current_file=transcribe_data.get("filename")
+                created_sentiment_date = datetime.utcnow()
+                analysis_sentiment_date = datetime.utcnow()
+                modified_sentiment_date = datetime.utcnow()
+                calulated_max_tokens = self.calculate_max_tokens(transcribe_merged_string, token_size=1)
+                file_entry_check = session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).all()
+                if len(file_entry_check) == 0:
+                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prompt_inject[0])
+                    if status == 'success':
+                        dump_data_into_table = SentimentAnalysis(ClientId=clientid,
+                                                                 AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
+                                                                 AudioFileName=current_file,Created=created_sentiment_date,
+                                                                 SentimentScore=str(sentiment_call_data['sentiment_score']),
+                                                                 SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
+                                                                 Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
+                                                                 Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
+                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']))
+                        session.add(dump_data_into_table)
+                        session.commit()
+                        result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
+                        return result,SUCCESS
+                    else:
+                        return sentiment_call_data,RESOURCE_NOT_FOUND
                 else:
-                    return sentiment_call_data,RESOURCE_NOT_FOUND
-            else:
-                result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
-                return result,SUCCESS
+                    result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
+                    return result,SUCCESS
 
-        except IntegrityError as e:
-            self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment",str(e))
-            error_array = []
-            error_array.append(str(e))
-            self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-            return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),RESOURCE_NOT_FOUND
-        except Exception as e:
-            self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment", str(e))
-            error_array = []
-            error_array.append(str(e))
-            self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-            return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
-        finally:
-            session.close()
+            except IntegrityError as e:
+                self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment",str(e))
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
+            except Exception as e:
+                self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment", str(e))
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+            finally:
+                session.close()
+
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result, INTERNAL_SERVER_ERROR
 
     def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        session = self.global_utility.get_database_session(connection_string)
-        try:
-            audio_dictionary = {}
-            transcribe_text = []
-            trans_dic={}
-            check_audio_id_exits = session.query(AudioTranscribe).filter(
-                AudioTranscribe.AudioFileName == audio_file).all()
+        if len(connection_string) > 0:
+            session = self.global_utility.get_database_session(connection_string)
+            try:
+                audio_dictionary = {}
+                transcribe_text = []
+                trans_dic={}
+                check_audio_id_exits = session.query(AudioTranscribe).filter(
+                    AudioTranscribe.AudioFileName == audio_file).all()
 
-            if len(check_audio_id_exits) > 0:
-                audio_id_query = session.query(AudioTranscribe.Id).filter(
-                    AudioTranscribe.AudioFileName == audio_file)
-                query_audio_id_results = audio_id_query.all()
-                check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
-                    AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                chunk_results_check = check_chunk_exist.all()
-                if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
-                    query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
-                                          AudioTranscribeTracker.ChunkFilePath,
-                                          AudioTranscribeTracker.ChunkSequence,
-                                          AudioTranscribeTracker.ChunkText).filter(
-                        AudioTranscribeTracker.AudioId == audio_id_query)
-                    results = query.all()
-                    for row in results:
-                        print("row outpupt", row.ClientId)
-                        transcribe_text.append(row.ChunkText)
-                        audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
-                                                 "ChunkSequence": row.ChunkSequence,
-                                                 "TranscribeMergeText": transcribe_text})
+                if len(check_audio_id_exits) > 0:
+                    audio_id_query = session.query(AudioTranscribe.Id).filter(
+                        AudioTranscribe.AudioFileName == audio_file)
+                    query_audio_id_results = audio_id_query.all()
+                    check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
+                        AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
+                    chunk_results_check = check_chunk_exist.all()
+                    if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
+                        query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
+                                              AudioTranscribeTracker.ChunkFilePath,
+                                              AudioTranscribeTracker.ChunkSequence,
+                                              AudioTranscribeTracker.ChunkText).filter(
+                            AudioTranscribeTracker.AudioId == audio_id_query)
+                        results = query.all()
+                        for row in results:
+                            print("row outpupt", row.ClientId)
+                            transcribe_text.append(row.ChunkText)
+                            audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
+                                                     "ChunkSequence": row.ChunkSequence,
+                                                     "TranscribeMergeText": transcribe_text})
+                    else:
+                        self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
+                        data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                        return data,RESOURCE_NOT_FOUND
                 else:
-                    self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
-                    data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                    self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
+                    data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
                     return data,RESOURCE_NOT_FOUND
-            else:
-                self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
-                data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
-                return data,RESOURCE_NOT_FOUND
-            result = {"message": ''.join(transcribe_text), "status": SUCCESS}
-            return result,SUCCESS
-        except Exception as e:
-            self.logger.error(f": get_data_from_transcribe_table {e}",e)
-            error_array = []
-            error_array.append(str(e))
-            self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
-            return set_json_format(error_array, 500, False, str(e))
-        finally:
-            self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
-            session.close()
+                result = {"message": ''.join(transcribe_text), "status": SUCCESS}
+                return result,SUCCESS
+            except Exception as e:
+                self.logger.error(f": get_data_from_transcribe_table {e}",e)
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+            finally:
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                session.close()
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result,INTERNAL_SERVER_ERROR
 
 
 
     def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
@@ -235,17 +244,17 @@ class SentimentAnalysisCreation:
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error('Error in Method get_connection_string ', str(e))
-                return set_json_format(error_array, 500, False, str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # result.close()
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
     def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
@@ -274,17 +283,17 @@ class SentimentAnalysisCreation:
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # self.logger.error(f": Error {e}",e)
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
     def get_prohibited_data_from_table(self, server_name, database_name, client_id):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
@@ -308,10 +317,10 @@ class SentimentAnalysisCreation:
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
                 # self.logger.error(f": Error {e}",e)
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
