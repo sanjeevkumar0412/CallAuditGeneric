@@ -1,11 +1,11 @@
 import os
 from flask import Flask, request,render_template
 from app.configs.error_code_enum import *
-
+from flask_cors import CORS
 app = Flask(__name__)
-
+CORS(app)
 from database_query_utils import DBRecord
-from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,
+from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,update_authentication_token,generate_authentication_token,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
                                       get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,open_ai_transcribe_audio,
                                       get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio)
@@ -146,34 +146,6 @@ def add_update_transcribe_tracker():
                                                           updatevalues)
     return update_status
 
-
-@app.route('/get_token_based_authenticate', methods=['GET'])
-def get_token_based_authenticate():
-    #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
-    user_name = request.args.get('username')
-    current_user = os.getlogin()
-    print('Current login user:', current_user)
-    success, message = get_token_based_authentication(server_name, database_name, client_id, user_name)
-    if success:
-        return set_json_format([],SUCCESS, True, str(message)),SUCCESS
-    else:
-        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
-
-
-@app.route('/get_ldap_based_authenticate', methods=['GET'])
-def get_ldap_based_authenticate():
-    #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
-    current_user = os.getlogin()
-    print('Current login user:', current_user)
-    success, message = get_ldap_authentication(server_name, database_name, client_id)
-    if success:
-        return set_json_format([],SUCCESS, True, str(message)),SUCCESS
-    else:
-        return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
-
-
 @app.route('/get_data_from_sentiment_table', methods=['GET'])
 def get_sentiment_data():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
@@ -258,6 +230,47 @@ def open_source_transcribe():
         return transcript,status
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript,status
+
+
+@app.route('/token_authenticate', methods=['GET'])
+def token_authenticate():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
+    user_name = request.args.get('username')
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    result = get_token_based_authentication(server_name, database_name, client_id, user_name)
+    return result
+
+@app.route('/ldap_authenticate', methods=['GET'])
+def ldap_authenticate():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    result = get_ldap_authentication(server_name, database_name, client_id)
+    return result
+
+@app.route('/update_token', methods=['GET'])
+def update_token():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
+    user_name = request.args.get('username')
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    result = update_authentication_token(server_name, database_name, client_id,user_name)
+    return result
+
+@app.route('/new_token', methods=['GET'])
+def new_token():
+    #  Dev Done, testing pending
+    client_id = int(request.args.get('clientid'))
+    user_name = request.args.get('username')
+    current_user = os.getlogin()
+    print('Current login user:', current_user)
+    result = generate_authentication_token(server_name, database_name, client_id,user_name)
+    return result
+
 @app.route('/sentiment',methods=['GET'])
 def index():
     return render_template('sentiment_data.html')
@@ -266,6 +279,32 @@ def index():
 def merge_transcribe():
     return render_template('merged_chunk_data.html')
 
+
+@app.route('/get_prohibited_data_from_table', methods=['GET'])
+def get_prohibited_data():
+    from app.model.sentiment_analysis import SentimentAnalysisCreation
+    sentiment_instance = SentimentAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
+    return data
+
+@app.route('/dump_data_into_compliance', methods=['GET','POST'])
+def dump_data_compliance_table():
+    from app.model.compliance_analysis import ComplianceAnalysisCreation
+    compliance_instance = ComplianceAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name)
+    return data
+
+
+@app.route('/get_data_from_compliance_score', methods=['GET'])
+def get_compliance_score_data():
+    from app.model.compliance_analysis import ComplianceAnalysisCreation
+    compliance_instance = ComplianceAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id)
+    return data
 
 if __name__ == '__main__':
     # app.run(debug=True)

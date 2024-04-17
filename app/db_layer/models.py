@@ -355,3 +355,48 @@ class AudioFileNamePattern(Base):
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+class ProhibitedKeyword(Base):
+    __tablename__ = 'ProhibitedKeyword'
+
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    ClientID = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    Keywords = Column(String, nullable=False)
+
+    def __repr__(self):
+        return f"<ProhibitedKeyword(ClientID={self.ClientID},Keywords='{self.Keywords}')>"
+
+
+
+class ScoreCardAnalysis(Base):
+    __tablename__ = 'ScoreCardAnalysis'
+
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    ScoreCardStatus = Column(Integer, nullable=False)
+    AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    ScoreCard = Column(String, nullable=True)
+    ComplianceSummary = Column(String, nullable=True)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
+    AudioFileName = Column(String, nullable=True)
+    OverallScore = Column(String, nullable=False)
+
+
+    def __repr__(self):
+        return f"<ScoreCardAnalysis(ClientId={self.ClientId},ScoreCardStatus='{self.ScoreCardStatus}',AnalysisDateTime='{self.AnalysisDateTime}" \
+               f",ScoreCard='{self.ScoreCard},ComplianceSummary='{self.ComplianceSummary},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}')>"
+
+
+class ComplianceScore(Base):
+    __tablename__ = 'ComplianceScore'
+
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    ClientID = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
+    Compliance = Column(Integer, nullable=False)
+
+    def __repr__(self):
+        return f"<ComplianceScore(ClientID={self.ClientID},Compliance='{self.Compliance}')>"
+
