@@ -41,16 +41,16 @@ class ComplianceAnalysisCreation:
                 stop=None
                 # stop=["\n"]
             )
-            sentiment = response.choices[0].message.content
-            results = json.loads(sentiment)
+            compliance_data = response.choices[0].message.content
+            results = json.loads(compliance_data)
             data = {'OverallScore':results['OverallScore'],'Scorecard':results}
             return status, data
         except Exception as e:
             status = 'failure'
             error_array = []
             error_array.append(str(e))
-            self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-            return status, set_json_format(error_array, 500, False, str(e))
+            self.logger.error(f" Compliance Error in method compliance_analysis", str(e))
+            return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
     def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data):
@@ -70,17 +70,17 @@ class ComplianceAnalysisCreation:
                 if len(file_entry_check) == 0:
                     compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
-                    dump_data_into_table = ScoreCardAnalysis(ClientId=clientid,
-                                                             ScoreCardStatus=22,
-                                                             AnalysisDateTime=analysis_compliance_date,
-                                                             ScoreCard=str(compliance_data['Scorecard']),
-                                                             ComplianceSummary='',
-                                                             Created=created_compliance_date,
-                                                             Modified=modified_compliance_date,
-                                                             AudioFileName=current_file,
-                                                             OverallScore=str(compliance_data['OverallScore']),
-                                                             )
                     if status == 'success':
+                        dump_data_into_table = ScoreCardAnalysis(ClientId=clientid,
+                                                                 ScoreCardStatus=22,
+                                                                 AnalysisDateTime=analysis_compliance_date,
+                                                                 ScoreCard=str(compliance_data['Scorecard']),
+                                                                 ComplianceSummary='',
+                                                                 Created=created_compliance_date,
+                                                                 Modified=modified_compliance_date,
+                                                                 AudioFileName=current_file,
+                                                                 OverallScore=str(compliance_data['OverallScore']),
+                                                                 )
                         session.add(dump_data_into_table)
                         session.commit()
                         # result=set_json_format([], SUCCESS, True, f"Compliance Record successfully recorded for the file {current_file}")
@@ -93,7 +93,7 @@ class ComplianceAnalysisCreation:
                     return result,SUCCESS
 
             except IntegrityError as e:
-                self.logger.error(f"Found error in data_dump_into_compliance_database or get_sentiment",str(e))
+                self.logger.error(f"Found error in data_dump_into_compliance_database or compliance_analysis",str(e))
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Compliance Error in method compliance_analysis", str(e))
@@ -111,7 +111,7 @@ class ComplianceAnalysisCreation:
             return result, INTERNAL_SERVER_ERROR
 
     def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,audio_file):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
@@ -158,14 +158,14 @@ class ComplianceAnalysisCreation:
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # result.close()
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
     def get_data_from_compliance_score(self, server_name, database_name, client_id):
-        self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
@@ -189,7 +189,7 @@ class ComplianceAnalysisCreation:
                 self.logger.error('Error in Method get_data_from_compliance_score ', str(e))
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
