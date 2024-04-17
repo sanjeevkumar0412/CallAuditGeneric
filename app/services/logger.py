@@ -90,7 +90,7 @@ class Logger:
         finally:
             session.close()
 
-    def log_entry_into_sql_table(self, server_name, database_name, client_id, is_removed=False):
+    def log_entry_into_sql_table(self, server_name, database_name, client_id, is_removed=False,logger_handler =0):
         try:
             def log_to_sql(record):
                 try:
@@ -124,8 +124,9 @@ class Logger:
 
             # Add the custom Loguru handler (Sink)
             if is_removed:
-                logger.remove(log_to_sql)
+                # logger.remove(log_to_sql)
+                logger.remove(logger_handler)
             else:
-                logger.add(log_to_sql, level='DEBUG', serialize=True)
+                return logger.add(log_to_sql, level='DEBUG', serialize=True)
         except Exception as e:
             print("When trying to connect to the Logger SQL database, an error occurred.", str(e))
