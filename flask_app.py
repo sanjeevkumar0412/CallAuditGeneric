@@ -275,6 +275,24 @@ def get_prohibited_data():
     data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
     return data
 
+@app.route('/dump_data_into_compliance', methods=['GET','POST'])
+def dump_data_compliance_table():
+    from app.model.compliance_analysis import ComplianceAnalysisCreation
+    compliance_instance = ComplianceAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name)
+    return data
+
+
+@app.route('/get_data_from_compliance_score', methods=['GET'])
+def get_compliance_score_data():
+    from app.model.compliance_analysis import ComplianceAnalysisCreation
+    compliance_instance = ComplianceAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id)
+    return data
+
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(threaded=True)
