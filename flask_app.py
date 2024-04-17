@@ -241,12 +241,6 @@ def token_authenticate():
     print('Current login user:', current_user)
     result = get_token_based_authentication(server_name, database_name, client_id, user_name)
     return result
-    # success, message = get_token_based_authentication(server_name, database_name, client_id, user_name)
-    # if success:
-    #     return set_json_format([],SUCCESS, True, str(message)),SUCCESS
-    # else:
-    #     return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
-
 
 @app.route('/ldap_authenticate', methods=['GET'])
 def ldap_authenticate():
@@ -256,11 +250,6 @@ def ldap_authenticate():
     print('Current login user:', current_user)
     result = get_ldap_authentication(server_name, database_name, client_id)
     return result
-    # success, message = get_ldap_authentication(server_name, database_name, client_id)
-    # if success:
-    #     return set_json_format([],SUCCESS, True, str(message)),SUCCESS
-    # else:
-    #     return set_json_format([],INTERNAL_SERVER_ERROR, False, str(message)),INTERNAL_SERVER_ERROR
 
 @app.route('/update_token', methods=['GET'])
 def update_token():

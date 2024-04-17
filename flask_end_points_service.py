@@ -89,7 +89,7 @@ def is_empty(value):
 
 def get_all_configurations_table(server_name, database_name, client_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         # Get data from Client table
@@ -140,7 +140,7 @@ def get_all_configurations_table(server_name, database_name, client_id):
         logger.error("connect_to_database", str(e))
         return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
@@ -197,7 +197,7 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
 
 def update_audio_transcribe_table(server_name, database_name, client_id, record_id, update_values):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AudioTranscribe).get(int(record_id))
@@ -214,13 +214,13 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
         logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
         return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
 def update_audio_transcribe_tracker_table(server_name, database_name, client_id, record_id, update_values):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         record = session.query(AudioTranscribeTracker).get(int(record_id))
@@ -250,7 +250,7 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
         logger.error(f"An error occurred in update_transcribe_text: ",str(e))
         return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, False,logger_handler)
         session.close()
 
 
@@ -556,7 +556,7 @@ def get_connection_string(server, database, client_id):
 
 def get_audio_transcribe_table_data(server_name, database_name, client_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         status_completed = JobStatusEnum.CompletedTranscript
@@ -573,13 +573,13 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
 def get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         status_completed = JobStatusEnum.CompletedTranscript
@@ -597,13 +597,13 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
     except Exception as e:
         return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
 def get_client_master_table_configurations(server_name, database_name, client_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(ClientMaster).filter(
@@ -618,13 +618,13 @@ def get_client_master_table_configurations(server_name, database_name, client_id
     except Exception as e:
         return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
 def get_app_configurations(server_name, database_name, client_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
@@ -638,13 +638,13 @@ def get_app_configurations(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
 def copy_audio_files_process(server_name, database_name, client_id):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results_config = session.query(Configurations).filter(
@@ -734,7 +734,7 @@ def copy_audio_files_process(server_name, database_name, client_id):
     except Exception as e:
         return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 
 
@@ -964,7 +964,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
 
 def get_file_name_pattern(server_name, database_name, client_id, file_name):
     try:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+        logger_handler = logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = get_connection_string(server_name, database_name, client_id)
         session = get_database_session(connection_string)
         results = session.query(AudioFileNamePattern).filter(
@@ -1024,7 +1024,7 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
     except Exception as e:
         return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(server_name, database_name, client_id, True)
+        logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
         session.close()
 def is_index_found(array, index):
     try:
