@@ -382,7 +382,7 @@ class ScoreCardAnalysis(Base):
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=False)
     AudioFileName = Column(String, nullable=True)
-    OverallScore = Column(Integer, nullable=False)
+    OverallScore = Column(String, nullable=False)
 
 
     def __repr__(self):
