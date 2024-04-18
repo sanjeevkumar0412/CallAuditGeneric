@@ -143,9 +143,9 @@ class SentimentAnalysisCreation:
             return result, INTERNAL_SERVER_ERROR
 
     def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
-        logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
+            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
             try:
                 audio_dictionary = {}
@@ -200,9 +200,9 @@ class SentimentAnalysisCreation:
 
 
     def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file):
-        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
+            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
             try:
                 audio_dictionary = {}
@@ -254,9 +254,9 @@ class SentimentAnalysisCreation:
             return result,INTERNAL_SERVER_ERROR
 
     def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
-        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
+            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
             check_audio_file_exits = session.query(SentimentAnalysis).filter(
                 SentimentAnalysis.AudioFileName == audio_file).all()
