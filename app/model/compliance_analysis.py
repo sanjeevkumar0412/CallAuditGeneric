@@ -203,7 +203,7 @@ class ComplianceAnalysisCreation:
             logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
             check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
                 ScoreCardAnalysis.AudioFileName == audio_file).all()
-
+            
             try:
                 if len(check_audio_file_exits) > 0:
                     compliance_dic={}
