@@ -272,7 +272,7 @@ def new_token():
     return result
 
 @app.route('/sentiment',methods=['GET'])
-def index():
+def sentiment_data():
     return render_template('sentiment_data.html')
 
 @app.route('/transcribe',methods=['GET'])
@@ -304,6 +304,16 @@ def get_compliance_score_data():
     compliance_instance = ComplianceAnalysisCreation()
     client_id = int(request.args.get('clientid'))
     data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id)
+    return data
+
+
+@app.route('/get_data_from_compliance_table', methods=['GET'])
+def get_compliance_data():
+    from app.model.compliance_analysis import ComplianceAnalysisCreation
+    compliance_instance = ComplianceAnalysisCreation()
+    client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name)
     return data
 
 if __name__ == '__main__':
