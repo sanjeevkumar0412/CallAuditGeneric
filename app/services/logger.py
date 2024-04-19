@@ -90,14 +90,14 @@ class Logger:
         finally:
             session.close()
 
-    def log_entry_into_sql_table(self, server_name, database_name, client_id, is_removed=False,logger_handler =0):
+    def log_entry_into_sql_table(self,session, client_id, is_removed=False,logger_handler =0):
         try:
             def log_to_sql(record):
                 try:
-                    dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
-                    engine = create_engine(dns)
-                    Session = sessionmaker(bind=engine)
-                    session = Session()
+                    # dns = f'mssql+pyodbc://{server_name}/{database_name}?driver=ODBC+Driver+17+for+SQL+Server'
+                    # engine = create_engine(dns)
+                    # Session = sessionmaker(bind=engine)
+                    # session = Session()
                     logger_record = record.record
                     log_entry = Logs(
                         ClientId=client_id,
