@@ -45,7 +45,8 @@ class DBRecord:
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             try:
-                logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+                session = self.global_utility.get_database_session(connection_string)
+                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -75,7 +76,7 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session,client_id, True,logger_handler)
                 cursor.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
@@ -86,7 +87,8 @@ class DBRecord:
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             try:
-                logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+                session = self.global_utility.get_database_session(connection_string)
+                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -111,7 +113,7 @@ class DBRecord:
                 }
                 return api_object, INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
@@ -120,7 +122,8 @@ class DBRecord:
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             try:
-                logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+                session = self.global_utility.get_database_session(connection_string)
+                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -162,7 +165,7 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
@@ -171,7 +174,8 @@ class DBRecord:
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             try:
-                logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+                session = self.global_utility.get_database_session(connection_string)
+                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -196,7 +200,7 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
@@ -205,7 +209,8 @@ class DBRecord:
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             try:
-                logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
+                session = self.global_utility.get_database_session(connection_string)
+                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -225,7 +230,7 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
