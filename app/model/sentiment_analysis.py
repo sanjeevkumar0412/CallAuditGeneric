@@ -145,8 +145,9 @@ class SentimentAnalysisCreation:
     def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
-            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
+            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+            # session = self.global_utility.get_database_session(connection_string)
             try:
                 audio_dictionary = {}
                 transcribe_text = []
@@ -191,7 +192,7 @@ class SentimentAnalysisCreation:
                 self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
@@ -202,8 +203,9 @@ class SentimentAnalysisCreation:
     def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file):
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
-            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
+            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+            # session = self.global_utility.get_database_session(connection_string)
             try:
                 audio_dictionary = {}
                 transcribe_text = []
@@ -247,7 +249,7 @@ class SentimentAnalysisCreation:
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # result.close()
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
@@ -256,8 +258,9 @@ class SentimentAnalysisCreation:
     def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
-            logger_handler = self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
             session = self.global_utility.get_database_session(connection_string)
+            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+            # session = self.global_utility.get_database_session(connection_string)
             check_audio_file_exits = session.query(SentimentAnalysis).filter(
                 SentimentAnalysis.AudioFileName == audio_file).all()
 
@@ -286,17 +289,17 @@ class SentimentAnalysisCreation:
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # self.logger.error(f": Error {e}",e)
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
     def get_prohibited_data_from_table(self, server_name, database_name, client_id):
-        logger_handler=self.logger.log_entry_into_sql_table(server_name, database_name, client_id, False)
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
+            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
             check_data_exist = session.query(ProhibitedKeyword).all()
 
             try:
@@ -320,7 +323,7 @@ class SentimentAnalysisCreation:
                 return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
                 # self.logger.error(f": Error {e}",e)
             finally:
-                self.logger.log_entry_into_sql_table(server_name, database_name, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
                 session.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
