@@ -821,7 +821,7 @@ def retries_open_ai_model(client, failed_file, model):
 def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
     try:
         status = SUCCESS
-        print(' Open Ai Audio File Path', transcribe_file)
+        logger.info(f"Loading from Premium Model {model}")
         audio_file = open(transcribe_file, "rb")
         transcript = client.audio.transcriptions.create(
             model=model,
