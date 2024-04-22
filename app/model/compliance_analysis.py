@@ -33,7 +33,7 @@ class ComplianceAnalysisCreation:
                     {"role": "user", "content": prompt}
                 ],
 
-                max_tokens=1500,
+                max_tokens=4000,
                 n=1,
                 presence_penalty=0.8,
                 temperature=0.2,
@@ -75,7 +75,6 @@ class ComplianceAnalysisCreation:
                                                                  ScoreCardStatus=22,
                                                                  AnalysisDateTime=analysis_compliance_date,
                                                                  ScoreCard=str(compliance_data['Scorecard']),
-                                                                 ComplianceSummary='',
                                                                  Created=created_compliance_date,
                                                                  Modified=modified_compliance_date,
                                                                  AudioFileName=current_file,

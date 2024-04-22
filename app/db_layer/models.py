@@ -396,7 +396,6 @@ class ScoreCardAnalysis(Base):
     ScoreCardStatus = Column(Integer, nullable=False)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
     ScoreCard = Column(String, nullable=True)
-    # ComplianceSummary = Column(String, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, unique=False, default=True)
