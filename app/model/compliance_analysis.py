@@ -84,12 +84,25 @@ class ComplianceAnalysisCreation:
                         session.commit()
                         # result=set_json_format([], SUCCESS, True, f"Compliance Record successfully recorded for the file {current_file}")
                         result= {"status":SUCCESS, "message": f"Compliance Record successfully recorded for the file {current_file}"}
+                        self.logger.info(f"Compliance Record successfully recorded for the file {current_file}")
                         return result,SUCCESS
                     else:
                         return compliance_data,RESOURCE_NOT_FOUND
                 else:
-                    result={"status":SUCCESS,"message":f"Compliance Record already available for this {current_file}"}
-                    return result,SUCCESS
+                    #Update logic written Here
+                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id)
+                    status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
+                    if status == "success":
+                        update_column_dic = {ScoreCardAnalysis.ScoreCard:str(compliance_data['Scorecard']),ScoreCardAnalysis.Modified:modified_compliance_date,ScoreCardAnalysis.OverallScore:str(compliance_data['OverallScore'])}
+                        session.query(ScoreCardAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
+                        session.commit()
+                        result={"status":SUCCESS,"message":f"Compliance Record has been updated successfully for this {current_file}"}
+                        self.logger.info(f"Compliance Record has been updated successfully for this {current_file}")
+                        return result,SUCCESS
+                    else:
+                        result={"status":RESOURCE_NOT_FOUND,"message":f"Error occured while updating {current_file}"}
+                        self.logger.error(f"Error occured while updating {current_file}", RESOURCE_NOT_FOUND)
+                        return result,RESOURCE_NOT_FOUND
 
             except IntegrityError as e:
                 self.logger.error(f"Found error in data_dump_into_compliance_database or compliance_analysis",str(e))
