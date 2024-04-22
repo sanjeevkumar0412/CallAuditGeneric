@@ -180,13 +180,23 @@ def copy_audio_files():
 
 @app.route('/transcribe_audio_text', methods=['GET','POST'])
 def transcribe_audio_text():
-    #  Dev Dones
-    client_id = int(request.args.get('clientid'))
-    record_id = int(request.args.get('id'))
-    current_user = os.getlogin()
-    print('Current login user:', current_user)
+    client_id_val = request.args.get('clientid')
+    record_id_val = request.args.get('id')
+    try:
+        client_id = int(client_id_val)
+        record_id = int(record_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+
     json_result = update_transcribe_audio_text(server_name, database_name, client_id, record_id)
     return json_result
+
 
 
 @app.route('/match_file_name_pettern', methods=['GET','POST'])
