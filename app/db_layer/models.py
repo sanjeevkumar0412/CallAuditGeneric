@@ -376,7 +376,6 @@ class ScoreCardAnalysis(Base):
     ScoreCardStatus = Column(Integer, nullable=False)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
     ScoreCard = Column(String, nullable=True)
-    ComplianceSummary = Column(String, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, unique=False, default=True)
@@ -387,7 +386,7 @@ class ScoreCardAnalysis(Base):
 
     def __repr__(self):
         return f"<ScoreCardAnalysis(ClientId={self.ClientId},ScoreCardStatus='{self.ScoreCardStatus}',AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",ScoreCard='{self.ScoreCard},ComplianceSummary='{self.ComplianceSummary},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}')>"
+               f",ScoreCard='{self.ScoreCard},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}')>"
 
 
 class ComplianceScore(Base):
