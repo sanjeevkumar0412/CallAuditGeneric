@@ -785,6 +785,7 @@ def open_source_transcribe_audio(file_path, model_name="base"):
     try:
         status = SUCCESS
         logger.info(f"Loading from Economy Model {model_name}")
+        time.sleep(5)
         model = whisper.load_model(model_name)
         result = model.transcribe(file_path)
         return result,status
@@ -822,6 +823,7 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
     try:
         status = SUCCESS
         logger.info(f"Loading from Premium Model {model}")
+        time.sleep(5)
         audio_file = open(transcribe_file, "rb")
         transcript = client.audio.transcriptions.create(
             model=model,
@@ -843,7 +845,6 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
 def update_transcribe_audio_text(server_name, database_name, client_id, file_id):
     transcript = None
     from datetime import datetime
-    time.sleep(10)
     connection_string, status = get_connection_string(server_name, database_name, client_id)
     if status == 200:
         try:
