@@ -13,7 +13,8 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
-database_name = 'AudioTrans'
+# database_name = 'AudioTrans'
+database_name = 'AudioMaster'
 
 
 
@@ -21,6 +22,7 @@ database_name = 'AudioTrans'
 def get_record():
     table_name = request.args.get('table_name')
     client_id = int(request.args.get('clientid'))
+    # data = db_instance.get_all_record_by_proc(server_name, database_name, client_id, table_name.capitalize())
     data = db_instance.get_all_record(server_name, database_name, client_id,table_name.capitalize())
     return data
 
@@ -148,6 +150,8 @@ def add_update_transcribe_tracker():
 
 @app.route('/get_data_from_sentiment_table', methods=['GET','POST'])
 def get_sentiment_data():
+    from datetime import datetime
+    print("Start get_sentiment_data End Point time:-", datetime.now())
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
     client_id = int(request.args.get('clientid'))

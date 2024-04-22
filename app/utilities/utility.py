@@ -12,7 +12,7 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
-from app.db_layer.models import (MasterConnectionString)
+from app.db_layer.models import (MasterConnectionString,MasterTable)
 
 load_dotenv()
 
@@ -99,9 +99,16 @@ class GlobalUtility:
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            records = session.query(MasterConnectionString).filter(
-                (MasterConnectionString.ClientId == client_id) & (
-                    MasterConnectionString.IsActive)).all()
+            from datetime import datetime
+            print("Start session time:-", datetime.now())
+            records = session.query(MasterTable).filter(
+                (MasterTable.ClientId == client_id) & (
+                    MasterTable.IsActive)).all()
+            from datetime import datetime
+            print("End session time:-", datetime.now())
+            # records = session.query(MasterConnectionString.ConnectionString,MasterConnectionString.ClientId,MasterConnectionString.IsActive).filter(
+            #     (MasterConnectionString.ClientId == client_id) & (
+            #         MasterConnectionString.IsActive)).all()
             record_coll = []
             for result in records:
                 record_coll.append(result.toDict())
