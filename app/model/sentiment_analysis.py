@@ -23,14 +23,14 @@ class SentimentAnalysisCreation:
     def get_sentiment(self,text,prompt_inject):
         try:
             status = 'success'
-            prompt = f'{prompt_check_list.sentiment_prompt} {prompt_inject}.The conversation text will be available between two @@@. For giving responses follows these JSON key value only in 1) Summary 2).Topics,3)FoulLanguage 4)ActionItems 5)ActionOwners 6)Score 7)AggregateSentiment 8)Compliance Score and 9)Good bye reminder message and date also.for JSON key Topics you will return subset in the format as follows "Topic": "<Topic Name>","Sentiment": "<Positive/Negative/Neutral>","FoulLanguage": "<Yes/NO>" ,"ActionItems": ["<List of Action items for the topic>"],"ActionOwners": ["<Owner of actions>"],"Score": "<Sentiment Score out of 10>".Be careful about future and past date and time predictions as they are associate about future actions items. For example if reminder is for after a month then you need to generate required date as SUM of Date Mentioned in transcription Plus 1 month and if it is for 1 week then it would be date discussed in transcription Plus 1 week. Transcribe text starts as follows @@@ {text}. @@@'
+            prompt = f'{prompt_check_list.sentiment_prompt} {prompt_inject}.The conversation text will be available between two @@@. For giving responses follows these JSON key value only in 1) Summary 2).Topics,3)FoulLanguage 4)ActionItems 5)ActionOwners 6)Score 7)AggregateSentiment 8)Compliance Score and 9)Good bye reminder message and date also.for JSON key Topics you will return subset in the format as follows "Topic": "<Topic Name>","Sentiment": "<Positive/Negative/Neutral>","FoulLanguage": "<Yes/NO>" ,"ActionItems": ["<List of Action items for the topic>"],"ActionOwners": ["<Owner of actions>"],"Score": "<Sentiment Score out of 10>".Be careful about future and past date and time predictions as they are associate about future actions items. For example if reminder is for after a month then you need to generate required date as SUM of Date Mentioned in transcription Plus 1 month and if it is for 1 week then it would be date discussed in transcription Plus 1 week. Transcribe text starts as follows @@@ {text}. @@@.Make sure that action item will not contain any blank values. Blank value will only be considered in exceptional cases.'
             # sentiment = response['choices'][0]['message']['content'].strip()
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 # model="gpt-4",
                 messages=[
-                    # {"role": "system", "content": prompt},
-                    {"role": "user", "content": prompt}
+                    {"role": "system", "content": prompt},
+                    # {"role": "user", "content": prompt}
                 ],
 
                 max_tokens=1500,
@@ -120,9 +120,26 @@ class SentimentAnalysisCreation:
                     else:
                         return sentiment_call_data,RESOURCE_NOT_FOUND
                 else:
-                    result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
-                    return result,SUCCESS
-
+                    #Update Logic
+                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prompt_inject[0])
+                    if status == "success":
+                        update_column_dic = {SentimentAnalysis.Sentiment:str(sentiment_call_data['average_sentiment']),
+                                             SentimentAnalysis.Modified:modified_sentiment_date,
+                                             SentimentAnalysis.SentimentScore:str(sentiment_call_data['sentiment_score']),
+                                             SentimentAnalysis.ActionItems:str(sentiment_call_data['action_items']),
+                                             SentimentAnalysis.Topics:str(sentiment_call_data['topics']),SentimentAnalysis.Owners:str(sentiment_call_data['owners']),
+                                             SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language'])
+                                             }
+                        session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
+                        session.commit()
+                        result = {"status": SUCCESS,"message": f"Sentiment Record has been updated successfully for this {current_file}"}
+                        self.logger.info(f"Sentiment Record has been updated successfully for this {current_file}")
+                        return result,SUCCESS
+                        # result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
+                    else:
+                        result={"status":RESOURCE_NOT_FOUND,"message":f"Error occured while updating Sentiment record {current_file}"}
+                        self.logger.error(f"Error occured while updating updating Sentiment record {current_file}", RESOURCE_NOT_FOUND)
+                        return result,RESOURCE_NOT_FOUND
             except IntegrityError as e:
                 self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment",str(e))
                 error_array = []
