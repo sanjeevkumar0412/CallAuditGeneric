@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine,text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.reflection import Inspector
 from db_layer.models import AudioTranscribe
@@ -41,11 +41,33 @@ class DBRecord:
             res.append(row_dict)
         return res
 
-    def get_all_record(self, server_name, database_name, client_id,table_name):
+    def get_all_record_by_proc(self, server_name, database_name, client_id,table_name):
+        # from datetime import datetime
+        # print("Start connection_string time:-", datetime.now())
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        # print("End connection_string time:-", datetime.now())
         if len(connection_string) > 0:
             try:
+                # print("Start  Engine Table Data time:-", datetime.now())
+                # engine = create_engine(connection_string)
+                # with engine.connect() as conn:
+                #     stmt = text("EXEC GetClientRecord")
+                #     result = conn.execute(stmt)
+                #     for row in result:
+                #         print(row)
+                #     print("End  Engine Table Data time:-", datetime.now())
+                #
+                #
+                # print("Start  Session Table Data time:-", datetime.now())
                 session = self.global_utility.get_database_session(connection_string)
+                # query_text = text("execute GetClientRecord")
+                # query = session.execute(query_text)
+                # query_columns = query.keys() if query else []
+                # data = [dict(zip(query_columns, row)) for row in query.all()]
+                # print("Session Table Data :-", data)
+                # print("End Session Table Data time:-", datetime.now())
+                # print("Start Normal/Old Code time:-", datetime.now())
+
                 logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
@@ -53,6 +75,7 @@ class DBRecord:
                     raw_sql = f"SELECT * FROM {table}"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion(cursor)
+                    # print("End Normal/Old Code time:-", datetime.now())
                     if len(result) > 0:
                         api_object = self.global_utility.get_json_format(result,SUCCESS)
                         return api_object,SUCCESS
@@ -77,6 +100,51 @@ class DBRecord:
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
                 self.logger.log_entry_into_sql_table(session,client_id, True,logger_handler)
+                cursor.close()
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result, INTERNAL_SERVER_ERROR
+    def get_all_record(self, server_name, database_name, client_id,table_name):
+        from datetime import datetime
+        print("Start get_all_record / connection_string time:-", datetime.now())
+        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        print("End connection_string time:-", datetime.now())
+        if len(connection_string) > 0:
+            try:
+                print("Start Table Data time:-", datetime.now())
+                session = self.global_utility.get_database_session(connection_string)
+                # logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                cursor, all_tables = self.get_sql_cursor(connection_string)
+                table = self.global_utility.get_table_name(all_tables, table_name)
+                if table is not None:
+                    raw_sql = f"SELECT * FROM {table}"
+                    cursor.execute(raw_sql)
+                    result = self.list_of_dictionary_conversion(cursor)
+                    print("End Table Data time:-", datetime.now())
+                    if len(result) > 0:
+                        api_object = self.global_utility.get_json_format(result,SUCCESS)
+                        return api_object,SUCCESS
+                    else:
+                        api_object = self.global_utility.get_json_format(result,RESOURCE_NOT_FOUND,True,'There is no record in the database'),RESOURCE_NOT_FOUND
+                        return api_object
+                else:
+                    api_object = {
+                        "result": [],
+                        "message": f"Table {table_name} not found ! ",
+                        "status": 'failure',
+                        'status_code': RESOURCE_NOT_FOUND
+                    }
+                    return api_object,RESOURCE_NOT_FOUND
+            except Exception as e:
+                api_object = {
+                    "result": [],
+                    "message": str(e),
+                    "status": 'failure',
+                    'status_code': INTERNAL_SERVER_ERROR
+                }
+                return api_object,INTERNAL_SERVER_ERROR
+            finally:
+                # self.logger.log_entry_into_sql_table(session,client_id, True,logger_handler)
                 cursor.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}

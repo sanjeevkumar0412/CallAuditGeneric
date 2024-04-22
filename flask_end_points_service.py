@@ -18,7 +18,7 @@ from app import prompt_check_list
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import (Client, Configurations, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
-                             AudioFileNamePattern,
+                             AudioFileNamePattern,MasterTable,
                              MasterConnectionString)
 
 global_utility = GlobalUtility()
@@ -515,9 +515,9 @@ def get_connection_string(server, database, client_id):
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
         session = Session()
-        records = session.query(MasterConnectionString).filter(
-            (MasterConnectionString.ClientId == client_id) & (
-                MasterConnectionString.IsActive)).all()
+        records = session.query(MasterTable).filter(
+            (MasterTable.ClientId == client_id) & (
+                MasterTable.IsActive)).all()
         record_coll = []
         for result in records:
             record_coll.append(result.toDict())
@@ -914,7 +914,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
             session.close()
     else:
-        return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False, str(connection_string['message'])), INTERNAL_SERVER_ERROR
+        return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
 
 def get_file_name_pattern(server_name, database_name, client_id, file_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
