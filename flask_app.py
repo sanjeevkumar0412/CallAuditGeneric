@@ -13,8 +13,8 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
-# database_name = 'AudioTrans'
-database_name = 'AudioMaster'
+database_name = 'AudioTrans'
+#database_name = 'AudioMaster'
 
 
 
@@ -154,7 +154,18 @@ def get_sentiment_data():
     print("Start get_sentiment_data End Point time:-", datetime.now())
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
     return data
@@ -216,7 +227,18 @@ def match_file_name_pettern():
 def dump_data_sentiment_table():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name)
     return data
@@ -249,7 +271,18 @@ def open_source_transcribe():
 @app.route('/token_authenticate', methods=['GET','POST'])
 def token_authenticate():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     user_name = request.args.get('username')
     current_user = os.getlogin()
     print('Current login user:', current_user)
@@ -259,7 +292,18 @@ def token_authenticate():
 @app.route('/ldap_authenticate', methods=['GET','POST'])
 def ldap_authenticate():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     current_user = os.getlogin()
     print('Current login user:', current_user)
     result = get_ldap_authentication(server_name, database_name, client_id)
@@ -268,7 +312,18 @@ def ldap_authenticate():
 @app.route('/update_token', methods=['GET','POST'])
 def update_token():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     user_name = request.args.get('username')
     current_user = os.getlogin()
     print('Current login user:', current_user)
@@ -278,7 +333,18 @@ def update_token():
 @app.route('/new_token', methods=['GET','POST'])
 def new_token():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     user_name = request.args.get('username')
     current_user = os.getlogin()
     print('Current login user:', current_user)
@@ -298,7 +364,18 @@ def merge_transcribe():
 def get_prohibited_data():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
     return data
 
@@ -306,7 +383,18 @@ def get_prohibited_data():
 def dump_data_compliance_table():
     from app.model.compliance_analysis import ComplianceAnalysisCreation
     compliance_instance = ComplianceAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name)
     return data
@@ -316,7 +404,18 @@ def dump_data_compliance_table():
 def get_compliance_score_data():
     from app.model.compliance_analysis import ComplianceAnalysisCreation
     compliance_instance = ComplianceAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id)
     return data
 
@@ -325,7 +424,18 @@ def get_compliance_score_data():
 def get_compliance_data():
     from app.model.compliance_analysis import ComplianceAnalysisCreation
     compliance_instance = ComplianceAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name)
     return data
