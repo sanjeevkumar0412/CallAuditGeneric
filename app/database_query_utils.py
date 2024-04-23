@@ -42,32 +42,10 @@ class DBRecord:
         return res
 
     def get_all_record_by_proc(self, server_name, database_name, client_id,table_name):
-        # from datetime import datetime
-        # print("Start connection_string time:-", datetime.now())
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        # print("End connection_string time:-", datetime.now())
         if len(connection_string) > 0:
             try:
-                # print("Start  Engine Table Data time:-", datetime.now())
-                # engine = create_engine(connection_string)
-                # with engine.connect() as conn:
-                #     stmt = text("EXEC GetClientRecord")
-                #     result = conn.execute(stmt)
-                #     for row in result:
-                #         print(row)
-                #     print("End  Engine Table Data time:-", datetime.now())
-                #
-                #
-                # print("Start  Session Table Data time:-", datetime.now())
                 session = self.global_utility.get_database_session(connection_string)
-                # query_text = text("execute GetClientRecord")
-                # query = session.execute(query_text)
-                # query_columns = query.keys() if query else []
-                # data = [dict(zip(query_columns, row)) for row in query.all()]
-                # print("Session Table Data :-", data)
-                # print("End Session Table Data time:-", datetime.now())
-                # print("Start Normal/Old Code time:-", datetime.now())
-
                 logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
@@ -75,7 +53,6 @@ class DBRecord:
                     raw_sql = f"SELECT * FROM {table}"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion(cursor)
-                    # print("End Normal/Old Code time:-", datetime.now())
                     if len(result) > 0:
                         api_object = self.global_utility.get_json_format(result,SUCCESS)
                         return api_object,SUCCESS
