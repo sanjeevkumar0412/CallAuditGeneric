@@ -82,10 +82,8 @@ class SentimentAnalysisCreation:
             return status, data
         except Exception as e:
             status = 'failure'
-            error_array = []
-            error_array.append(str(e))
             self.logger.error(f" Sentiment Error in method get_sentiment",str(e))
-            return status, set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+            return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
     def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
         connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
@@ -135,17 +133,15 @@ class SentimentAnalysisCreation:
                         result = {"status": SUCCESS,"message": f"Sentiment Record has been updated successfully for this {current_file}"}
                         self.logger.info(f"Sentiment Record has been updated successfully for this {current_file}")
                         return result,SUCCESS
-                        # result={"status":SUCCESS,"message":f"Sentiment Record already available for this {current_file}"}
                     else:
-                        result={"status":RESOURCE_NOT_FOUND,"message":f"Error occured while updating Sentiment record {current_file}"}
-                        self.logger.error(f"Error occured while updating updating Sentiment record {current_file}", RESOURCE_NOT_FOUND)
-                        return result,RESOURCE_NOT_FOUND
+                        self.logger.error(f"Error occured while updating updating Sentiment record {sentiment_call_data}", RESOURCE_NOT_FOUND)
+                        return sentiment_call_data, INTERNAL_SERVER_ERROR
             except IntegrityError as e:
                 self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment",str(e))
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e)),RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment", str(e))
                 error_array = []

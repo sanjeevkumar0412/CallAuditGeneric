@@ -47,10 +47,8 @@ class ComplianceAnalysisCreation:
             return status, data
         except Exception as e:
             status = 'failure'
-            error_array = []
-            error_array.append(str(e))
             self.logger.error(f" Compliance Error in method compliance_analysis", str(e))
-            return status, set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+            return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
     def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data):
@@ -100,22 +98,19 @@ class ComplianceAnalysisCreation:
                         self.logger.info(f"Compliance Record has been updated successfully for this {current_file}")
                         return result,SUCCESS
                     else:
-                        result={"status":RESOURCE_NOT_FOUND,"message":f"Error occured while updating {current_file}"}
-                        self.logger.error(f"Error occured while updating {current_file}", RESOURCE_NOT_FOUND)
-                        return result,RESOURCE_NOT_FOUND
-
+                        return compliance_data, INTERNAL_SERVER_ERROR
             except IntegrityError as e:
                 self.logger.error(f"Found error in data_dump_into_compliance_database or compliance_analysis",str(e))
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Compliance Error in method compliance_analysis", str(e))
-                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),RESOURCE_NOT_FOUND
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in data_dump_into_compliance_database or compliance_analysis", str(e))
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Compliance Error in method compliance_analysis", str(e))
-                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
             finally:
                 session.close()
         else:
