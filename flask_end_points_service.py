@@ -515,9 +515,9 @@ def get_connection_string(server, database, client_id):
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
         session = Session()
-        records = session.query(MasterTable).filter(
-            (MasterTable.ClientId == client_id) & (
-                MasterTable.IsActive)).all()
+        records = session.query(MasterConnectionString).filter(
+            (MasterConnectionString.ClientId == client_id) & (
+                MasterConnectionString.IsActive)).all()
         record_coll = []
         for result in records:
             record_coll.append(result.toDict())

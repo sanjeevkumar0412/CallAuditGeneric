@@ -101,9 +101,9 @@ class GlobalUtility:
             session = Session()
             from datetime import datetime
             print("Start session time:-", datetime.now())
-            records = session.query(MasterTable).filter(
-                (MasterTable.ClientId == client_id) & (
-                    MasterTable.IsActive)).all()
+            records = session.query(MasterConnectionString).filter(
+                (MasterConnectionString.ClientId == client_id) & (
+                    MasterConnectionString.IsActive)).all()
             from datetime import datetime
             print("End session time:-", datetime.now())
             # records = session.query(MasterConnectionString.ConnectionString,MasterConnectionString.ClientId,MasterConnectionString.IsActive).filter(
