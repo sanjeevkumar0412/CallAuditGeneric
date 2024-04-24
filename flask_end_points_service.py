@@ -869,6 +869,12 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                     for result_elm in audio_results:
                         audio_result_array.append(result_elm.toDict())
                     file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
+                    check_file = os.path.isfile(file_path)
+                    if not check_file:
+                        error_message = 'The requested file path does not exist: '+file_path
+                        logger.error('Error in update_transcribe_audio_text ',error_message)
+                        return set_json_format([error_message], RESOURCE_NOT_FOUND, False,
+                                               error_message), RESOURCE_NOT_FOUND
                     file_size = os.path.getsize(file_path)
                     file_size_mb = int(file_size / (1024 * 1024))
                     if file_size_mb > 15:
@@ -908,9 +914,9 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
                 return updated_result
         except Exception as e:
             error_array = []
-            error_array.append(str(e))
+            error_array.append(str(e).replace('[WinError 3]',''))
             logger.error('Error in Method update_transcribe_audio_text ',str(e))
-            return set_json_format(error_array,INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
+            return set_json_format(error_array,INTERNAL_SERVER_ERROR, False, str(e).replace('[WinError 3]','')),INTERNAL_SERVER_ERROR
         finally:
             logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
             session.close()
