@@ -20,11 +20,10 @@ class SentimentAnalysisCreation:
         self.logger = Logger()
         self.global_utility = GlobalUtility()
 
-    def get_sentiment(self,text,prompt_inject):
+    def get_sentiment(self,text,prohibited_prompt_inject):
         try:
             status = 'success'
-            prompt = f'{prompt_check_list.sentiment_prompt} {prompt_inject}.The conversation text will be available between two @@@. For giving responses follows these JSON key value only in 1) Summary 2).Topics,3)FoulLanguage 4)ActionItems 5)ActionOwners 6)Score 7)AggregateSentiment 8)Compliance Score and 9)Good bye reminder message and date also.for JSON key Topics you will return subset in the format as follows "Topic": "<Topic Name>","Sentiment": "<Positive/Negative/Neutral>","FoulLanguage": "<Yes/NO>" ,"ActionItems": ["<List of Action items for the topic>"],"ActionOwners": ["<Owner of actions>"],"Score": "<Sentiment Score out of 10>".Be careful about future and past date and time predictions as they are associate about future actions items. For example if reminder is for after a month then you need to generate required date as SUM of Date Mentioned in transcription Plus 1 month and if it is for 1 week then it would be date discussed in transcription Plus 1 week. Transcribe text starts as follows @@@ {text}. @@@.Make sure that action item will not contain any blank values. Blank value will only be considered in exceptional cases.'
-            # sentiment = response['choices'][0]['message']['content'].strip()
+            prompt = "{} {} {} @@@ {}.@@@. {}".format(prompt_check_list.sentiment_prompt,prohibited_prompt_inject,prompt_check_list.sentiment_prompt_after_inject,text,prompt_check_list.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 # model="gpt-4",
@@ -90,7 +89,7 @@ class SentimentAnalysisCreation:
         if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string)
             try:
-                prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
+                prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
                 transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
                 transcribe_merged_string = '.'.join(transcribe_audio_data)
                 clientid=transcribe_data.get("ClientId")
@@ -101,7 +100,7 @@ class SentimentAnalysisCreation:
                 calulated_max_tokens = self.calculate_max_tokens(transcribe_merged_string, token_size=1)
                 file_entry_check = session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).all()
                 if len(file_entry_check) == 0:
-                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prompt_inject[0])
+                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
                     if status == 'success':
                         dump_data_into_table = SentimentAnalysis(ClientId=clientid,
                                                                  AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
@@ -119,7 +118,7 @@ class SentimentAnalysisCreation:
                         return sentiment_call_data,RESOURCE_NOT_FOUND
                 else:
                     #Update Logic
-                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prompt_inject[0])
+                    status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
                     if status == "success":
                         update_column_dic = {SentimentAnalysis.Sentiment:str(sentiment_call_data['average_sentiment']),
                                              SentimentAnalysis.Modified:modified_sentiment_date,
@@ -141,13 +140,13 @@ class SentimentAnalysisCreation:
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e)),RESOURCE_NOT_FOUND
+                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e)),RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in dump_data_into_sentiment_database or get_sentiment", str(e))
                 error_array = []
                 error_array.append(str(e))
                 self.logger.error(f" Sentiment Error in method get_sentiment", str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                return set_json_format(error_array, e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
             finally:
                 session.close()
 
@@ -175,6 +174,11 @@ class SentimentAnalysisCreation:
                     check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
                         AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
                     chunk_results_check = check_chunk_exist.all()
+
+                    if len(chunk_results_check) == 0:
+                        data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
+                        return data, RESOURCE_NOT_FOUND
+
                     if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
                         query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
                                               AudioTranscribeTracker.ChunkFilePath,
@@ -230,8 +234,11 @@ class SentimentAnalysisCreation:
                     query_audio_id_results = audio_id_query.all()
                     check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
                         AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                    # blank_emails = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.ChunkText == '').all()
                     chunk_results_check = check_chunk_exist.all()
+
+                    if len(chunk_results_check) == 0:
+                        data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
+                        return data, RESOURCE_NOT_FOUND
                     if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
                         query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
                                               AudioTranscribeTracker.ChunkFilePath,
