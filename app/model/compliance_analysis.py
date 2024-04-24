@@ -24,7 +24,7 @@ class ComplianceAnalysisCreation:
     def compliance_analysis(self, trans_text,compliance_check_list):
         try:
             status = 'success'
-            prompt = "{} {} {} @@@ {}.@@@".format(prompt_check_list.compliance_prompt, compliance_check_list, prompt_check_list.compliance_prompt_after_checklist ,trans_text)
+            prompt = "{} {} {} @@@ {}.@@@.{}.".format(prompt_check_list.compliance_prompt, compliance_check_list, prompt_check_list.compliance_prompt_after_checklist ,trans_text,prompt_check_list.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
                 model="gpt-3.5-turbo",
                 # model="gpt-4",
@@ -135,6 +135,10 @@ class ComplianceAnalysisCreation:
                         AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
                     # blank_emails = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.ChunkText == '').all()
                     chunk_results_check = check_chunk_exist.all()
+                    if len(chunk_results_check) == 0:
+                        data = {"status": RESOURCE_NOT_FOUND,"message": f": {audio_file} file not exist in AudioTranscribeTracker Table"}
+                        return data, RESOURCE_NOT_FOUND
+
                     if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
                         query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
                                               AudioTranscribeTracker.ChunkFilePath,
