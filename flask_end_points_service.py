@@ -89,59 +89,64 @@ def is_empty(value):
 
 def get_all_configurations_table(server_name, database_name, client_id):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        # Get data from Client table
-        clients_data = session.query(Client).filter_by(ClientId=client_id).all()
-        client_coll = []
-        for client_result in clients_data:
-            client_coll.append(client_result.toDict())
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            # Get data from Client table
+            clients_data = session.query(Client).filter_by(ClientId=client_id).all()
+            client_coll = []
+            for client_result in clients_data:
+                client_coll.append(client_result.toDict())
 
-        # Get data from Configuration table
-        configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
-        configuration_coll = []
-        for configuration_result in configuration_data:
-            configuration_coll.append(configuration_result.toDict())
-        filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
-        filetype_info_coll = []
-        for status_result in filetype_info_data:
-            filetype_info_coll.append(status_result.toDict())
+            # Get data from Configuration table
+            configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
+            configuration_coll = []
+            for configuration_result in configuration_data:
+                configuration_coll.append(configuration_result.toDict())
+            filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
+            filetype_info_coll = []
+            for status_result in filetype_info_data:
+                filetype_info_coll.append(status_result.toDict())
 
-        # Get data from Subscription table
-        subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-        subscriptions_array = []
-        for subscriptions_result in subscriptions_data:
-            subscriptions_array.append(subscriptions_result.toDict())
+            # Get data from Subscription table
+            subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
+            subscriptions_array = []
+            for subscriptions_result in subscriptions_data:
+                subscriptions_array.append(subscriptions_result.toDict())
 
-            # Get data from Job Status table
-        job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-        job_status_coll = []
-        for status_result in job_status_data:
-            job_status_coll.append(status_result.toDict())
+                # Get data from Job Status table
+            job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
+            job_status_coll = []
+            for status_result in job_status_data:
+                job_status_coll.append(status_result.toDict())
 
-        # Get data from Subscription Plan table
-        subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
-        subscriptions_plan_coll = []
-        for subscriptions_plan_data in subscriptions_plan_data:
-            subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
+            # Get data from Subscription Plan table
+            subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
+            subscriptions_plan_coll = []
+            for subscriptions_plan_data in subscriptions_plan_data:
+                subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
 
-        configurations = {
-            'Client': client_coll,
-            'Configurations': configuration_coll,
-            'FileTypesInfo': filetype_info_coll,
-            'Subscriptions': subscriptions_array,
-            'JobStatus': job_status_coll,
-            'SubscriptionsPlan': subscriptions_plan_coll
-        }
-        return get_json_format(configurations,SUCCESS),SUCCESS
+            configurations = {
+                'Client': client_coll,
+                'Configurations': configuration_coll,
+                'FileTypesInfo': filetype_info_coll,
+                'Subscriptions': subscriptions_array,
+                'JobStatus': job_status_coll,
+                'SubscriptionsPlan': subscriptions_plan_coll
+            }
+            return get_json_format(configurations,SUCCESS),SUCCESS
+        else:
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
+                           str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
-        session.close()
         logger.error("connect_to_database", str(e))
         return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def create_audio_file_entry(session, model_info):
@@ -197,61 +202,73 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
 
 def update_audio_transcribe_table(server_name, database_name, client_id, record_id, update_values):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        record = session.query(AudioTranscribe).get(int(record_id))
-        if record is not None:  # Check if the record exists
-            for column, value in update_values.items():
-                setattr(record, column, value)
-            session.commit()
-            return set_json_format([record_id],SUCCESS),SUCCESS
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            record = session.query(AudioTranscribe).get(int(record_id))
+            if record is not None:  # Check if the record exists
+                for column, value in update_values.items():
+                    setattr(record, column, value)
+                session.commit()
+                return set_json_format([record_id],SUCCESS),SUCCESS
+            else:
+                return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
         else:
-            return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
+                                   str(connection_string['message'])), RESOURCE_NOT_FOUND
 
     except Exception as e:
         session.close()
         logger.error(f"An error occurred in update_transcribe_text: {e}",str(e))
         return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def update_audio_transcribe_tracker_table(server_name, database_name, client_id, record_id, update_values):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        record = session.query(AudioTranscribeTracker).get(int(record_id))
-        if len(record) > 0:  # Check if the record exists
-            for column, value in update_values.items():
-                setattr(record, column, value)
-            session.commit()
-            logger.info(f"Id—the {record_id} record in the AudioTranscribeTracker Table has been successfully updated.")
-            record_data = session.query(AudioTranscribeTracker).filter(
-                (AudioTranscribeTracker.ClientId == record.ClientId) & (
-                        AudioTranscribeTracker.AudioId == record.AudioId) & (
-                        AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
-            if len(record_data) == 0:
-                parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
-                status_draft = JobStatusEnum.Draft
-                status_id = status_draft.value
-                values = {'JobStatus': status_id}
-                if record is not None:  # Check if the record exists
-                    for column, value in values.items():
-                        setattr(parent_record, column, value)
-                    session.commit()
-            return set_json_format([record_id],SUCCESS),SUCCESS
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            record = session.query(AudioTranscribeTracker).get(int(record_id))
+            if len(record) > 0:  # Check if the record exists
+                for column, value in update_values.items():
+                    setattr(record, column, value)
+                session.commit()
+                logger.info(f"Id—the {record_id} record in the AudioTranscribeTracker Table has been successfully updated.")
+                record_data = session.query(AudioTranscribeTracker).filter(
+                    (AudioTranscribeTracker.ClientId == record.ClientId) & (
+                            AudioTranscribeTracker.AudioId == record.AudioId) & (
+                            AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
+                if len(record_data) == 0:
+                    parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
+                    status_draft = JobStatusEnum.Draft
+                    status_id = status_draft.value
+                    values = {'JobStatus': status_id}
+                    if record is not None:  # Check if the record exists
+                        for column, value in values.items():
+                            setattr(parent_record, column, value)
+                        session.commit()
+                return set_json_format([record_id],SUCCESS),SUCCESS
+            else:
+                return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
         else:
-            return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
+                                   str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
         session.close()
         logger.error(f"An error occurred in update_transcribe_text: ",str(e))
         return set_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, False,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, False,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def get_client_configurations(server, database, client_id, master_client_user):
@@ -318,9 +335,10 @@ def get_client_master_data(server, database, client_id):
 
 def get_ldap_authentication(server_name, database_name, client_id):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+        session = get_database_session(connection_string[0]['transaction'])
+        session_logger = get_database_session(connection_string[0]['logger'])
+        logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
         records = session.query(Configurations).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
         record_coll = []
         for result_elm in records:
@@ -347,8 +365,9 @@ def get_ldap_authentication(server_name, database_name, client_id):
             error_msg_array.append(str(e))
             return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True, logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True, logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
@@ -356,10 +375,11 @@ def get_ldap_authentication(server_name, database_name, client_id):
 
 def get_token_based_authentication(server_name, database_name, client_id, user_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             record = session.query(AuthTokenManagement).filter(
                 (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
                     Client.IsActive)).all()
@@ -396,8 +416,9 @@ def get_token_based_authentication(server_name, database_name, client_id, user_n
             error_msg_array.append(str(e))
             return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
@@ -405,10 +426,11 @@ def get_token_based_authentication(server_name, database_name, client_id, user_n
 
 def generate_authentication_token(server_name, database_name, client_id, user_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             record = session.query(AuthTokenManagement).filter(
                 (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
                     Client.IsActive)).all()
@@ -434,6 +456,7 @@ def generate_authentication_token(server_name, database_name, client_id, user_na
                 msg_array.append(message_info)
                 return set_json_format(msg_array, SUCCESS, True, message_info), SUCCESS
             else:
+                logger.error("generate_authentication_token ,",f"The token cannot be generated for this user. Since this user {user_name} has already registered.")
                 message_info = str(f"The token cannot be generated for this user. Since this user {user_name} has already registered.")
                 msg_array = []
                 msg_array.append(message_info)
@@ -444,8 +467,9 @@ def generate_authentication_token(server_name, database_name, client_id, user_na
             msg_array.append(str(e))
             return set_json_format(msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True, logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True, logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
@@ -453,10 +477,11 @@ def generate_authentication_token(server_name, database_name, client_id, user_na
 
 def update_authentication_token(server_name, database_name, client_id, user_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             record = session.query(AuthTokenManagement).filter(
                 (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
                     Client.IsActive)).all()
@@ -502,8 +527,9 @@ def update_authentication_token(server_name, database_name, client_id, user_name
             msg_array.append(str(e))
             return set_json_format(msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True, logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True, logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
@@ -539,99 +565,122 @@ def get_connection_string(server, database, client_id):
 
 def get_audio_transcribe_table_data(server_name, database_name, client_id):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        status_completed = JobStatusEnum.CompletedTranscript
-        status_id = status_completed.value
-        results = session.query(AudioTranscribe).filter(
-            (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
-        if len(results) > 0:
-            result_array = []
-            for result_elm in results:
-                result_array.append(result_elm.toDict())
-            return get_json_format(result_array,SUCCESS),SUCCESS
-        elif len(results) == 0:
-            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            status_completed = JobStatusEnum.CompletedTranscript
+            status_id = status_completed.value
+            results = session.query(AudioTranscribe).filter(
+                (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
+            if len(results) > 0:
+                result_array = []
+                for result_elm in results:
+                    result_array.append(result_elm.toDict())
+                return get_json_format(result_array,SUCCESS),SUCCESS
+            elif len(results) == 0:
+                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        else:
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
+                                   str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
         return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        status_completed = JobStatusEnum.CompletedTranscript
-        status_id = status_completed.value
-        results = session.query(AudioTranscribeTracker).filter(
-            (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
-                    AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
-        if len(results) > 0:
-            result_array = []
-            for result_elm in results:
-                result_array.append(result_elm.toDict())
-            return get_json_format(result_array,SUCCESS),SUCCESS
-        elif len(results) == 0:
-            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            status_completed = JobStatusEnum.CompletedTranscript
+            status_id = status_completed.value
+            results = session.query(AudioTranscribeTracker).filter(
+                (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
+                        AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
+            if len(results) > 0:
+                result_array = []
+                for result_elm in results:
+                    result_array.append(result_elm.toDict())
+                return get_json_format(result_array,SUCCESS),SUCCESS
+            elif len(results) == 0:
+                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        else:
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
+                                   str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
         return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def get_client_master_table_configurations(server_name, database_name, client_id):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        results = session.query(ClientMaster).filter(
-            (ClientMaster.ClientId == client_id) & (ClientMaster.IsActive)).all()
-        if len(results) > 0:
-            result_array = []
-            for result_elm in results:
-                result_array.append(result_elm.toDict())
-            return get_json_format(result_array,SUCCESS),SUCCESS
-        elif len(results) == 0:
-            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            results = session.query(ClientMaster).filter(
+                (ClientMaster.ClientId == client_id) & (ClientMaster.IsActive)).all()
+            if len(results) > 0:
+                result_array = []
+                for result_elm in results:
+                    result_array.append(result_elm.toDict())
+                return get_json_format(result_array,SUCCESS),SUCCESS
+            elif len(results) == 0:
+                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        else:
+                return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
         return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def get_app_configurations(server_name, database_name, client_id):
     try:
-        connection_string = get_connection_string(server_name, database_name, client_id)
-        session = get_database_session(connection_string)
-        logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
-        results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
-        if len(results) > 0:
-            result_array = []
-            for result_elm in results:
-                result_array.append(result_elm.toDict())
-            return get_json_format(result_array,SUCCESS),SUCCESS
-        elif len(results) == 0:
-            return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        connection_string,status = get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
+            results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
+            if len(results) > 0:
+                result_array = []
+                for result_elm in results:
+                    result_array.append(result_elm.toDict())
+                return get_json_format(result_array,SUCCESS),SUCCESS
+            elif len(results) == 0:
+                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+        else:
+            return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
         return get_json_format([],INTERNAL_SERVER_ERROR,  False, str(e)),INTERNAL_SERVER_ERROR
     finally:
-        logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+        logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
         session.close()
+        session_logger.close()
 
 
 def copy_audio_files_process(server_name, database_name, client_id):
     # try:
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             results_config = session.query(Configurations).filter(
                 (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
             result_config_array = []
@@ -713,8 +762,9 @@ def copy_audio_files_process(server_name, database_name, client_id):
         except Exception as e:
             return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
@@ -853,7 +903,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
     transcript = None
     from datetime import datetime
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200 and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
@@ -934,10 +984,11 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
 
 def get_file_name_pattern(server_name, database_name, client_id, file_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             results = session.query(AudioFileNamePattern).filter(
                 (AudioFileNamePattern.ClientId == client_id) & (AudioFileNamePattern.IsActive)).order_by(
                 AudioFileNamePattern.Sequence.asc()).all()
@@ -985,8 +1036,9 @@ def get_file_name_pattern(server_name, database_name, client_id, file_name):
         except Exception as e:
             return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
