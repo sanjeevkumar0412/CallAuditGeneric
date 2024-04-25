@@ -109,7 +109,7 @@ class SentimentAnalysisCreation:
                                                                  SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
                                                                  Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
                                                                  Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
-                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),prompt=str(sentiment_call_data['prompt'])),
+                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),prompt=str(sentiment_call_data['prompt']))
                         session.add(dump_data_into_table)
                         session.commit()
                         result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
