@@ -237,10 +237,11 @@ class SentimentAnalysis(Base):
     FoulLanguage = Column(String, nullable=False)
     ActionItems = Column(String, nullable=False)
     Owners = Column(String, nullable=False)
+    prompt = Column(String, nullable=False)
 
     def __repr__(self):
         return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}')>"
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}',prompt='{self.prompt}')>"
 
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
@@ -402,11 +403,12 @@ class ScoreCardAnalysis(Base):
     IsDeleted = Column(Boolean, unique=False, default=False)
     AudioFileName = Column(String, nullable=True)
     OverallScore = Column(String, nullable=False)
+    prompt = Column(String, nullable=False)
 
 
     def __repr__(self):
         return f"<ScoreCardAnalysis(ClientId={self.ClientId},ScoreCardStatus='{self.ScoreCardStatus}',AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",ScoreCard='{self.ScoreCard},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}')>"
+               f",ScoreCard='{self.ScoreCard},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}',prompt='{self.prompt}')>"
 
 
 class ComplianceScore(Base):

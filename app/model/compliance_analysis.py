@@ -43,7 +43,7 @@ class ComplianceAnalysisCreation:
             )
             compliance_data = response.choices[0].message.content
             results = json.loads(compliance_data)
-            data = {'OverallScore':results['OverallScore'],'Scorecard':results}
+            data = {'OverallScore':results['OverallScore'],'Scorecard':results,'prompt':prompt}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -77,6 +77,7 @@ class ComplianceAnalysisCreation:
                                                                  Modified=modified_compliance_date,
                                                                  AudioFileName=current_file,
                                                                  OverallScore=str(compliance_data['OverallScore']),
+                                                                 prompt=str(compliance_data['prompt']),
                                                                  )
                         session.add(dump_data_into_table)
                         session.commit()
@@ -91,7 +92,7 @@ class ComplianceAnalysisCreation:
                     compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
                     if status == "success":
-                        update_column_dic = {ScoreCardAnalysis.ScoreCard:str(compliance_data['Scorecard']),ScoreCardAnalysis.Modified:modified_compliance_date,ScoreCardAnalysis.OverallScore:str(compliance_data['OverallScore'])}
+                        update_column_dic = {ScoreCardAnalysis.ScoreCard:str(compliance_data['Scorecard']),ScoreCardAnalysis.Modified:modified_compliance_date,ScoreCardAnalysis.OverallScore:str(compliance_data['OverallScore']),ScoreCardAnalysis.prompt:str(compliance_data['prompt'])}
                         session.query(ScoreCardAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
                         result={"status":SUCCESS,"message":f"Compliance Record has been updated successfully for this {current_file}"}

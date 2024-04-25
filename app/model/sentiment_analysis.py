@@ -28,8 +28,8 @@ class SentimentAnalysisCreation:
                 model="gpt-3.5-turbo",
                 # model="gpt-4",
                 messages=[
-                    {"role": "system", "content": prompt},
-                    # {"role": "user", "content": prompt}
+                    # {"role": "system", "content": prompt},
+                    {"role": "user", "content": prompt}
                 ],
 
                 max_tokens=1500,
@@ -77,7 +77,7 @@ class SentimentAnalysisCreation:
 
             data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
                     'action_items': action_items, 'owners': owners, 'sentiment_score': sentiment_score,
-                    'average_sentiment': average_sentiment}
+                    'average_sentiment': average_sentiment,'prompt': prompt}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -109,7 +109,7 @@ class SentimentAnalysisCreation:
                                                                  SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
                                                                  Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
                                                                  Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
-                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']))
+                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),prompt=str(sentiment_call_data['prompt'])),
                         session.add(dump_data_into_table)
                         session.commit()
                         result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
@@ -125,7 +125,8 @@ class SentimentAnalysisCreation:
                                              SentimentAnalysis.SentimentScore:str(sentiment_call_data['sentiment_score']),
                                              SentimentAnalysis.ActionItems:str(sentiment_call_data['action_items']),
                                              SentimentAnalysis.Topics:str(sentiment_call_data['topics']),SentimentAnalysis.Owners:str(sentiment_call_data['owners']),
-                                             SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language'])
+                                             SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language']),
+                                             SentimentAnalysis.prompt:str(sentiment_call_data['prompt'])
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
