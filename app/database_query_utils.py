@@ -82,22 +82,18 @@ class DBRecord:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
     def get_all_record(self, server_name, database_name, client_id,table_name):
-        from datetime import datetime
-        print("Start get_all_record / connection_string time:-", datetime.now())
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        print("End connection_string time:-", datetime.now())
-        if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
             try:
-                print("Start Table Data time:-", datetime.now())
-                session = self.global_utility.get_database_session(connection_string)
-                # logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
                     raw_sql = f"SELECT * FROM {table}"
                     cursor.execute(raw_sql)
                     result = self.list_of_dictionary_conversion(cursor)
-                    print("End Table Data time:-", datetime.now())
                     if len(result) > 0:
                         api_object = self.global_utility.get_json_format(result,SUCCESS)
                         return api_object,SUCCESS
@@ -121,19 +117,22 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                # self.logger.log_entry_into_sql_table(session,client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger,client_id, True,logger_handler)
                 cursor.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
 
     def get_record_by_id(self, server_name, database_name, client_id,table_name, id):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
             try:
-                session = self.global_utility.get_database_session(connection_string)
-                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+                session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -158,17 +157,20 @@ class DBRecord:
                 }
                 return api_object, INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
     def get_data_by_column_name(self,server_name, database_name, client_id, table_name, column_name, column_value):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
             try:
-                session = self.global_utility.get_database_session(connection_string)
-                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
                 cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -210,17 +212,19 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
     def update_record_by_column(self,server_name, database_name, client_id, table_name, column_to_update, new_value, condition_column, condition_value):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
             try:
-                session = self.global_utility.get_database_session(connection_string)
-                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
                 cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -245,17 +249,19 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
     def delete_record_by_id(self, server_name, database_name, client_id,table_name, id):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+        # if len(connection_string) > 0:
             try:
-                session = self.global_utility.get_database_session(connection_string)
-                logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+                session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
                 cursor, all_tables = self.get_sql_cursor(connection_string)
                 table = self.global_utility.get_table_name(all_tables, table_name)
                 if table is not None:
@@ -275,7 +281,8 @@ class DBRecord:
                 }
                 return api_object,INTERNAL_SERVER_ERROR
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
