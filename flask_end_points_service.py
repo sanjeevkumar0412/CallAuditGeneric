@@ -515,13 +515,20 @@ def get_connection_string(server, database, client_id):
         engine = create_engine(dns)
         Session = sessionmaker(bind=engine)
         session = Session()
-        records = session.query(MasterConnectionString).filter(
-            (MasterConnectionString.ClientId == client_id) & (
-                MasterConnectionString.IsActive)).all()
+        records = session.query(MasterTable).filter(
+            (MasterTable.ClientId == client_id) & (
+                MasterTable.IsActive)).all()
         record_coll = []
         for result in records:
             record_coll.append(result.toDict())
-        return global_utility.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING),SUCCESS
+        transaction_type_connection_string = global_utility.get_connectionstring_by_connection_type(record_coll, CONFIG.CONNECTION_TYPE_TRANSACTION)
+        logger_type_connection_string = global_utility.get_connectionstring_by_connection_type(record_coll, CONFIG.CONNECTION_TYPE_LOGGER)
+        connection_strings= {
+            'transaction':transaction_type_connection_string,
+            'logger': logger_type_connection_string
+        }
+         # return global_utility.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING),SUCCESS
+        return [connection_strings], SUCCESS
     except Exception as e:
         error_array = []
         error_array.append(str(e))
@@ -846,10 +853,11 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
     transcript = None
     from datetime import datetime
     connection_string, status = get_connection_string(server_name, database_name, client_id)
-    if status == 200:
+    if status == 200 and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
-            session = get_database_session(connection_string)
-            logger_handler = logger.log_entry_into_sql_table(session, client_id, False)
+            session = get_database_session(connection_string[0]['transaction'])
+            session_logger = get_database_session(connection_string[0]['logger'])
+            logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
             results_config = session.query(Configurations).filter(
                 (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
             result_config_array = []
@@ -918,8 +926,9 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             logger.error('update_transcribe_audio_text:- ',str(e))
             return set_json_format(error_array,INTERNAL_SERVER_ERROR, False, str(e).replace('[WinError 3]','')),INTERNAL_SERVER_ERROR
         finally:
-            logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+            logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
             session.close()
+            session_logger.close()
     else:
         return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
 

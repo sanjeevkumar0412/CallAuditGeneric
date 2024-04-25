@@ -13,8 +13,8 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
-database_name = 'AudioTrans'
-#database_name = 'AudioMaster'
+#database_name = 'AudioTrans'
+database_name = 'AudioMaster'
 
 
 

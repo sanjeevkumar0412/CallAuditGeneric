@@ -13,6 +13,7 @@ from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
 from app.db_layer.models import (MasterConnectionString,MasterTable)
+from app.configs.error_code_enum import *
 
 load_dotenv()
 
@@ -101,9 +102,9 @@ class GlobalUtility:
             session = Session()
             from datetime import datetime
             print("Start session time:-", datetime.now())
-            records = session.query(MasterConnectionString).filter(
-                (MasterConnectionString.ClientId == client_id) & (
-                    MasterConnectionString.IsActive)).all()
+            records = session.query(MasterTable).filter(
+                (MasterTable.ClientId == client_id) & (
+                    MasterTable.IsActive)).all()
             from datetime import datetime
             print("End session time:-", datetime.now())
             # records = session.query(MasterConnectionString.ConnectionString,MasterConnectionString.ClientId,MasterConnectionString.IsActive).filter(
@@ -112,9 +113,17 @@ class GlobalUtility:
             record_coll = []
             for result in records:
                 record_coll.append(result.toDict())
-            return self.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING)
+            transaction_type_connection_string = self.get_connectionstring_by_connection_type(record_coll,CONFIG.CONNECTION_TYPE_TRANSACTION)
+            logger_type_connection_string = self.get_connectionstring_by_connection_type(record_coll,CONFIG.CONNECTION_TYPE_LOGGER)
+            connection_strings = {
+                'transaction': transaction_type_connection_string,
+                'logger': logger_type_connection_string
+            }
+            # return self.get_values_from_json_array(record_coll, CONFIG.CONNECTION_STRING)
+            return [connection_strings], SUCCESS
         except Exception as e:
-            return []
+            return self.set_json_format([str(e)], INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
+            # return []
         finally:
             session.close()
     def get_key_config_value(self, key_name):
@@ -451,3 +460,11 @@ class GlobalUtility:
                 return False
         except Exception as e:
             self.logger.error('validate_folder', e)
+
+    def get_connectionstring_by_connection_type(self, result_set, target_value):
+        value = None
+        # filtered_data = [item['ConfigValue'] for item in result_set if item['ConfigKey'] == target_value]
+        filtered_data = [item[CONFIG.CONNECTION_STRING] for item in result_set if item['ConnectionType'] == target_value]
+        if len(filtered_data) > 0:
+            value = filtered_data[0]
+        return value

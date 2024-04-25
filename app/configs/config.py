@@ -37,6 +37,11 @@ class CONFIG:
     SECRETKEY = 'SecretKey'
 
     CONNECTION_STRING = 'ConnectionString'
+    CONNECTION_TYPE_TRANSACTION = 'Transaction'
+    CONNECTION_TYPE_LOGGER = 'Logger'
+
+
+
 
     # file
     TRANSCRIBE_FILE_PATH = 'ChunkFilePath'
