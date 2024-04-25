@@ -158,7 +158,7 @@ class ComplianceAnalysisCreation:
                         return data,RESOURCE_NOT_FOUND
                 else:
                     self.logger.info(f":Record not found {audio_file}")
-                    data= {"message":f":Record not found {audio_file} in AudioTranscribe Table"}
+                    data= {"status":RESOURCE_NOT_FOUND, "message":f":Record not found {audio_file} in AudioTranscribe Table"}
                     return data,RESOURCE_NOT_FOUND
                 return self.data_dump_into_compliance_database(server_name, database_name, client_id, audio_dictionary)
             except Exception as e:
@@ -227,7 +227,7 @@ class ComplianceAnalysisCreation:
                     # result = compliance_dic
                     return result,SUCCESS
                 else:
-                    data = {"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
                     return data,RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in get_compliance_data_from_table", str(e))
