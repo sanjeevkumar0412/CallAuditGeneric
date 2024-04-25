@@ -258,7 +258,7 @@ class SentimentAnalysisCreation:
                         return data,RESOURCE_NOT_FOUND
                 else:
                     self.logger.info(f":Record not found {audio_file}")
-                    data= {"message":f":Record not found {audio_file} in AudioTranscribe Table"}
+                    data= {"status":RESOURCE_NOT_FOUND,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
                     return data,RESOURCE_NOT_FOUND
                 return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
             except Exception as e:
@@ -299,7 +299,7 @@ class SentimentAnalysisCreation:
                     result = sentiment_dic
                     return result,SUCCESS
                 else:
-                    data = {"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
                     return data,RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in get_sentiment_data_from_table", str(e))
@@ -333,7 +333,7 @@ class SentimentAnalysisCreation:
 
                     return result,SUCCESS
                 else:
-                    data = {"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
+                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
                     return data,RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in ProhibitedKeyword", str(e))
