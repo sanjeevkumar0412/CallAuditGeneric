@@ -13,15 +13,26 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 db_instance = DBRecord()
 server_name = 'FLM-VM-COGAIDEV'
-database_name = 'AudioTrans'
-#database_name = 'AudioMaster'
+#database_name = 'AudioTrans'
+database_name = 'AudioMaster'
 
 
 
 @app.route('/get_all_data', methods=['GET','POST'])
 def get_record():
     table_name = request.args.get('table_name')
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     # data = db_instance.get_all_record_by_proc(server_name, database_name, client_id, table_name.capitalize())
     data = db_instance.get_all_record(server_name, database_name, client_id,table_name.capitalize())
     return data
@@ -30,8 +41,19 @@ def get_record():
 @app.route('/get_record_by_id', methods=['GET','POST'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
     id = request.args.get('id')
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     data = db_instance.get_record_by_id(server_name, database_name, client_id,table_name, id)
     if data == None:
         data = {"Error": "Invalid table/Data not available for this " + table_name}
@@ -41,7 +63,18 @@ def get_recordby_id():
 @app.route('/get_record_by_column_name', methods=['GET','POST'])
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     column_name = request.args.get('column_name')
     column_value = request.args.get('column_value')
     data = db_instance.get_data_by_column_name(server_name, database_name, client_id,table_name, column_name, column_value)
@@ -51,7 +84,18 @@ def get_recordby_column_name():
 @app.route('/update_record_by_column', methods=['GET','POST'])
 def get_update_by_column_name():
     table_name = request.args.get('table_name')
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     column_to_update = request.args.get('column_to_update')
     new_value = request.args.get('new_value')
     condition_column = request.args.get('condition_column')
@@ -68,7 +112,18 @@ def get_update_by_column_name():
 @app.route('/delete_record_by_id', methods=['DELETE'])
 def delete_recordby_id():
     table_name = request.args.get('table_name')
-    client_id = int(request.args.get('clientid'))
+    # client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     itm_id = request.args.get('id')
     data = db_instance.delete_record_by_id(server_name, database_name, client_id,table_name, itm_id)
 
@@ -82,7 +137,18 @@ def delete_recordby_id():
 def get_transcribe_sentiment():
     from app.model.sentiment_analysis import SentimentAnalysisCreation
     sentiment_instance = SentimentAnalysisCreation()
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name)
     return data
@@ -91,7 +157,17 @@ def get_transcribe_sentiment():
 @app.route('/get_client_master_configurations', methods=['GET','POST'])
 def get_client_master_configurations():
     # Done
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     json_result = get_client_master_table_configurations(server_name, database_name, client_id)
     return json_result
 
@@ -99,7 +175,17 @@ def get_client_master_configurations():
 @app.route('/get_client_configurations', methods=['GET','POST'])
 def get_client_configurations():
     # Done
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     json_result = get_app_configurations(server_name, database_name, client_id)
     return json_result
 
@@ -108,7 +194,17 @@ def get_client_configurations():
 def get_audio_transcribe_data():
     try:
         # Done
-        client_id = int(request.args.get('clientid'))
+        client_id_val = request.args.get('clientid')
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
         json_result = get_audio_transcribe_table_data(server_name, database_name, client_id)
         return json_result
     except Exception as e:
@@ -119,7 +215,17 @@ def get_audio_transcribe_data():
 def get_audio_transcribe_tracker_data():
     try:
         # Done
-        client_id = int(request.args.get('clientid'))
+        client_id_val = request.args.get('clientid')
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
         audio_id = int(request.args.get('audioid'))
         current_user = os.getlogin()
         json_result = get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id)
@@ -131,7 +237,17 @@ def get_audio_transcribe_tracker_data():
 @app.route('/add_update_transcribe', methods=['GET','POST'])
 def add_update_transcribe():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
     update_status = update_audio_transcribe_table(server_name, database_name, client_id, recored_id, updatevalues)
@@ -141,7 +257,17 @@ def add_update_transcribe():
 @app.route('/add_update_transcribe_tracker', methods=['GET','POST'])
 def add_update_transcribe_tracker():
     #  Dev Done, testing pending
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     recored_id = int(request.args.get('id'))
     updatevalues = request.args.get('updatevalues')
     update_status = update_audio_transcribe_tracker_table(server_name, database_name, client_id, recored_id,
@@ -174,7 +300,17 @@ def get_sentiment_data():
 @app.route('/get_all_configurations', methods=['GET','POST'])
 def get_all_configurations():
     #  Dev Done
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     current_user = os.getlogin()
     print('Current login user:', current_user)
     json_result = get_all_configurations_table(server_name, database_name, client_id)
@@ -183,7 +319,17 @@ def get_all_configurations():
 @app.route('/copy_audio_files', methods=['GET','POST'])
 def copy_audio_files():
     #  Dev Done
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     current_user = os.getlogin()
     print('Current login user:', current_user)
     json_result = copy_audio_files_process(server_name, database_name, client_id)
@@ -213,7 +359,17 @@ def transcribe_audio_text():
 @app.route('/match_file_name_pettern', methods=['GET','POST'])
 def match_file_name_pettern():
     #  Dev Done
-    client_id = int(request.args.get('clientid'))
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     file_name = request.args.get('filename')
     current_user = os.getlogin()
     file_name = '24-10003-douglas-21March-AY-Noida-Call-Approva-Ashutosh'

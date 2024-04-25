@@ -119,10 +119,12 @@ class ComplianceAnalysisCreation:
             return result, INTERNAL_SERVER_ERROR
 
     def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,audio_file):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string)
-            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
             try:
                 audio_dictionary = {}
                 transcribe_text = []
@@ -170,17 +172,20 @@ class ComplianceAnalysisCreation:
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
                 # result.close()
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
                 session.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
     def get_data_from_compliance_score(self, server_name, database_name, client_id):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string)
-            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            # if len(connection_string) > 0:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
             try:
                 compliance_score = session.query(ComplianceScore).all()
                 compliance_data=""
@@ -201,18 +206,20 @@ class ComplianceAnalysisCreation:
                 self.logger.error('Error in Method get_data_from_compliance_score ', str(e))
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
                 session.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
 
     def get_compliance_data_from_table(self, server_name, database_name, client_id,audio_file):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string)
-            logger_handler = self.logger.log_entry_into_sql_table(session, client_id, False)
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
             check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
                 ScoreCardAnalysis.AudioFileName == audio_file).all()
             
@@ -237,8 +244,9 @@ class ComplianceAnalysisCreation:
                 self.logger.error(f" Fetch record from Compliance table Error in method get_compliance_data_from_table", str(e))
                 return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
             finally:
-                self.logger.log_entry_into_sql_table(session, client_id, True,logger_handler)
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
                 session.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
