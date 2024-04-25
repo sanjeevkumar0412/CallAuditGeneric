@@ -85,9 +85,9 @@ class SentimentAnalysisCreation:
             return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
     def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string)
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             try:
                 prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
                 transcribe_audio_data=transcribe_data.get("TranscribeMergeText")

@@ -52,9 +52,11 @@ class ComplianceAnalysisCreation:
 
 
     def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data):
-        connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string)
+        # connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        # if len(connection_string) > 0:
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             try:
                 # prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
                 transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
