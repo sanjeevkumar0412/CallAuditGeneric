@@ -313,9 +313,11 @@ class SentimentAnalysisCreation:
                                           "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
                     # result = {"sentimentdata": sentiment_dic}
                     result = sentiment_dic
+                    self.logger.info(f":Get Data from SentimentAnalysis table successfully for AudioFile {audio_file}")
                     return result,SUCCESS
                 else:
                     data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                    self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
                     return data,RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in get_sentiment_data_from_table", str(e))
