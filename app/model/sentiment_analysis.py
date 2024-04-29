@@ -45,39 +45,45 @@ class SentimentAnalysisCreation:
             if 'Summary' in results:
                 summary_report = results['Summary']
             else:
-                summary_report = 'key not Summary not found'
+                summary_report = ''
 
             if 'Topics' in results:
                 topics = results['Topics']
             else:
-                topics = 'key Topics not found'
+                topics = ''
             if 'FoulLanguage' in results:
                 foul_language = results['FoulLanguage']
             else:
-                foul_language = 'key Foul Language not found'
+                foul_language = 'No'
 
             if 'ActionItems' in results:
                 action_items = results['ActionItems']
             else:
-                action_items = 'key Action Items not found'
+                action_items = 'No ActionItems.'
 
             if 'ActionOwners' in results:
                 owners = results['ActionOwners']
             else:
-                owners = 'key Owners not found'
+                owners = 'ActionOwners not available.'
             if 'Score' in results:
                 sentiment_score = results['Score']
             else:
-                sentiment_score = 'key Score not found'
+                sentiment_score = '0'
 
             if 'AggregateSentiment' in results:
                 average_sentiment = results['AggregateSentiment']
             else:
-                average_sentiment = 'key Aggregate Sentiment not found'
+                average_sentiment = 'AggregateSentiment not available'
+
+            if 'Good bye reminder message' in results:
+                reminder_message = results['Good bye reminder message']
+            else:
+                reminder_message = 'Reminder message not available.'
+
 
             data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
                     'action_items': action_items, 'owners': owners, 'sentiment_score': sentiment_score,
-                    'average_sentiment': average_sentiment,'prompt': prompt}
+                    'average_sentiment': average_sentiment,'prompt': prompt,'reminder_message':reminder_message}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -109,7 +115,8 @@ class SentimentAnalysisCreation:
                                                                  SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
                                                                  Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
                                                                  Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
-                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),prompt=str(sentiment_call_data['prompt']))
+                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),
+                                                                 prompt=str(sentiment_call_data['prompt']),Reminder=str(sentiment_call_data['reminder_message']))
                         session.add(dump_data_into_table)
                         session.commit()
                         result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
@@ -126,7 +133,8 @@ class SentimentAnalysisCreation:
                                              SentimentAnalysis.ActionItems:str(sentiment_call_data['action_items']),
                                              SentimentAnalysis.Topics:str(sentiment_call_data['topics']),SentimentAnalysis.Owners:str(sentiment_call_data['owners']),
                                              SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language']),
-                                             SentimentAnalysis.prompt:str(sentiment_call_data['prompt'])
+                                             SentimentAnalysis.prompt:str(sentiment_call_data['prompt']),
+                                             SentimentAnalysis.Reminder:str(sentiment_call_data['reminder_message'])
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
@@ -302,7 +310,7 @@ class SentimentAnalysisCreation:
                                           "FoulLanguage":data[0].FoulLanguage,"ActionItems":data[0].ActionItems,
                                           "Owners":data[0].Owners,"SentimentScore":data[0].SentimentScore,
                                           "SentimentStatus":data[0].SentimentStatus,
-                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment})
+                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
                     # result = {"sentimentdata": sentiment_dic}
                     result = sentiment_dic
                     return result,SUCCESS

@@ -43,7 +43,13 @@ class ComplianceAnalysisCreation:
             )
             compliance_data = response.choices[0].message.content
             results = json.loads(compliance_data)
-            data = {'OverallScore':results['OverallScore'],'Scorecard':results,'prompt':prompt}
+            compliance_met_values = [value['compliance_met'] for value in results.values() if isinstance(value, dict)]
+            total_compliance_met_length= len(compliance_met_values)
+            compliance_met_true_values = sum(compliance_met_values)
+            score= (compliance_met_true_values / total_compliance_met_length) * 100
+            roundund_off_score=round(float(score))
+            OverallScore=f"{roundund_off_score}%"
+            data = {'OverallScore':OverallScore,'Scorecard':results,'prompt':prompt}
             return status, data
         except Exception as e:
             status = 'failure'
