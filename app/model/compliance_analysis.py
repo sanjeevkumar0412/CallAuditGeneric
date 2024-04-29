@@ -241,9 +241,11 @@ class ComplianceAnalysisCreation:
                                           "Modified":data[0].Modified})
                     result = {"Compliance": compliance_dic}
                     # result = compliance_dic
+                    self.logger.info(f":Get Data from ScoreCardAnalysis table successfully for AudioFile {audio_file}")
                     return result,SUCCESS
                 else:
                     data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                    self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
                     return data,RESOURCE_NOT_FOUND
             except Exception as e:
                 self.logger.error(f"Found error in get_compliance_data_from_table", str(e))
