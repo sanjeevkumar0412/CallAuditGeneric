@@ -12,9 +12,11 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 
 db_instance = DBRecord()
-server_name = 'FLM-VM-COGAIDEV'
-#database_name = 'AudioTrans'
-database_name = 'AudioMaster'
+server_name = os.environ.get("SERVER_NAME")
+# Below configuration dev environment while running application in Dev Environment
+database_name = os.environ.get("DATABASE_NAME_DEV")
+# Below configuration QA environment while running application in QA Environment
+#database_name = os.environ.get("DATABASE_NAME_QA")
 
 
 
