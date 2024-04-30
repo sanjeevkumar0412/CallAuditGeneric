@@ -237,10 +237,12 @@ class SentimentAnalysis(Base):
     FoulLanguage = Column(String, nullable=False)
     ActionItems = Column(String, nullable=False)
     Owners = Column(String, nullable=False)
+    prompt = Column(String, nullable=False)
+    Reminder = Column(String, nullable=False)
 
     def __repr__(self):
         return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}')>"
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}',prompt='{self.prompt}',Reminder='{self.Reminder}')>"
 
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
@@ -326,6 +328,7 @@ class MasterConnectionString(Base):
     DatabaseType = Column(Integer, ForeignKey('DatabaseMaster.Id'), nullable=False)
     ConnectionName = Column(String, unique=True, nullable=True)
     ConnectionString = Column(String, unique=True, nullable=True)
+    ConnectionType  = Column(String, unique=True, nullable=True)
     Host = Column(String, unique=True, nullable=True)
     Port = Column(String, unique=True, nullable=True)
     Username = Column(String, unique=True, nullable=True)
@@ -339,6 +342,27 @@ class MasterConnectionString(Base):
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 
+class MasterTable(Base):
+    __tablename__ = 'MasterTable'
+
+    Id = Column(Integer, unique=True, primary_key=True, nullable=False, autoincrement=True)
+    ClientId = Column(Integer, nullable=False)
+    DatabaseType = Column(Integer, nullable=False)
+    ConnectionName = Column(String, unique=True, nullable=True)
+    ConnectionString = Column(String, unique=True, nullable=True)
+    ConnectionType = Column(String, unique=True, nullable=True)
+    Host = Column(String, unique=True, nullable=True)
+    Port = Column(String, unique=True, nullable=True)
+    Username = Column(String, unique=True, nullable=True)
+    Password = Column(String, unique=True, nullable=True)
+    DatabaseName = Column(String, unique=True, nullable=True)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True, nullable=True)
+    IsDeleted = Column(Boolean, unique=False, default=False, nullable=True)
+
+    def toDict(self):
+        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
 class AudioFileNamePattern(Base):
     __tablename__ = 'AudioFileNamePattern'
 
@@ -376,18 +400,18 @@ class ScoreCardAnalysis(Base):
     ScoreCardStatus = Column(Integer, nullable=False)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
     ScoreCard = Column(String, nullable=True)
-    ComplianceSummary = Column(String, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, unique=False, default=True)
     IsDeleted = Column(Boolean, unique=False, default=False)
     AudioFileName = Column(String, nullable=True)
     OverallScore = Column(String, nullable=False)
+    prompt = Column(String, nullable=False)
 
 
     def __repr__(self):
         return f"<ScoreCardAnalysis(ClientId={self.ClientId},ScoreCardStatus='{self.ScoreCardStatus}',AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",ScoreCard='{self.ScoreCard},ComplianceSummary='{self.ComplianceSummary},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}')>"
+               f",ScoreCard='{self.ScoreCard},Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),AudioFileName='{self.AudioFileName}',prompt='{self.prompt}')>"
 
 
 class ComplianceScore(Base):
