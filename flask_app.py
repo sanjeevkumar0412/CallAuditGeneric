@@ -596,6 +596,11 @@ def get_compliance_data():
     data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name)
     return data
 
+
+@app.route('/compliance',methods=['GET'])
+def compliance_data():
+    return render_template('compliance.html')
+
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(threaded=True)
