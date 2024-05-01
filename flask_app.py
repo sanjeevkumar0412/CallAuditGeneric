@@ -18,6 +18,13 @@ database_name = os.environ.get("DATABASE_NAME_DEV")
 # Below configuration QA environment while running application in QA Environment
 #database_name = os.environ.get("DATABASE_NAME_QA")
 
+from app.model.sentiment_analysis import SentimentAnalysisCreation
+sentiment_instance = SentimentAnalysisCreation()
+from app.model.compliance_analysis import ComplianceAnalysisCreation
+compliance_instance = ComplianceAnalysisCreation()
+
+from app import prompt_check_list
+
 
 
 @app.route('/get_all_data', methods=['GET','POST'])
@@ -137,8 +144,6 @@ def delete_recordby_id():
 
 @app.route('/merge_chunk_transcribe_text', methods=['GET','POST'])
 def get_transcribe_sentiment():
-    from app.model.sentiment_analysis import SentimentAnalysisCreation
-    sentiment_instance = SentimentAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -278,10 +283,6 @@ def add_update_transcribe_tracker():
 
 @app.route('/get_data_from_sentiment_table', methods=['GET','POST'])
 def get_sentiment_data():
-    from datetime import datetime
-    print("Start get_sentiment_data End Point time:-", datetime.now())
-    from app.model.sentiment_analysis import SentimentAnalysisCreation
-    sentiment_instance = SentimentAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -383,8 +384,6 @@ def match_file_name_pettern():
 
 @app.route('/dump_data_into_sentiment', methods=['GET','POST'])
 def dump_data_sentiment_table():
-    from app.model.sentiment_analysis import SentimentAnalysisCreation
-    sentiment_instance = SentimentAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -398,8 +397,13 @@ def dump_data_sentiment_table():
         }, RESOURCE_NOT_FOUND
     # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
-    data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name)
-    return data
+    if len(prompt_check_list.open_ai_key) > 0:
+        data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name)
+        return data
+    else:
+        data={"message":"Open AI key can't be blank","status":RESOURCE_NOT_FOUND}
+        return data,RESOURCE_NOT_FOUND
+
 
 @app.route('/open_ai_transcribe_audio_text', methods=['GET','POST'])
 def open_ai_transcribe_audio_text():
@@ -520,8 +524,6 @@ def merge_transcribe():
 
 @app.route('/get_prohibited_data_from_table', methods=['GET'])
 def get_prohibited_data():
-    from app.model.sentiment_analysis import SentimentAnalysisCreation
-    sentiment_instance = SentimentAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -539,8 +541,6 @@ def get_prohibited_data():
 
 @app.route('/dump_data_into_compliance', methods=['GET','POST'])
 def dump_data_compliance_table():
-    from app.model.compliance_analysis import ComplianceAnalysisCreation
-    compliance_instance = ComplianceAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -554,14 +554,16 @@ def dump_data_compliance_table():
         }, RESOURCE_NOT_FOUND
     # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
-    data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name)
-    return data
+    if len(prompt_check_list.open_ai_key) > 0:
+        data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name)
+        return data
+    else:
+        data={"message":"Open AI key can't be blank","status":RESOURCE_NOT_FOUND}
+        return data,RESOURCE_NOT_FOUND
 
 
 @app.route('/get_data_from_compliance_score', methods=['GET'])
 def get_compliance_score_data():
-    from app.model.compliance_analysis import ComplianceAnalysisCreation
-    compliance_instance = ComplianceAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
@@ -580,8 +582,6 @@ def get_compliance_score_data():
 
 @app.route('/get_data_from_compliance_table', methods=['GET'])
 def get_compliance_data():
-    from app.model.compliance_analysis import ComplianceAnalysisCreation
-    compliance_instance = ComplianceAnalysisCreation()
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
