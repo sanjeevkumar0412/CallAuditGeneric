@@ -32,7 +32,7 @@ class SentimentAnalysisCreation:
                     {"role": "user", "content": prompt}
                 ],
 
-                max_tokens=4000,
+                max_tokens=2000,
                 n=1,
                 presence_penalty=0.9,
                 temperature=0,
