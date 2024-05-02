@@ -32,11 +32,11 @@ class SentimentAnalysisCreation:
                     {"role": "user", "content": prompt}
                 ],
 
-                max_tokens=1500,
+                max_tokens=4000,
                 n=1,
-                presence_penalty=0.8,
-                temperature=0.2,
-                top_p=1.0,
+                presence_penalty=0.9,
+                temperature=0,
+                top_p=0.8,
                 stop=None
                 # stop=["\n"]
             )
@@ -61,8 +61,8 @@ class SentimentAnalysisCreation:
             else:
                 action_items = 'No ActionItems.'
 
-            if 'ActionOwners' in results:
-                owners = results['ActionOwners']
+            if 'ActionItemsOwners' in results:
+                owners = results['ActionItemsOwners']
             else:
                 owners = 'ActionOwners not available.'
             if 'Score' in results:
@@ -304,12 +304,11 @@ class SentimentAnalysisCreation:
                 if len(check_audio_file_exits) > 0:
                     sentiment_dic={}
                     data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
-                    sentiment_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,
+                    sentiment_dic.update({"ClientId":data[0].ClientId,
                                           "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
                                           "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
-                                          "FoulLanguage":data[0].FoulLanguage,"ActionItems":data[0].ActionItems,
-                                          "Owners":data[0].Owners,"SentimentScore":data[0].SentimentScore,
-                                          "SentimentStatus":data[0].SentimentStatus,
+                                          "FoulLanguage":data[0].FoulLanguage,
+                                          "ActionItemsOwners":data[0].Owners,
                                           "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
                     # result = {"sentimentdata": sentiment_dic}
                     result = sentiment_dic

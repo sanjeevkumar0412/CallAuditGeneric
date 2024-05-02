@@ -10,19 +10,13 @@ The conversation text will be available between two @@@.
 
 For the JSON response, include the following key-value pairs separately from each other:
 
-Summary: A brief summary of the conversation.
-Topics: A list of topics discussed, with their summary descriptions:
+Summary: A summary of the conversation in 50 to 250 words.
+Topics: A list of topics discussed, with their summary descriptions and remove the column ActionItemsOwners from this:
 Sentiment: The sentiment (Positive/Negative/Neutral) of the topic.
-FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/NO). 
-Score: The sentiment score out of 10 for the topic.
-ActionItems: Overall list of future action items discussed.
-ActionOwners: Overall list of owners responsible for the future action items.
-Score: Overall sentiment score out of 10 for the conversation.
+FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/NO).
+ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item. the second key will be ActionOwner and it will return the name of action owner.
 AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.
-Compliance Score: Compliance score out of 10 for adherence to guidelines.
-Good bye reminder message: Reminder given by the virtual agent to the debtor for any future action before closing the discussion. 
-ActionItem: Any future action items related to the topic and its subkey will appear in child list in key ActionOwner as follows:
-ActionOwner: The owner(s) responsible for the future action items.
+Good bye reminder message: Reminder given by the virtual agent to the debtor for any future action before closing the discussion.
 
 Make sure that you are always adding the above JSON keys in the resonse. 
 
