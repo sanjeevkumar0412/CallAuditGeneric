@@ -38,55 +38,39 @@ $(document).ready(function() {
                     var sentimentData = data;
                     var tableBody = $('#sentimentData');
                     // Append AudioFileName first
-				if (sentimentData.AudioFileName !== '') {
-						var row = $('<tr class="audio_cls"></tr>');
-						row.append($('<td></td>').text('AudioFileName'));
-						row.append($('<td></td>').text(sentimentData.AudioFileName));
-						//$('.audio_cls').show();
-						tableBody.empty().append(row);
-					}
-				if (sentimentData.ActionItems !== '') {
-                    // Append ActionItems next
-                    row = $('<tr class="audio_cls"></tr>');
-                    row.append($('<td></td>').text('ActionItems'));
-                    row.append($('<td></td>').text(sentimentData.ActionItems));
-                    tableBody.append(row);
-                    // Append other data in the original order
-					/*if data.status != 200 {
-                      //AudioFileName,ActionItems,Owners,Sentiment,FoulLanguage,SummaryReport,Topics,Reminder
-						$('.audio_cls').hide();
-					}*/
-				}
+
 				row = $('<tr></tr>');
-                    row.append($('<td></td>').text('Owners'));
-                    row.append($('<td></td>').text(sentimentData.Owners));
+						row.append($('<td></td>').text('AudioFileName'));
+						row.append($('<td class="td_break_all"></td>').text(sentimentData.AudioFileName));
+						//$('.audio_cls').show();
+						tableBody.append(row);
+				row = $('<tr></tr>');
+                    row.append($('<td></td>').text('ActionItemsOwners'));
+                    row.append($('<td class="td_break_all"></td>').text(sentimentData.ActionItemsOwners));
                     tableBody.append(row);
                 row = $('<tr></tr>');
                 row.append($('<td></td>').text('Sentiment'));
-                row.append($('<td></td>').text(sentimentData.Sentiment));
+                row.append($('<td class="td_break_all"></td>').text(sentimentData.Sentiment));
                 tableBody.append(row);
 
                 row = $('<tr></tr>');
                     row.append($('<td></td>').text('FoulLanguage'));
-                    row.append($('<td></td>').text(sentimentData.FoulLanguage));
+                    row.append($('<td class="td_break_all"></td>').text(sentimentData.FoulLanguage));
                     tableBody.append(row);
-
-
 
                 row = $('<tr></tr>');
                     row.append($('<td></td>').text('SummaryReport'));
-                    row.append($('<td></td>').text(sentimentData.SummaryReport));
+                    row.append($('<td class="td_break_all"></td>').text(sentimentData.SummaryReport));
                     tableBody.append(row);
-
 
                 row = $('<tr></tr>');
                     row.append($('<td></td>').text('Topics'));
-                    row.append($('<td></td>').text(sentimentData.Topics));
+                    row.append($('<td class="td_break_all"></td>').text(sentimentData.Topics));
                     tableBody.append(row);
 
                      row = $('<tr></tr>');
                     row.append($('<td></td>').text('Reminder'));
-                    row.append($('<td></td>').text(sentimentData.Reminder));
+                    row.append($('<td class="td_break_all"></td>').text(sentimentData.Reminder));
                     tableBody.append(row);
 				if(sentimentData.ActionItems === undefined) {
 					console.log('If Condition');
