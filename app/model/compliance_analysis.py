@@ -33,7 +33,7 @@ class ComplianceAnalysisCreation:
                     {"role": "user", "content": prompt}
                 ],
 
-                max_tokens=4000,
+                max_tokens=2000,
                 n=1,
                 presence_penalty=0.8,
                 temperature=0.2,
@@ -44,11 +44,14 @@ class ComplianceAnalysisCreation:
             compliance_data = response.choices[0].message.content
             results = json.loads(compliance_data)
             compliance_met_values = [value['compliance_met'] for value in results.values() if isinstance(value, dict)]
-            total_compliance_met_length= len(compliance_met_values)
-            compliance_met_true_values = sum(compliance_met_values)
-            score= (compliance_met_true_values / total_compliance_met_length) * 100
-            roundund_off_score=round(float(score))
-            OverallScore=f"{roundund_off_score}%"
+            if len(compliance_met_values) > 0:
+                total_compliance_met_length= len(compliance_met_values)
+                compliance_met_true_values = sum(compliance_met_values)
+                score= (compliance_met_true_values / total_compliance_met_length) * 100
+                roundund_off_score=round(float(score))
+                OverallScore=f"{roundund_off_score}%"
+            else:
+                OverallScore="0"
             data = {'OverallScore':OverallScore,'Scorecard':results,'prompt':prompt}
             return status, data
         except Exception as e:
@@ -58,8 +61,6 @@ class ComplianceAnalysisCreation:
 
 
     def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data):
-        # connection_string = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        # if len(connection_string) > 0:
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
