@@ -372,6 +372,36 @@ def get_ldap_authentication(server_name, database_name, client_id):
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
 
+def get_authentication(session, client_id, user_name):
+    try:
+        record = session.query(AuthTokenManagement).filter(
+            (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                AuthTokenManagement.IsActive)).all()
+        if len(record) > 0:
+            auth_message = str("Authentication Token successfully validated")
+            msg_array = []
+            msg_array.append(auth_message)
+            return set_json_format(msg_array, SUCCESS, True, auth_message), SUCCESS
+        else:
+            auth_message = str(f"Please register user{user_name} as they are not yet registered.")
+            msg_array = []
+            msg_array.append(auth_message)
+            return set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, auth_message), UNAUTHORIZED_ACCESS
+    except jwt.ExpiredSignatureError:
+        error_message = str("The token has lost its validity(expired). Kindly update the token and try it again.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, PERMISSION_ERROR, False, error_message), PERMISSION_ERROR
+    except jwt.InvalidTokenError:
+        error_message = str("The token that was passed is invalid. Kindly try again with the correct credentials.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, BAD_REQUEST, False, error_message), BAD_REQUEST
+    except Exception as e:
+        error_msg_array = []
+        error_msg_array.append(str(e))
+        return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
+
 
 def get_token_based_authentication(server_name, database_name, client_id, user_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
@@ -899,7 +929,7 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
             return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
 
 
-def update_transcribe_audio_text(server_name, database_name, client_id, file_id):
+def update_transcribe_audio_text(server_name, database_name, client_id,user_name, file_id):
     transcript = None
     from datetime import datetime
     connection_string, status = get_connection_string(server_name, database_name, client_id)
@@ -908,68 +938,81 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results_config = session.query(Configurations).filter(
-                (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
-            result_config_array = []
-            if len(results_config) > 0:
-                for result_elm in results_config:
-                    result_config_array.append(result_elm.toDict())
-            if len(result_config_array) > 0:
-                whisper_model = global_utility.get_configuration_by_key_name(result_config_array, CONFIG.WHISPER_MODEL)
-                subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,
-                                                                                   CONFIG.SUBSCRIPTION_TYPE)
-                processing_status = JobStatusEnum.CompletedTranscript
-                status_id= processing_status.value
-                audio_results = session.query(AudioTranscribeTracker).filter(
-                    (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
-                if len(audio_results) > 0:
-                    audio_result_array = []
-                    for result_elm in audio_results:
-                        audio_result_array.append(result_elm.toDict())
-                    file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
-                    check_file = os.path.isfile(file_path)
-                    if not check_file:
-                        error_message = 'The requested file path does not exist: '+file_path
-                        logger.error('update_transcribe_audio_text:- ', error_message)
-                        return set_json_format([error_message], RESOURCE_NOT_FOUND, False,
-                                               error_message), RESOURCE_NOT_FOUND
-                    file_size = os.path.getsize(file_path)
-                    file_size_mb = int(file_size / (1024 * 1024))
-                    if file_size_mb > 15:
-                        msg = 'File size greater than 10 mb so we are processing this file'
-                        logger.info(msg)
-                        #Need to debug this code on the server
-                        # error_array = []
-                        # error_array.append(msg)
-                        # return set_json_format(error_array, 400, False, msg)
-                else:
-                    msg = 'The file might have been deleted, renamed, moved to a different location.'
-                    error_array = []
-                    error_array.append(msg)
-                    logger.info(msg)
-                    return set_json_format(error_array, RESOURCE_NOT_FOUND, False, msg),RESOURCE_NOT_FOUND
-                start_transcribe_time = datetime.utcnow()
-                if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
-                    transcript,status = open_ai_transcribe_audio(file_path)
-                    if status != 200:
-                        return transcript,status
-                elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
-                    transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
-                    if status == 200:
-                        transcript = transcript_whisper['text']
+            response_message, auth_status = get_authentication(session,client_id,user_name)
+            if auth_status == SUCCESS:
+                results_config = session.query(Configurations).filter(
+                    (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
+                result_config_array = []
+                if len(results_config) > 0:
+                    for result_elm in results_config:
+                        result_config_array.append(result_elm.toDict())
+                if len(result_config_array) > 0:
+                    whisper_model = global_utility.get_configuration_by_key_name(result_config_array, CONFIG.WHISPER_MODEL)
+                    subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,
+                                                                                       CONFIG.SUBSCRIPTION_TYPE)
+                    processing_status = JobStatusEnum.CompletedTranscript
+                    status_id= processing_status.value
+                    audio_results = session.query(AudioTranscribeTracker).filter(
+                        (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
+                    if len(audio_results) > 0:
+                        audio_result_array = []
+                        for result_elm in audio_results:
+                            audio_result_array.append(result_elm.toDict())
+                        file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
+                        check_file = os.path.isfile(file_path)
+                        if not check_file:
+                            error_message = 'The requested file path does not exist: '+file_path
+                            logger.error('update_transcribe_audio_text:- ', error_message)
+                            return set_json_format([error_message], RESOURCE_NOT_FOUND, False,
+                                                   error_message), RESOURCE_NOT_FOUND
+                        file_size = os.path.getsize(file_path)
+                        file_size_mb = int(file_size / (1024 * 1024))
+                        if file_size_mb > 15:
+                            msg = 'File size greater than 10 mb so we are processing this file'
+                            logger.info(msg)
+                            #Need to debug this code on the server
+                            # error_array = []
+                            # error_array.append(msg)
+                            # return set_json_format(error_array, 400, False, msg)
                     else:
-                        return transcript_whisper,status
-                else:
-                    transcript,status = open_ai_transcribe_audio(file_path)
-                    if status != 200:
-                        return transcript,status
+                        msg = 'The file might have been deleted, renamed, moved to a different location.'
+                        error_array = []
+                        error_array.append(msg)
+                        logger.info(msg)
+                        return set_json_format(error_array, RESOURCE_NOT_FOUND, False, msg),RESOURCE_NOT_FOUND
+                    start_transcribe_time = datetime.utcnow()
+                    if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
+                        transcript,status = open_ai_transcribe_audio(file_path)
+                        if status != 200:
+                            return transcript,status
+                    elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
+                        transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
+                        if status == 200:
+                            transcript = transcript_whisper['text']
+                        else:
+                            return transcript_whisper,status
+                    else:
+                        transcript,status = open_ai_transcribe_audio(file_path)
+                        if status != 200:
+                            return transcript,status
 
-                end_transcribe_time = datetime.utcnow()
-                update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
-                                       "ChunkTranscribeStart": start_transcribe_time,
-                                       "ChunkTranscribeEnd": end_transcribe_time}
-                updated_result = update_audio_transcribe_tracker_status(session, file_id, status_id, update_child_values)
-                return updated_result
+                    end_transcribe_time = datetime.utcnow()
+                    update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
+                                           "ChunkTranscribeStart": start_transcribe_time,
+                                           "ChunkTranscribeEnd": end_transcribe_time}
+                    updated_result = update_audio_transcribe_tracker_status(session, file_id, status_id, update_child_values)
+                    return updated_result
+                else:
+                    error_message = str(
+                        f"For the passed client ID {client_id}, no configuration could be retrieved. Please try it once more with valid client ID.")
+                    error_msg_array = []
+                    error_msg_array.append(error_message)
+                    return set_json_format(error_msg_array, RESOURCE_NOT_FOUND, False, error_message), RESOURCE_NOT_FOUND
+            else:
+                error_message = str(f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
+                error_msg_array = []
+                error_msg_array.append(error_message)
+                return set_json_format(error_msg_array, response_message['status_code'], False, error_message), response_message['status_code']
         except Exception as e:
             error_array = []
             error_array.append(str(e).replace('[WinError 3]',''))

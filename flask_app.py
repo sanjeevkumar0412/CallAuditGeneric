@@ -338,27 +338,6 @@ def copy_audio_files():
     json_result = copy_audio_files_process(server_name, database_name, client_id)
     return json_result
 
-@app.route('/transcribe_audio_text', methods=['GET','POST'])
-def transcribe_audio_text():
-    client_id_val = request.args.get('clientid')
-    record_id_val = request.args.get('id')
-    try:
-        client_id = int(client_id_val)
-        record_id = int(record_id_val)
-    except Exception as e:
-        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
-        return {
-            "result": [response_message],
-            "message": response_message,
-            "status": 'failed',
-            'status_code': RESOURCE_NOT_FOUND
-        }, RESOURCE_NOT_FOUND
-
-    json_result = update_transcribe_audio_text(server_name, database_name, client_id, record_id)
-    return json_result
-
-
-
 @app.route('/match_file_name_pettern', methods=['GET','POST'])
 def match_file_name_pettern():
     #  Dev Done
@@ -429,6 +408,34 @@ def open_source_transcribe():
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript,status
 
+@app.route('/transcribe_audio_text', methods=['GET','POST'])
+def transcribe_audio_text():
+    client_id_val = request.args.get('clientid')
+    record_id_val = request.args.get('id')
+    user_name = request.args.get('username')
+    if client_id_val and record_id_val and user_name:
+        try:
+            client_id = int(client_id_val)
+            record_id = int(record_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+
+        json_result = update_transcribe_audio_text(server_name, database_name, client_id,user_name, record_id)
+        return json_result
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
 
 @app.route('/token_authenticate', methods=['GET','POST'])
 def token_authenticate():
