@@ -35,7 +35,7 @@ Date Mentioned in transcription Plus 1 month and if it is for 1 week then it wou
  So Please understand the given prompt very carefully and provide the correct output of mentioned JSON keys.
  Focus on the correct output of the Keys like ActionItems and Owners output be valid."""
 
-prompt_for_data_key_never_blank="Make sure that action or ActionItems or Owners item will not contain any blank values. Blank value will only be considered in exceptional cases."
+prompt_for_data_key_never_blank="Make sure that action or Owners item will not contain any blank values. Blank value will only be considered in exceptional cases."
 
 compliance_prompt="""As a Business Analyst, your role involves analyzing transcripts generated from recordings of conversations between two or more
 individuals and providing responses in JSON format. These conversations could involve various scenarios such as loan recovery negotiations,
