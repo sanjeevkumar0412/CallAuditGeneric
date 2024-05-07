@@ -369,12 +369,11 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                error_message = str(
-                    f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                error_msg_array = []
-                error_msg_array.append(error_message)
-                return set_json_format(error_msg_array, response_message['status_code'], False, error_message),
-                response_message['status_code']
+                # error_message = str(
+                #     f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
+                # error_msg_array = []
+                # error_msg_array.append(error_message)
+                return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']),response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR

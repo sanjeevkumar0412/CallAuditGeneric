@@ -111,11 +111,7 @@ class DBRecord:
                         }
                         return api_object,RESOURCE_NOT_FOUND
                 else:
-                    error_message = str(
-                        f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                    error_msg_array = []
-                    error_msg_array.append(error_message)
-                    return self.global_utility.set_json_format(error_msg_array, response_message['status_code'], False, error_message), \
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), \
                     response_message['status_code']
             except Exception as e:
                 api_object = {
@@ -158,12 +154,8 @@ class DBRecord:
 
                     return {'data': result}
                 else:
-                    error_message = str(
-                        f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                    error_msg_array = []
-                    error_msg_array.append(error_message)
-                    return self.global_utility.set_json_format(error_msg_array, response_message['status_code'], False,
-                                                               error_message), response_message['status_code']
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 self.logger.error(".........Error in get_record_by_id...........", str(e))
                 api_object = {
@@ -181,29 +173,40 @@ class DBRecord:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_data_by_column_name(self,server_name, database_name, client_id, table_name, column_name, column_value):
+    def get_data_by_column_name(self,server_name, database_name, client_id,user_name, table_name, column_name, column_value):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             # if len(connection_string) > 0:
             try:
+                session = self.global_utility.get_database_session(connection_string[0]['transaction'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    check_column = inspector.get_columns(table_name)
-                    column_exists = any(column['name'] == column_name for column in check_column)
-                    if column_exists:
-                        raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
-                        cursor.execute(raw_sql)
-                        result = self.list_of_dictionary_conversion(cursor)
-                        api_object = {
-                            "result": result,
-                            "message": 'The data result set that the service provided.',
-                            "status": 'success',
-                            'status_code': SUCCESS
-                        }
-                        return api_object,SUCCESS
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        check_column = inspector.get_columns(table_name)
+                        column_exists = any(column['name'] == column_name for column in check_column)
+                        if column_exists:
+                            raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
+                            cursor.execute(raw_sql)
+                            result = self.list_of_dictionary_conversion(cursor)
+                            api_object = {
+                                "result": result,
+                                "message": 'The data result set that the service provided.',
+                                "status": 'success',
+                                'status_code': SUCCESS
+                            }
+                            return api_object,SUCCESS
+                        else:
+                            api_object = {
+                                "result": [],
+                                "message": f"Column  {column_name} not found!",
+                                "status": 'failure',
+                                'status_code': RESOURCE_NOT_FOUND
+                            }
+                            return api_object,RESOURCE_NOT_FOUND
                     else:
                         api_object = {
                             "result": [],
@@ -213,13 +216,8 @@ class DBRecord:
                         }
                         return api_object,RESOURCE_NOT_FOUND
                 else:
-                    api_object = {
-                        "result": [],
-                        "message": f"Column  {column_name} not found!",
-                        "status": 'failure',
-                        'status_code': RESOURCE_NOT_FOUND
-                    }
-                    return api_object,RESOURCE_NOT_FOUND
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 api_object = {
                     "result": [],

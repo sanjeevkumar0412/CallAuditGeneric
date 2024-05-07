@@ -472,6 +472,9 @@ class GlobalUtility:
                     AuthTokenManagement.IsActive)).all()
             if len(record) > 0:
                 result = self.get_configuration_by_column(record)
+                token = self.get_list_array_value(result,CONFIG.TOKEN)
+                secret_key = self.get_list_array_value(result,CONFIG.SECRETKEY)
+                decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
                 auth_message = str("Authentication Token successfully validated")
                 msg_array = []
                 msg_array.append(auth_message)

@@ -378,6 +378,13 @@ def get_authentication(session, client_id, user_name):
             (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
                 AuthTokenManagement.IsActive)).all()
         if len(record) > 0:
+            result = global_utility.get_configuration_by_column(record)
+            token = global_utility.get_list_array_value(result,
+                                                        CONFIG.TOKEN)
+            secret_key = global_utility.get_list_array_value(result,
+                                                             CONFIG.SECRETKEY)
+
+            decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
             auth_message = str("Authentication Token successfully validated")
             msg_array = []
             msg_array.append(auth_message)
@@ -1009,10 +1016,10 @@ def update_transcribe_audio_text(server_name, database_name, client_id,user_name
                     error_msg_array.append(error_message)
                     return set_json_format(error_msg_array, RESOURCE_NOT_FOUND, False, error_message), RESOURCE_NOT_FOUND
             else:
-                error_message = str(f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                error_msg_array = []
-                error_msg_array.append(error_message)
-                return set_json_format(error_msg_array, response_message['status_code'], False, error_message), response_message['status_code']
+                # error_message = str(f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
+                # error_msg_array = [response_message['message']]
+                # error_msg_array.append(response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), response_message['status_code']
         except Exception as e:
             error_array = []
             error_array.append(str(e).replace('[WinError 3]',''))
