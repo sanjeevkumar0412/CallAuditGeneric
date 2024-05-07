@@ -31,20 +31,30 @@ from app import prompt_check_list
 def get_record():
     table_name = request.args.get('table_name')
     client_id_val = request.args.get('clientid')
-    try:
-        client_id = int(client_id_val)
-    except Exception as e:
-        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+    user_name = request.args.get('username')
+    if client_id_val and table_name and user_name:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        # client_id = int(request.args.get('clientid'))
+        # data = db_instance.get_all_record_by_proc(server_name, database_name, client_id, table_name.capitalize())
+        data = db_instance.get_all_record(server_name, database_name, client_id,user_name,table_name.capitalize())
+        return data
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
         return {
             "result": [response_message],
             "message": response_message,
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    # client_id = int(request.args.get('clientid'))
-    # data = db_instance.get_all_record_by_proc(server_name, database_name, client_id, table_name.capitalize())
-    data = db_instance.get_all_record(server_name, database_name, client_id,table_name.capitalize())
-    return data
 
 
 @app.route('/get_record_by_id', methods=['GET','POST'])
@@ -53,20 +63,30 @@ def get_recordby_id():
     # client_id = int(request.args.get('clientid'))
     id = request.args.get('id')
     client_id_val = request.args.get('clientid')
-    try:
-        client_id = int(client_id_val)
-    except Exception as e:
-        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+    user_name = request.args.get('username')
+    if client_id_val and id and table_name and user_name:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        data = db_instance.get_record_by_id(server_name, database_name, client_id,user_name,table_name, id)
+        if data == None:
+            data = {"Error": "Invalid table/Data not available for this " + table_name}
+        return data
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
         return {
             "result": [response_message],
             "message": response_message,
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    data = db_instance.get_record_by_id(server_name, database_name, client_id,table_name, id)
-    if data == None:
-        data = {"Error": "Invalid table/Data not available for this " + table_name}
-    return data
 
 
 @app.route('/get_record_by_column_name', methods=['GET','POST'])
@@ -545,7 +565,7 @@ def get_prohibited_data():
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
         # client_id = int(request.args.get('clientid'))
-        data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
+        data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id,user_name)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
