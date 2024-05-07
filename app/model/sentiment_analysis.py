@@ -64,7 +64,7 @@ class SentimentAnalysisCreation:
             if 'ActionItemsOwners' in results:
                 owners = results['ActionItemsOwners']
             else:
-                owners = 'ActionOwners not available.'
+                owners = 'N/A'
             if 'Score' in results:
                 sentiment_score = results['Score']
             else:
@@ -73,12 +73,12 @@ class SentimentAnalysisCreation:
             if 'AggregateSentiment' in results:
                 average_sentiment = results['AggregateSentiment']
             else:
-                average_sentiment = 'AggregateSentiment not available'
+                average_sentiment = 'Neutral'
 
             if 'Good bye reminder message' in results:
                 reminder_message = results['Good bye reminder message']
             else:
-                reminder_message = 'Reminder message not available.'
+                reminder_message = 'N/A'
 
 
             data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
