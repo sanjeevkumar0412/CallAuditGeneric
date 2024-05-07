@@ -532,19 +532,29 @@ def merge_transcribe():
 @app.route('/get_prohibited_data_from_table', methods=['GET'])
 def get_prohibited_data():
     client_id_val = request.args.get('clientid')
-    try:
-        client_id = int(client_id_val)
-    except Exception as e:
-        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+    user_name = request.args.get('username')
+    if client_id_val and user_name:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        # client_id = int(request.args.get('clientid'))
+        data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
+        return data
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
         return {
             "result": [response_message],
             "message": response_message,
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    # client_id = int(request.args.get('clientid'))
-    data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
-    return data
 
 @app.route('/dump_data_into_compliance', methods=['GET','POST'])
 def dump_data_compliance_table():

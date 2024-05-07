@@ -333,39 +333,48 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_prohibited_data_from_table(self, server_name, database_name, client_id):
+    def get_prohibited_data_from_table(self, server_name, database_name, client_id,user_name):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
-            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            check_data_exist = session.query(ProhibitedKeyword).all()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+                check_data_exist = session.query(ProhibitedKeyword).all()
 
-            try:
-                if len(check_data_exist) > 0:
-                    prohibited_data=[]
-                    data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
-                    for key_data in data:
-                        prohibited_data.append(key_data.Keywords)
+                try:
+                    if len(check_data_exist) > 0:
+                        prohibited_data=[]
+                        data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
+                        for key_data in data:
+                            prohibited_data.append(key_data.Keywords)
 
-                    result=','.join(prohibited_data)
+                        result=','.join(prohibited_data)
 
-                    return result,SUCCESS
-                else:
-                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
-                    return data,RESOURCE_NOT_FOUND
-            except Exception as e:
-                self.logger.error(f"Found error in ProhibitedKeyword", str(e))
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
-                # self.logger.error(f": Error {e}",e)
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+                        return result,SUCCESS
+                    else:
+                        data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
+                        return data,RESOURCE_NOT_FOUND
+                except Exception as e:
+                    self.logger.error(f"Found error in ProhibitedKeyword", str(e))
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
+                    return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
+                    # self.logger.error(f": Error {e}",e)
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                error_message = str(
+                    f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
+                error_msg_array = []
+                error_msg_array.append(error_message)
+                return set_json_format(error_msg_array, response_message['status_code'], False, error_message),
+                response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
