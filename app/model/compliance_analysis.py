@@ -127,103 +127,113 @@ class ComplianceAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,audio_file):
+    def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,user_name,audio_file):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            try:
-                audio_dictionary = {}
-                transcribe_text = []
-                check_audio_file_exits = session.query(AudioTranscribe).filter(
-                    AudioTranscribe.AudioFileName == audio_file).all()
-                if len(check_audio_file_exits) > 0:
-                    audio_id_query = session.query(AudioTranscribe.Id).filter(
-                        AudioTranscribe.AudioFileName == audio_file)
-                    query_audio_id_results = audio_id_query.all()
-                    check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
-                        AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                    # blank_emails = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.ChunkText == '').all()
-                    chunk_results_check = check_chunk_exist.all()
-                    if len(chunk_results_check) == 0:
-                        data = {"status": RESOURCE_NOT_FOUND,"message": f": {audio_file} file not exist in AudioTranscribeTracker Table"}
-                        return data, RESOURCE_NOT_FOUND
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                try:
+                    audio_dictionary = {}
+                    transcribe_text = []
+                    check_audio_file_exits = session.query(AudioTranscribe).filter(
+                        AudioTranscribe.AudioFileName == audio_file).all()
+                    if len(check_audio_file_exits) > 0:
+                        audio_id_query = session.query(AudioTranscribe.Id).filter(
+                            AudioTranscribe.AudioFileName == audio_file)
+                        query_audio_id_results = audio_id_query.all()
+                        check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
+                            AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
+                        # blank_emails = session.query(AudioTranscribeTracker).filter(AudioTranscribeTracker.ChunkText == '').all()
+                        chunk_results_check = check_chunk_exist.all()
+                        if len(chunk_results_check) == 0:
+                            data = {"status": RESOURCE_NOT_FOUND,"message": f": {audio_file} file not exist in AudioTranscribeTracker Table"}
+                            return data, RESOURCE_NOT_FOUND
 
-                    if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
-                        query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
-                                              AudioTranscribeTracker.ChunkFilePath,
-                                              AudioTranscribeTracker.ChunkSequence,
-                                              AudioTranscribeTracker.ChunkText).filter(
-                            AudioTranscribeTracker.AudioId == audio_id_query)
-                        results = query.all()
-                        for row in results:
-                            print("row outpupt", row.ClientId)
-                            transcribe_text.append(row.ChunkText)
-                            audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
-                                                     "ChunkSequence": row.ChunkSequence,
-                                                     "TranscribeMergeText": transcribe_text,"filename":audio_file})
+                        if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
+                            query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
+                                                  AudioTranscribeTracker.ChunkFilePath,
+                                                  AudioTranscribeTracker.ChunkSequence,
+                                                  AudioTranscribeTracker.ChunkText).filter(
+                                AudioTranscribeTracker.AudioId == audio_id_query)
+                            results = query.all()
+                            for row in results:
+                                print("row outpupt", row.ClientId)
+                                transcribe_text.append(row.ChunkText)
+                                audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
+                                                         "ChunkSequence": row.ChunkSequence,
+                                                         "TranscribeMergeText": transcribe_text,"filename":audio_file})
+                        else:
+                            self.logger.info(f":Transcribe Job Status is pending")
+                            data= {"status":RESOURCE_NOT_FOUND,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                            return data,RESOURCE_NOT_FOUND
                     else:
-                        self.logger.info(f":Transcribe Job Status is pending")
-                        data= {"status":RESOURCE_NOT_FOUND,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                        self.logger.info(f":Record not found {audio_file}")
+                        data= {"status":RESOURCE_NOT_FOUND, "message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                else:
-                    self.logger.info(f":Record not found {audio_file}")
-                    data= {"status":RESOURCE_NOT_FOUND, "message":f":Record not found {audio_file} in AudioTranscribe Table"}
-                    return data,RESOURCE_NOT_FOUND
-                return self.data_dump_into_compliance_database(server_name, database_name, client_id, audio_dictionary)
-            except Exception as e:
-                # self.logger.error(f": Error {e}",e)
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error('Error in Method get_connection_string ', str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-                # result.close()
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+                    return self.data_dump_into_compliance_database(server_name, database_name, client_id, audio_dictionary)
+                except Exception as e:
+                    # self.logger.error(f": Error {e}",e)
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error('Error in Method get_connection_string ', str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                    # result.close()
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                return self.global_utility.set_json_format([response_message['message']],
+                                                           response_message['status_code'], False,
+                                                           response_message['message']), response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_data_from_compliance_score(self, server_name, database_name, client_id):
+    def get_data_from_compliance_score(self, server_name, database_name, client_id,user_name):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            try:
-                compliance_score = session.query(ComplianceScore).all()
-                compliance_data=""
-                if len(compliance_score) > 0:
-                    result = session.query(ComplianceScore.Compliance).filter_by(ClientID=client_id).all()
-                    numbered_topics = [f"{i}) {result[0]}\n" for i, result in enumerate(result, start=1)]
-                    for topic in numbered_topics:
-                        compliance_data += topic
-                    self.logger.info(f":Get Data from compliance Score successfully for ClientID {client_id}")
-                    return compliance_data,SUCCESS
-                else:
-                    self.logger.info(f":Compliance data not available for ClientID{client_id}")
-                    result = {'status': RESOURCE_NOT_FOUND, "message": "Compliance data not available !"}
-                    return result,RESOURCE_NOT_FOUND
-            except Exception as e:
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error('Error in Method get_data_from_compliance_score ', str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                try:
+                    compliance_score = session.query(ComplianceScore).all()
+                    compliance_data=""
+                    if len(compliance_score) > 0:
+                        result = session.query(ComplianceScore.Compliance).filter_by(ClientID=client_id).all()
+                        numbered_topics = [f"{i}) {result[0]}\n" for i, result in enumerate(result, start=1)]
+                        for topic in numbered_topics:
+                            compliance_data += topic
+                        self.logger.info(f":Get Data from compliance Score successfully for ClientID {client_id}")
+                        return compliance_data,SUCCESS
+                    else:
+                        self.logger.info(f":Compliance data not available for ClientID{client_id}")
+                        result = {'status': RESOURCE_NOT_FOUND, "message": "Compliance data not available !"}
+                        return result,RESOURCE_NOT_FOUND
+                except Exception as e:
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error('Error in Method get_data_from_compliance_score ', str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                return self.global_utility.set_json_format([response_message['message']],
+                                                           response_message['status_code'], False,
+                                                           response_message['message']), response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
 
-    def get_compliance_data_from_table(self, server_name, database_name, client_id,audio_file):
+    def get_compliance_data_from_table(self, server_name, database_name, client_id,user_name,audio_file):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
@@ -231,33 +241,38 @@ class ComplianceAnalysisCreation:
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
             check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
                 ScoreCardAnalysis.AudioFileName == audio_file).all()
-            
-            try:
-                if len(check_audio_file_exits) > 0:
-                    compliance_dic={}
-                    data = session.query(ScoreCardAnalysis).filter_by(AudioFileName=audio_file).all()
-                    compliance_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,
-                                          "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
-                                          "Created":data[0].Created,"ScoreCard":data[0].ScoreCard,"OverallScore":data[0].OverallScore,
-                                          "Modified":data[0].Modified})
-                    result = {"Compliance": compliance_dic}
-                    # result = compliance_dic
-                    self.logger.info(f":Get Data from ScoreCardAnalysis table successfully for AudioFile {audio_file}")
-                    return result,SUCCESS
-                else:
-                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
-                    self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
-                    return data,RESOURCE_NOT_FOUND
-            except Exception as e:
-                self.logger.error(f"Found error in get_compliance_data_from_table", str(e))
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error(f" Fetch record from Compliance table Error in method get_compliance_data_from_table", str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                try:
+                    if len(check_audio_file_exits) > 0:
+                        compliance_dic={}
+                        data = session.query(ScoreCardAnalysis).filter_by(AudioFileName=audio_file).all()
+                        compliance_dic.update({"Id":data[0].Id,"ClientId":data[0].ClientId,
+                                              "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
+                                              "Created":data[0].Created,"ScoreCard":data[0].ScoreCard,"OverallScore":data[0].OverallScore,
+                                              "Modified":data[0].Modified})
+                        result = {"Compliance": compliance_dic}
+                        # result = compliance_dic
+                        self.logger.info(f":Get Data from ScoreCardAnalysis table successfully for AudioFile {audio_file}")
+                        return result,SUCCESS
+                    else:
+                        data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                        self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
+                        return data,RESOURCE_NOT_FOUND
+                except Exception as e:
+                    self.logger.error(f"Found error in get_compliance_data_from_table", str(e))
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error(f" Fetch record from Compliance table Error in method get_compliance_data_from_table", str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                return self.global_utility.set_json_format([response_message['message']],
+                                                           response_message['status_code'], False,
+                                                           response_message['message']), response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
