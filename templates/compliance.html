@@ -104,7 +104,6 @@
             margin-bottom: 26px;
         }
     </style>
-{#    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>#}
       <script src="../static/jquery-3.6.js"></script>
 </head>
 <body>
@@ -121,7 +120,6 @@
             <input type="text" id="audio-file" name="audio-file">
             <input type="submit" value="Submit" style="width: 23%;margin-left: 38%;">
         </form>
-
         <div id="result"></div>
         <table id="compliance-table" style="display: none;">
             <thead>
@@ -154,11 +152,15 @@
                     type: 'GET',
                     data: formData,
                     success: function(response){
+
+
                         console.log("Result>>>>>>>",response);
                         $('#compliance-form').hide();
                         $('.loader').hide();
                         $('#compliance-table').show()
                         $('#backcompliance').show();
+
+
                         displayComplianceTable(response.Compliance);
                     },
                     error: function(xhr, status, error){
@@ -169,7 +171,12 @@
                 function displayComplianceTable(complianceData) {
                     var tableBody = $('#compliance-table tbody');
                     tableBody.empty();
-
+                    console.log("l>>>>>>.",complianceData);
+                    delete complianceData.ClientId;
+                    delete complianceData.Created;
+                    delete complianceData.Modified;
+                    delete complianceData.Id;
+                    delete complianceData.AnalysisDateTime;
                     $.each(complianceData, function (key, value) {
                         var row = $('<tr></tr>');
                         row.append($('<td></td>').text(key));

@@ -14,6 +14,9 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
     # api_key=os.environ["OPENAI_API_KEY"],
 )
+
+open_ai_model=os.environ.get("open_ai_model")
+
 class SentimentAnalysisCreation:
 
     def __init__(self):
@@ -25,7 +28,8 @@ class SentimentAnalysisCreation:
             status = 'success'
             prompt = "{} {} {} @@@ {}.@@@. {}".format(prompt_check_list.sentiment_prompt,prohibited_prompt_inject,prompt_check_list.sentiment_prompt_after_inject,text,prompt_check_list.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
-                model="gpt-4-1106-preview",
+                model=open_ai_model,
+                # model="gpt-4-1106-preview",
                 # model="gpt-4",
                 messages=[
                     # {"role": "system", "content": prompt},

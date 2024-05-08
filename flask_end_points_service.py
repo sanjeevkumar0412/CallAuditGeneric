@@ -887,7 +887,7 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
             file=audio_file,
             response_format='text',
             language='en',
-            prompt= "Skit Collections Agency,Skit Collection Agency"
+            prompt= "Skit Collections Agency,Skit Collection Agency,Welcome back Mark! Thanks! We have received"
         )
         return transcript,status
     except Exception as e:
