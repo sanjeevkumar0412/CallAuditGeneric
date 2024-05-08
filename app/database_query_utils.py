@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine,text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.reflection import Inspector
-from db_layer.models import AudioTranscribe
+from app.db_layer.models import AudioTranscribe
 from sqlalchemy.sql import select
 from app.utilities.utility import GlobalUtility
 from app.services.logger import Logger
@@ -111,6 +111,7 @@ class DBRecord:
                         }
                         return api_object,RESOURCE_NOT_FOUND
                 else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                     return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), \
                     response_message['status_code']
             except Exception as e:
@@ -154,6 +155,7 @@ class DBRecord:
 
                     return {'data': result}
                 else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                     return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
                                                                response_message['message']), response_message['status_code']
             except Exception as e:
@@ -215,6 +217,7 @@ class DBRecord:
                         }
                         return api_object,RESOURCE_NOT_FOUND
                 else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                     return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
                                                                response_message['message']), response_message['status_code']
             except Exception as e:
@@ -257,6 +260,7 @@ class DBRecord:
 
                     return {'data': result}
                 else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                     return self.global_utility.set_json_format([response_message['message']],
                                                                response_message['status_code'], False,
                                                                response_message['message']), response_message['status_code']
@@ -295,6 +299,7 @@ class DBRecord:
 
                     return {'data': result}
                 else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                     return self.global_utility.set_json_format([response_message['message']],
                                                                response_message['status_code'], False,
                                                                response_message['message']), response_message['status_code']

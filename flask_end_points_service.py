@@ -139,6 +139,7 @@ def get_all_configurations_table(server_name, database_name, client_id,user_name
                 }
                 return get_json_format(configurations,SUCCESS),SUCCESS
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
 
@@ -223,6 +224,7 @@ def update_audio_transcribe_table(server_name, database_name, client_id,user_nam
                 else:
                     return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -271,6 +273,7 @@ def update_audio_transcribe_tracker_table(server_name, database_name, client_id,
                 else:
                     return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -405,7 +408,7 @@ def get_authentication(session, client_id, user_name):
             msg_array.append(auth_message)
             return set_json_format(msg_array, SUCCESS, True, auth_message), SUCCESS
         else:
-            auth_message = str(f"Please register user{user_name} as they are not yet registered.")
+            auth_message = str(f"Please register user {user_name} as they are not yet registered.")
             msg_array = []
             msg_array.append(auth_message)
             return set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, auth_message), UNAUTHORIZED_ACCESS
@@ -636,6 +639,7 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id,user_n
                 else:
                     return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -671,6 +675,7 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
                 elif len(results) == 0:
                     return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -703,6 +708,7 @@ def get_client_master_table_configurations(server_name, database_name, client_id
                 elif len(results) == 0:
                     return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -733,6 +739,7 @@ def get_app_configurations(server_name, database_name, client_id,user_name):
                 elif len(results) == 0:
                     return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -834,6 +841,7 @@ def copy_audio_files_process(server_name, database_name, client_id,user_name):
                 else:
                     return get_json_format([], INTERNAL_SERVER_ERROR, False, 'There is no configuration found in the table'),INTERNAL_SERVER_ERROR
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         except Exception as e:
@@ -1057,9 +1065,7 @@ def update_transcribe_audio_text(server_name, database_name, client_id,user_name
                     error_msg_array.append(error_message)
                     return set_json_format(error_msg_array, RESOURCE_NOT_FOUND, False, error_message), RESOURCE_NOT_FOUND
             else:
-                # error_message = str(f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                # error_msg_array = [response_message['message']]
-                # error_msg_array.append(response_message['message'])
+                logger.error(f'Token found a issue for user {user_name}',response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), response_message['status_code']
         except Exception as e:
             error_array = []
@@ -1127,6 +1133,7 @@ def get_file_name_pattern(server_name, database_name, client_id,user_name, file_
                 elif len(results) == 0:
                     return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
             else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         except Exception as e:

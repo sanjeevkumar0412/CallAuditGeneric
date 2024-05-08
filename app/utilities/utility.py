@@ -480,7 +480,7 @@ class GlobalUtility:
                 msg_array.append(auth_message)
                 return self.set_json_format(msg_array, SUCCESS, True, auth_message), SUCCESS
             else:
-                auth_message = str(f"Please register user{user_name} as they are not yet registered.")
+                auth_message = str(f"Please register user {user_name} as they are not yet registered.")
                 msg_array = []
                 msg_array.append(auth_message)
                 return self.set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, auth_message), UNAUTHORIZED_ACCESS

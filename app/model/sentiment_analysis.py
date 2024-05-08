@@ -226,6 +226,7 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return self.global_utility.set_json_format([response_message['message']],
                                                            response_message['status_code'], False,
                                                            response_message['message']), response_message['status_code']
@@ -293,6 +294,7 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return self.global_utility.set_json_format([response_message['message']],
                                                            response_message['status_code'], False,
                                                            response_message['message']), response_message['status_code']
@@ -338,6 +340,7 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False,
                                        response_message['message']), response_message['status_code']
         else:
@@ -380,10 +383,7 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                # error_message = str(
-                #     f"Token discovered a issue for user {user_name}. Please act in accordance with the error code.")
-                # error_msg_array = []
-                # error_msg_array.append(error_message)
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']),response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}

@@ -186,6 +186,7 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return self.global_utility.set_json_format([response_message['message']],
                                                            response_message['status_code'], False,
                                                            response_message['message']), response_message['status_code']
@@ -225,6 +226,7 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return self.global_utility.set_json_format([response_message['message']],
                                                            response_message['status_code'], False,
                                                            response_message['message']), response_message['status_code']
@@ -270,6 +272,7 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 return self.global_utility.set_json_format([response_message['message']],
                                                            response_message['status_code'], False,
                                                            response_message['message']), response_message['status_code']
