@@ -43,8 +43,6 @@ def get_record():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        # client_id = int(request.args.get('clientid'))
-        # data = db_instance.get_all_record_by_proc(server_name, database_name, client_id, table_name.capitalize())
         data = db_instance.get_all_record(server_name, database_name, client_id,user_name,table_name.capitalize())
         return data
     else:
@@ -60,7 +58,6 @@ def get_record():
 @app.route('/get_record_by_id', methods=['GET','POST'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
-    # client_id = int(request.args.get('clientid'))
     id = request.args.get('id')
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
@@ -92,7 +89,6 @@ def get_recordby_id():
 @app.route('/get_record_by_column_name', methods=['GET','POST'])
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
-    # client_id = int(request.args.get('clientid'))
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     if client_id_val and id and table_name and user_name:
@@ -160,7 +156,6 @@ def get_update_by_column_name():
 @app.route('/delete_record_by_id', methods=['DELETE'])
 def delete_recordby_id():
     table_name = request.args.get('table_name')
-    # client_id = int(request.args.get('clientid'))
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     if client_id_val and user_name:
@@ -176,7 +171,6 @@ def delete_recordby_id():
             }, RESOURCE_NOT_FOUND
         itm_id = request.args.get('id')
         data = db_instance.delete_record_by_id(server_name, database_name, client_id,user_name,table_name, itm_id)
-        # data = db_instance.delete_record_by_id(table_name, itm_id)
         if data == None:
             data = {"Error": "Invalid table/Data not available for this " + table_name}
         return {'data': data}
@@ -204,7 +198,6 @@ def get_transcribe_sentiment():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        # client_id = int(request.args.get('clientid'))
         audio_file_name = request.args.get('audio_file')
         data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,user_name,audio_file_name)
         return data
@@ -220,7 +213,6 @@ def get_transcribe_sentiment():
 
 @app.route('/get_client_master_configurations', methods=['GET','POST'])
 def get_client_master_configurations():
-    # Done
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     if client_id_val and user_name:
@@ -247,7 +239,6 @@ def get_client_master_configurations():
 
 @app.route('/get_client_configurations', methods=['GET','POST'])
 def get_client_configurations():
-    # Done
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     if client_id_val and user_name:
@@ -317,7 +308,7 @@ def get_audio_transcribe_tracker_data():
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
         audio_id = int(request.args.get('audioid'))
-        current_user = os.getlogin()
+        # current_user = os.getlogin()
         json_result = get_audio_transcribe_tracker_table_data(server_name, database_name, client_id,user_name, audio_id)
         return json_result
     else:
@@ -393,7 +384,8 @@ def add_update_transcribe_tracker():
 def get_sentiment_data():
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
-    if client_id_val and user_name:
+    audio_file_name = request.args.get('audio_file')
+    if client_id_val and user_name and audio_file_name:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -404,7 +396,6 @@ def get_sentiment_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        audio_file_name = request.args.get('audio_file')
         data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,user_name,audio_file_name)
         return data
     else:
@@ -419,7 +410,6 @@ def get_sentiment_data():
 
 @app.route('/get_all_configurations', methods=['GET','POST'])
 def get_all_configurations():
-    #  Dev Done
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     if client_id_val and user_name:
@@ -433,8 +423,8 @@ def get_all_configurations():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
+        # current_user = os.getlogin()
+        # print('Current login user:', current_user)
         json_result = get_all_configurations_table(server_name, database_name, client_id,user_name)
         return json_result
     else:
@@ -461,8 +451,8 @@ def copy_audio_files():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
+        # current_user = os.getlogin()
+        # print('Current login user:', current_user)
         json_result = copy_audio_files_process(server_name, database_name, client_id,user_name)
         return json_result
     else:
@@ -476,7 +466,6 @@ def copy_audio_files():
 
 @app.route('/match_file_name_pettern', methods=['GET','POST'])
 def match_file_name_pettern():
-    #  Dev Done
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     file_name = request.args.get('filename')
@@ -491,11 +480,11 @@ def match_file_name_pettern():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
+        # current_user = os.getlogin()
         file_name = '24-10003-douglas-21March-AY-Noida-Call-Approva-Ashutosh'
         file_name = '24-10003_tomous_25April_CTS_Mumbai_Outbound_Ritesh_Manish'
         # file_name = 'ABC-21March-AY-Noida-Call-Approva'
-        print('Current login user:', current_user)
+        # print('Current login user:', current_user)
         json_result = get_file_name_pattern(server_name, database_name, client_id,user_name,file_name)
         return json_result
     else:
@@ -541,6 +530,7 @@ def dump_data_sentiment_table():
 
 @app.route('/open_ai_transcribe_audio_text', methods=['GET','POST'])
 def open_ai_transcribe_audio_text():
+    # this end point used only for development
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     # file = 'D:/Cogent_AI_Audio_Repo/DMV-85311-MU1/DMV-85311-MU11_Chunk_6.wav'
@@ -553,6 +543,7 @@ def open_ai_transcribe_audio_text():
     return transcript,status
 @app.route('/open_source_transcribe', methods=['GET','POST'])
 def open_source_transcribe():
+    # this end point used only for development
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
     file = 'D:/Cogent_AI_Audio_Repo/Outbound_DebtDispute/Outbound_DebtDispute.mp3'
@@ -607,8 +598,8 @@ def token_authenticate():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
+        # current_user = os.getlogin()
+        # print('Current login user:', current_user)
         result = get_token_based_authentication(server_name, database_name, client_id, user_name)
         return result
     else:
@@ -633,8 +624,8 @@ def ldap_authenticate():
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    current_user = os.getlogin()
-    print('Current login user:', current_user)
+    # current_user = os.getlogin()
+    # print('Current login user:', current_user)
     result = get_ldap_authentication(server_name, database_name, client_id)
     return result
 
@@ -653,8 +644,8 @@ def update_token():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
+        # current_user = os.getlogin()
+        # print('Current login user:', current_user)
         result = update_authentication_token(server_name, database_name, client_id,user_name)
         return result
     else:
@@ -681,8 +672,8 @@ def new_token():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        current_user = os.getlogin()
-        print('Current login user:', current_user)
+        # current_user = os.getlogin()
+        # print('Current login user:', current_user)
         result = generate_authentication_token(server_name, database_name, client_id,user_name)
         return result
     else:
@@ -718,7 +709,6 @@ def get_prohibited_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        # client_id = int(request.args.get('clientid'))
         data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id,user_name)
         return data
     else:
