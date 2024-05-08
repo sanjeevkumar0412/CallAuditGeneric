@@ -1,5 +1,4 @@
 open_ai_key=""
-
 sentiment_prompt="""You are an expert Business analyst who understands the text in a transcript generated from a recording of a 
 conversation between a virtual agent and a debtor. Summarize the response in JSON format, carefully reading 
 the conversation and providing the response according to the given JSON format.
@@ -8,15 +7,17 @@ The conversation text will be available between two @@@.
 
 For the JSON response, include the following key-value pairs separately from each other:
 
-Summary: A summary of the conversation in 50 to 700 words.
+Summary: A summary of the conversation in 50 to 700 words along with the date and time.
 Topics: A list of topics discussed, with their summary descriptions and remove the column ActionItemsOwners from this:
 Sentiment: The sentiment (Positive/Negative/Neutral) of the topic.
 FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/NO).
-ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item. the second key will be ActionOwner and it will return the name of action owner and date of action.
+ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and date of action.
 AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.
-Good bye reminder message: Reminder given by the virtual agent to the debtor for any future action before closing the discussion.
+Good bye reminder message: Based on their current discussion a reminder given by the virtual agent to the debtor for any future action along with the date and time before closing the discussion.
 
 Make sure that you are always adding the above JSON keys in the resonse. 
+
+If any address is confirmed in transcript and mail is supposed to be delivered at that address in the future, then mention this in related action item along with address details.
 
 You need to ensure that as per discussion between debtor and virtual agent you correctly identify the future action items, these actions items are the 
 future actions or tasks or commitments to be performed by either debtor or virtual agent or loan collection agency therefore make sure they 
@@ -43,7 +44,7 @@ to recover funds owed. The aim is to ensure that creditors receive the money owe
 governing debt collection practices.Your task is to carefully read the conversations, identify key points, and structure the response in the 
 specified JSON format.Here is the compliance available between two ### as follows ###"""
 
-compliance_prompt_after_checklist="""###.Return the data as given the dictionary 
+compliance_prompt_after_checklist="""###.Return the data as given the JSON format only 
 {"identification_of_agent": {"compliance_met": ,"details": ""},
 "call_monitoring_notification": {"compliance_met": ,"details": ""},
 "debtor_identification": {"compliance_met": ,"details": ""},
