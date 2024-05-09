@@ -95,12 +95,12 @@ class SentimentAnalysisCreation:
             self.logger.error(f" Sentiment Error in method get_sentiment",str(e))
             return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
-    def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data):
+    def dump_data_into_sentiment_database(self, server_name, database_name, client_id,user_name,transcribe_data):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             try:
-                prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
+                prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id,user_name)
                 transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
                 transcribe_merged_string = '.'.join(transcribe_audio_data)
                 clientid=transcribe_data.get("ClientId")
@@ -285,7 +285,7 @@ class SentimentAnalysisCreation:
                         self.logger.info(f":Record not found {audio_file}")
                         data= {"status":RESOURCE_NOT_FOUND,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                    return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
+                    return self.dump_data_into_sentiment_database(server_name, database_name, client_id,user_name,audio_dictionary)
                 except Exception as e:
                     # self.logger.error(f": Error {e}",e)
                     error_array = []

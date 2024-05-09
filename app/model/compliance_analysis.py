@@ -61,7 +61,7 @@ class ComplianceAnalysisCreation:
             return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
-    def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data):
+    def data_dump_into_compliance_database(self, server_name, database_name, client_id,user_name,transcribe_data):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
@@ -76,7 +76,7 @@ class ComplianceAnalysisCreation:
                 modified_compliance_date = datetime.utcnow()
                 file_entry_check = session.query(ScoreCardAnalysis).filter_by(AudioFileName=current_file).all()
                 if len(file_entry_check) == 0:
-                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id)
+                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,user_name)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
                     if status == 'success':
                         dump_data_into_table = ScoreCardAnalysis(ClientId=clientid,
@@ -99,7 +99,7 @@ class ComplianceAnalysisCreation:
                         return compliance_data,RESOURCE_NOT_FOUND
                 else:
                     #Update logic written Here
-                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id)
+                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,user_name)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
                     if status == "success":
                         update_column_dic = {ScoreCardAnalysis.ScoreCard:str(compliance_data['Scorecard']),ScoreCardAnalysis.Modified:modified_compliance_date,ScoreCardAnalysis.OverallScore:str(compliance_data['OverallScore']),ScoreCardAnalysis.prompt:str(compliance_data['prompt'])}
@@ -174,7 +174,7 @@ class ComplianceAnalysisCreation:
                         self.logger.info(f":Record not found {audio_file}")
                         data= {"status":RESOURCE_NOT_FOUND, "message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                    return self.data_dump_into_compliance_database(server_name, database_name, client_id, audio_dictionary)
+                    return self.data_dump_into_compliance_database(server_name, database_name, client_id,user_name,audio_dictionary)
                 except Exception as e:
                     # self.logger.error(f": Error {e}",e)
                     error_array = []
