@@ -14,6 +14,9 @@ client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
     # api_key=os.environ["OPENAI_API_KEY"],
 )
+
+open_ai_model=os.environ.get("open_ai_model")
+
 class SentimentAnalysisCreation:
 
     def __init__(self):
@@ -25,7 +28,8 @@ class SentimentAnalysisCreation:
             status = 'success'
             prompt = "{} {} {} @@@ {}.@@@. {}".format(prompt_check_list.sentiment_prompt,prohibited_prompt_inject,prompt_check_list.sentiment_prompt_after_inject,text,prompt_check_list.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=open_ai_model,
+                # model="gpt-4-1106-preview",
                 # model="gpt-4",
                 messages=[
                     # {"role": "system", "content": prompt},
@@ -34,14 +38,15 @@ class SentimentAnalysisCreation:
 
                 max_tokens=2000,
                 n=1,
-                presence_penalty=0.9,
-                temperature=0,
+                presence_penalty=0.8,
+                temperature=0.2,
                 top_p=0.8,
                 stop=None
                 # stop=["\n"]
             )
             sentiment = response.choices[0].message.content
-            results = json.loads(sentiment)
+            json_string_cleaned = sentiment.replace('```', '').replace('\n', '').replace('json', '')
+            results = json.loads(json_string_cleaned)
             if 'Summary' in results:
                 summary_report = results['Summary']
             else:
@@ -64,7 +69,7 @@ class SentimentAnalysisCreation:
             if 'ActionItemsOwners' in results:
                 owners = results['ActionItemsOwners']
             else:
-                owners = 'ActionOwners not available.'
+                owners = 'N/A'
             if 'Score' in results:
                 sentiment_score = results['Score']
             else:
@@ -73,12 +78,12 @@ class SentimentAnalysisCreation:
             if 'AggregateSentiment' in results:
                 average_sentiment = results['AggregateSentiment']
             else:
-                average_sentiment = 'AggregateSentiment not available'
+                average_sentiment = 'Neutral'
 
             if 'Good bye reminder message' in results:
                 reminder_message = results['Good bye reminder message']
             else:
-                reminder_message = 'Reminder message not available.'
+                reminder_message = 'N/A'
 
 
             data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
@@ -134,7 +139,8 @@ class SentimentAnalysisCreation:
                                              SentimentAnalysis.Topics:str(sentiment_call_data['topics']),SentimentAnalysis.Owners:str(sentiment_call_data['owners']),
                                              SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language']),
                                              SentimentAnalysis.prompt:str(sentiment_call_data['prompt']),
-                                             SentimentAnalysis.Reminder:str(sentiment_call_data['reminder_message'])
+                                             SentimentAnalysis.Reminder:str(sentiment_call_data['reminder_message']),
+                                             SentimentAnalysis.Summary:str(sentiment_call_data['summary_report'])
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()

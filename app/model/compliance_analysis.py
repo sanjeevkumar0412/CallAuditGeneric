@@ -13,6 +13,7 @@ from openai import OpenAI
 client = OpenAI(
     api_key=os.environ.get("OPENAI_API_KEY"),
 )
+open_ai_model=os.environ.get("open_ai_model")
 
 class ComplianceAnalysisCreation:
 
@@ -20,13 +21,12 @@ class ComplianceAnalysisCreation:
         self.logger = Logger()
         self.global_utility = GlobalUtility()
 
-
     def compliance_analysis(self, trans_text,compliance_check_list):
         try:
             status = 'success'
             prompt = "{} {} {} @@@ {}.@@@.{}.".format(prompt_check_list.compliance_prompt, compliance_check_list, prompt_check_list.compliance_prompt_after_checklist ,trans_text,prompt_check_list.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
-                model="gpt-3.5-turbo",
+                model=open_ai_model,
                 # model="gpt-4",
                 messages=[
                     # {"role": "system", "content": prompt},
@@ -42,7 +42,8 @@ class ComplianceAnalysisCreation:
                 # stop=["\n"]
             )
             compliance_data = response.choices[0].message.content
-            results = json.loads(compliance_data)
+            json_string_cleaned = compliance_data.replace('```', '').replace('\n', '').replace('json', '')
+            results = json.loads(json_string_cleaned)
             compliance_met_values = [value['compliance_met'] for value in results.values() if isinstance(value, dict)]
             if len(compliance_met_values) > 0:
                 total_compliance_met_length= len(compliance_met_values)
