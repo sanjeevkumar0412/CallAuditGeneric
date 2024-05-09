@@ -87,56 +87,62 @@ def is_empty(value):
     return value is None or (isinstance(value, str) and not value.strip())
 
 
-def get_all_configurations_table(server_name, database_name, client_id):
+def get_all_configurations_table(server_name, database_name, client_id,user_name):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            # Get data from Client table
-            clients_data = session.query(Client).filter_by(ClientId=client_id).all()
-            client_coll = []
-            for client_result in clients_data:
-                client_coll.append(client_result.toDict())
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                clients_data = session.query(Client).filter_by(ClientId=client_id).all()
+                client_coll = []
+                for client_result in clients_data:
+                    client_coll.append(client_result.toDict())
 
-            # Get data from Configuration table
-            configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
-            configuration_coll = []
-            for configuration_result in configuration_data:
-                configuration_coll.append(configuration_result.toDict())
-            filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
-            filetype_info_coll = []
-            for status_result in filetype_info_data:
-                filetype_info_coll.append(status_result.toDict())
+                # Get data from Configuration table
+                configuration_data = session.query(Configurations).filter_by(ClientId=client_id).all()
+                configuration_coll = []
+                for configuration_result in configuration_data:
+                    configuration_coll.append(configuration_result.toDict())
+                filetype_info_data = session.query(FileTypesInfo).filter_by(ClientId=client_id).all()
+                filetype_info_coll = []
+                for status_result in filetype_info_data:
+                    filetype_info_coll.append(status_result.toDict())
 
-            # Get data from Subscription table
-            subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
-            subscriptions_array = []
-            for subscriptions_result in subscriptions_data:
-                subscriptions_array.append(subscriptions_result.toDict())
+                # Get data from Subscription table
+                subscriptions_data = session.query(Subscriptions).filter_by(ClientId=client_id).all()
+                subscriptions_array = []
+                for subscriptions_result in subscriptions_data:
+                    subscriptions_array.append(subscriptions_result.toDict())
 
-                # Get data from Job Status table
-            job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
-            job_status_coll = []
-            for status_result in job_status_data:
-                job_status_coll.append(status_result.toDict())
+                    # Get data from Job Status table
+                job_status_data = session.query(JobStatus).filter(JobStatus.IsActive).all()
+                job_status_coll = []
+                for status_result in job_status_data:
+                    job_status_coll.append(status_result.toDict())
 
-            # Get data from Subscription Plan table
-            subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
-            subscriptions_plan_coll = []
-            for subscriptions_plan_data in subscriptions_plan_data:
-                subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
+                # Get data from Subscription Plan table
+                subscriptions_plan_data = session.query(SubscriptionPlan).filter_by(ClientId=client_id).all()
+                subscriptions_plan_coll = []
+                for subscriptions_plan_data in subscriptions_plan_data:
+                    subscriptions_plan_coll.append(subscriptions_plan_data.toDict())
 
-            configurations = {
-                'Client': client_coll,
-                'Configurations': configuration_coll,
-                'FileTypesInfo': filetype_info_coll,
-                'Subscriptions': subscriptions_array,
-                'JobStatus': job_status_coll,
-                'SubscriptionsPlan': subscriptions_plan_coll
-            }
-            return get_json_format(configurations,SUCCESS),SUCCESS
+                configurations = {
+                    'Client': client_coll,
+                    'Configurations': configuration_coll,
+                    'FileTypesInfo': filetype_info_coll,
+                    'Subscriptions': subscriptions_array,
+                    'JobStatus': job_status_coll,
+                    'SubscriptionsPlan': subscriptions_plan_coll
+                }
+                return get_json_format(configurations,SUCCESS),SUCCESS
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
+
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
                            str(connection_string['message'])), RESOURCE_NOT_FOUND
@@ -200,21 +206,27 @@ def get_audio_transcribe_tracker_table_data(server, database, client_id, audio_p
         session.close()
 
 
-def update_audio_transcribe_table(server_name, database_name, client_id, record_id, update_values):
+def update_audio_transcribe_table(server_name, database_name, client_id,user_name, record_id, update_values):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            record = session.query(AudioTranscribe).get(int(record_id))
-            if record is not None:  # Check if the record exists
-                for column, value in update_values.items():
-                    setattr(record, column, value)
-                session.commit()
-                return set_json_format([record_id],SUCCESS),SUCCESS
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                record = session.query(AudioTranscribe).get(int(record_id))
+                if record is not None:  # Check if the record exists
+                    for column, value in update_values.items():
+                        setattr(record, column, value)
+                    session.commit()
+                    return set_json_format([record_id],SUCCESS),SUCCESS
+                else:
+                    return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
             else:
-                return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
                                    str(connection_string['message'])), RESOURCE_NOT_FOUND
@@ -229,35 +241,41 @@ def update_audio_transcribe_table(server_name, database_name, client_id, record_
         session_logger.close()
 
 
-def update_audio_transcribe_tracker_table(server_name, database_name, client_id, record_id, update_values):
+def update_audio_transcribe_tracker_table(server_name, database_name, client_id,user_name, record_id, update_values):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            record = session.query(AudioTranscribeTracker).get(int(record_id))
-            if len(record) > 0:  # Check if the record exists
-                for column, value in update_values.items():
-                    setattr(record, column, value)
-                session.commit()
-                logger.info(f"Id—the {record_id} record in the AudioTranscribeTracker Table has been successfully updated.")
-                record_data = session.query(AudioTranscribeTracker).filter(
-                    (AudioTranscribeTracker.ClientId == record.ClientId) & (
-                            AudioTranscribeTracker.AudioId == record.AudioId) & (
-                            AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
-                if len(record_data) == 0:
-                    parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
-                    status_draft = JobStatusEnum.Draft
-                    status_id = status_draft.value
-                    values = {'JobStatus': status_id}
-                    if record is not None:  # Check if the record exists
-                        for column, value in values.items():
-                            setattr(parent_record, column, value)
-                        session.commit()
-                return set_json_format([record_id],SUCCESS),SUCCESS
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                record = session.query(AudioTranscribeTracker).get(int(record_id))
+                if len(record) > 0:  # Check if the record exists
+                    for column, value in update_values.items():
+                        setattr(record, column, value)
+                    session.commit()
+                    logger.info(f"Id—the {record_id} record in the AudioTranscribeTracker Table has been successfully updated.")
+                    record_data = session.query(AudioTranscribeTracker).filter(
+                        (AudioTranscribeTracker.ClientId == record.ClientId) & (
+                                AudioTranscribeTracker.AudioId == record.AudioId) & (
+                                AudioTranscribeTracker.ChunkStatus != 'Completed')).all()
+                    if len(record_data) == 0:
+                        parent_record = session.query(AudioTranscribe).get(int(record.AudioId))
+                        status_draft = JobStatusEnum.Draft
+                        status_id = status_draft.value
+                        values = {'JobStatus': status_id}
+                        if record is not None:  # Check if the record exists
+                            for column, value in values.items():
+                                setattr(parent_record, column, value)
+                            session.commit()
+                    return set_json_format([record_id],SUCCESS),SUCCESS
+                else:
+                    return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
             else:
-                return set_json_format([],INTERNAL_SERVER_ERROR, False, f"The record ID, {record_id}, could not be found."),INTERNAL_SERVER_ERROR
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
                                    str(connection_string['message'])), RESOURCE_NOT_FOUND
@@ -371,6 +389,43 @@ def get_ldap_authentication(server_name, database_name, client_id):
     else:
         return set_json_format([connection_string['message']], INTERNAL_SERVER_ERROR, False,
                                str(connection_string['message'])), INTERNAL_SERVER_ERROR
+
+def get_authentication(session, client_id, user_name):
+    try:
+        record = session.query(AuthTokenManagement).filter(
+            (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                AuthTokenManagement.IsActive)).all()
+        if len(record) > 0:
+            result = global_utility.get_configuration_by_column(record)
+            token = global_utility.get_list_array_value(result,
+                                                        CONFIG.TOKEN)
+            secret_key = global_utility.get_list_array_value(result,
+                                                             CONFIG.SECRETKEY)
+
+            decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
+            auth_message = str("Authentication Token successfully validated")
+            msg_array = []
+            msg_array.append(auth_message)
+            return set_json_format(msg_array, SUCCESS, True, auth_message), SUCCESS
+        else:
+            auth_message = str(f"Please register user {user_name} as they are not yet registered.")
+            msg_array = []
+            msg_array.append(auth_message)
+            return set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, auth_message), UNAUTHORIZED_ACCESS
+    except jwt.ExpiredSignatureError:
+        error_message = str("The token has lost its validity(expired). Kindly update the token and try it again.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, PERMISSION_ERROR, False, error_message), PERMISSION_ERROR
+    except jwt.InvalidTokenError:
+        error_message = str("The token that was passed is invalid. Kindly try again with the correct credentials.")
+        error_msg_array = []
+        error_msg_array.append(error_message)
+        return set_json_format(error_msg_array, BAD_REQUEST, False, error_message), BAD_REQUEST
+    except Exception as e:
+        error_msg_array = []
+        error_msg_array.append(str(e))
+        return set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR
 
 
 def get_token_based_authentication(server_name, database_name, client_id, user_name):
@@ -563,24 +618,30 @@ def get_connection_string(server, database, client_id):
         session.close()
 
 
-def get_audio_transcribe_table_data(server_name, database_name, client_id):
+def get_audio_transcribe_table_data(server_name, database_name, client_id,user_name):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            status_completed = JobStatusEnum.CompletedTranscript
-            status_id = status_completed.value
-            results = session.query(AudioTranscribe).filter(
-                (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
-            if len(results) > 0:
-                result_array = []
-                for result_elm in results:
-                    result_array.append(result_elm.toDict())
-                return get_json_format(result_array,SUCCESS),SUCCESS
-            elif len(results) == 0:
-                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                status_completed = JobStatusEnum.CompletedTranscript
+                status_id = status_completed.value
+                results = session.query(AudioTranscribe).filter(
+                    (AudioTranscribe.ClientId == client_id) & (AudioTranscribe.JobStatus != int(status_id))).all()
+                if len(results) > 0:
+                    result_array = []
+                    for result_elm in results:
+                        result_array.append(result_elm.toDict())
+                    return get_json_format(result_array,SUCCESS),SUCCESS
+                else:
+                    return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
                                    str(connection_string['message'])), RESOURCE_NOT_FOUND
@@ -592,25 +653,31 @@ def get_audio_transcribe_table_data(server_name, database_name, client_id):
         session_logger.close()
 
 
-def get_audio_transcribe_tracker_table_data(server_name, database_name, client_id, audio_id):
+def get_audio_transcribe_tracker_table_data(server_name, database_name, client_id,user_name, audio_id):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            status_completed = JobStatusEnum.CompletedTranscript
-            status_id = status_completed.value
-            results = session.query(AudioTranscribeTracker).filter(
-                (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
-                        AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
-            if len(results) > 0:
-                result_array = []
-                for result_elm in results:
-                    result_array.append(result_elm.toDict())
-                return get_json_format(result_array,SUCCESS),SUCCESS
-            elif len(results) == 0:
-                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                status_completed = JobStatusEnum.CompletedTranscript
+                status_id = status_completed.value
+                results = session.query(AudioTranscribeTracker).filter(
+                    (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.AudioId == audio_id) & (
+                            AudioTranscribeTracker.ChunkStatus != int(status_id))).all()
+                if len(results) > 0:
+                    result_array = []
+                    for result_elm in results:
+                        result_array.append(result_elm.toDict())
+                    return get_json_format(result_array,SUCCESS),SUCCESS
+                elif len(results) == 0:
+                    return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False,
                                    str(connection_string['message'])), RESOURCE_NOT_FOUND
@@ -622,22 +689,28 @@ def get_audio_transcribe_tracker_table_data(server_name, database_name, client_i
         session_logger.close()
 
 
-def get_client_master_table_configurations(server_name, database_name, client_id):
+def get_client_master_table_configurations(server_name, database_name, client_id,user_name):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results = session.query(ClientMaster).filter(
-                (ClientMaster.ClientId == client_id) & (ClientMaster.IsActive)).all()
-            if len(results) > 0:
-                result_array = []
-                for result_elm in results:
-                    result_array.append(result_elm.toDict())
-                return get_json_format(result_array,SUCCESS),SUCCESS
-            elif len(results) == 0:
-                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                results = session.query(ClientMaster).filter(
+                    (ClientMaster.ClientId == client_id) & (ClientMaster.IsActive)).all()
+                if len(results) > 0:
+                    result_array = []
+                    for result_elm in results:
+                        result_array.append(result_elm.toDict())
+                    return get_json_format(result_array,SUCCESS),SUCCESS
+                elif len(results) == 0:
+                    return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
                 return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
@@ -648,21 +721,27 @@ def get_client_master_table_configurations(server_name, database_name, client_id
         session_logger.close()
 
 
-def get_app_configurations(server_name, database_name, client_id):
+def get_app_configurations(server_name, database_name, client_id,user_name):
     try:
         connection_string,status = get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
-            if len(results) > 0:
-                result_array = []
-                for result_elm in results:
-                    result_array.append(result_elm.toDict())
-                return get_json_format(result_array,SUCCESS),SUCCESS
-            elif len(results) == 0:
-                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                results = session.query(Client).filter((Client.ClientId == client_id) & (Client.IsActive)).all()
+                if len(results) > 0:
+                    result_array = []
+                    for result_elm in results:
+                        result_array.append(result_elm.toDict())
+                    return get_json_format(result_array,SUCCESS),SUCCESS
+                elif len(results) == 0:
+                    return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         else:
             return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
     except Exception as e:
@@ -673,7 +752,7 @@ def get_app_configurations(server_name, database_name, client_id):
         session_logger.close()
 
 
-def copy_audio_files_process(server_name, database_name, client_id):
+def copy_audio_files_process(server_name, database_name, client_id,user_name):
     # try:
     connection_string, status = get_connection_string(server_name, database_name, client_id)
     if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
@@ -681,84 +760,90 @@ def copy_audio_files_process(server_name, database_name, client_id):
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results_config = session.query(Configurations).filter(
-                (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
-            result_config_array = []
-            if len(results_config) > 0:
-                for result_elm in results_config:
-                    result_config_array.append(result_elm.toDict())
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                results_config = session.query(Configurations).filter(
+                    (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
+                result_config_array = []
+                if len(results_config) > 0:
+                    for result_elm in results_config:
+                        result_config_array.append(result_elm.toDict())
 
-            results_file_type = session.query(FileTypesInfo).filter(
-                (FileTypesInfo.ClientId == client_id) & (FileTypesInfo.IsActive)).all()
-            result_file_type_array = []
-            if len(results_file_type) > 0:
-                for result_elm in results_file_type:
-                    result_file_type_array.append(result_elm.toDict())
-            if len(result_config_array) > 0:
-                source_file_path = global_utility.get_configuration_by_key_name(result_config_array,
-                                                                                CONFIG.AUDIO_SOURCE_FOLDER_PATH)
-                destination_path = global_utility.get_configuration_by_key_name(result_config_array,
-                                                                                CONFIG.AUDIO_DESTINATION_FOLDER_PATH)
-                audio_file_size = int(
-                    global_utility.get_configuration_by_key_name(result_config_array, CONFIG.AUDIO_FILE_SIZE))
-                is_validate_path = global_utility.validate_folder(source_file_path, destination_path)
-                if is_validate_path:
-                    file_collection = global_utility.get_all_files(source_file_path)
-                    for file in file_collection:
-                        file_url = source_file_path + "/" + file
-                        file_name, extension = global_utility.get_file_extension(file)
-                        file_type_id = global_utility.get_file_type_by_key_name(result_file_type_array, extension)
-                        if file_type_id > 0:
-                            name_file = file_url.split('/')[-1].split('.')[0]
-                            dir_folder_url = os.path.join(destination_path, name_file)
-                            is_folder_created = global_utility.create_folder_structure(file, dir_folder_url,
-                                                                                       destination_path)
-                            status_processing = JobStatusEnum.Processing
-                            status_id = status_processing.value
-                            if is_folder_created:
-                                is_copied_files = global_utility.copy_file(file_url, dir_folder_url)
-                                if is_copied_files:
-                                    audio_file_path = os.path.join(dir_folder_url, file)
-                                    file_size = os.path.getsize(audio_file_path)
-                                    file_size_mb = int(file_size / (1024 * 1024))
-                                    if file_size_mb > audio_file_size:
-                                        logger.info(f'file {name_file} Starting with size :- {file_size}')
-                                        audio_transcribe_model = AudioTranscribe(ClientId=client_id,
-                                                                                 AudioFileName=file, JobStatus=status_id,
-                                                                                 FileType=file_type_id,
-                                                                                 TranscribeFilePath=audio_file_path)
-                                        parent_record = create_audio_file_entry(session, audio_transcribe_model)
-                                        audio_chunk_process(session, client_id, parent_record, status_id,
-                                                            result_file_type_array, audio_file_path,
-                                                            dir_folder_url)
+                results_file_type = session.query(FileTypesInfo).filter(
+                    (FileTypesInfo.ClientId == client_id) & (FileTypesInfo.IsActive)).all()
+                result_file_type_array = []
+                if len(results_file_type) > 0:
+                    for result_elm in results_file_type:
+                        result_file_type_array.append(result_elm.toDict())
+                if len(result_config_array) > 0:
+                    source_file_path = global_utility.get_configuration_by_key_name(result_config_array,
+                                                                                    CONFIG.AUDIO_SOURCE_FOLDER_PATH)
+                    destination_path = global_utility.get_configuration_by_key_name(result_config_array,
+                                                                                    CONFIG.AUDIO_DESTINATION_FOLDER_PATH)
+                    audio_file_size = int(
+                        global_utility.get_configuration_by_key_name(result_config_array, CONFIG.AUDIO_FILE_SIZE))
+                    is_validate_path = global_utility.validate_folder(source_file_path, destination_path)
+                    if is_validate_path:
+                        file_collection = global_utility.get_all_files(source_file_path)
+                        for file in file_collection:
+                            file_url = source_file_path + "/" + file
+                            file_name, extension = global_utility.get_file_extension(file)
+                            file_type_id = global_utility.get_file_type_by_key_name(result_file_type_array, extension)
+                            if file_type_id > 0:
+                                name_file = file_url.split('/')[-1].split('.')[0]
+                                dir_folder_url = os.path.join(destination_path, name_file)
+                                is_folder_created = global_utility.create_folder_structure(file, dir_folder_url,
+                                                                                           destination_path)
+                                status_processing = JobStatusEnum.Processing
+                                status_id = status_processing.value
+                                if is_folder_created:
+                                    is_copied_files = global_utility.copy_file(file_url, dir_folder_url)
+                                    if is_copied_files:
+                                        audio_file_path = os.path.join(dir_folder_url, file)
+                                        file_size = os.path.getsize(audio_file_path)
+                                        file_size_mb = int(file_size / (1024 * 1024))
+                                        if file_size_mb > audio_file_size:
+                                            logger.info(f'file {name_file} Starting with size :- {file_size}')
+                                            audio_transcribe_model = AudioTranscribe(ClientId=client_id,
+                                                                                     AudioFileName=file, JobStatus=status_id,
+                                                                                     FileType=file_type_id,
+                                                                                     TranscribeFilePath=audio_file_path)
+                                            parent_record = create_audio_file_entry(session, audio_transcribe_model)
+                                            audio_chunk_process(session, client_id, parent_record, status_id,
+                                                                result_file_type_array, audio_file_path,
+                                                                dir_folder_url)
+                                        else:
+                                            audio_transcribe_model = AudioTranscribe(ClientId=client_id,
+                                                                                     AudioFileName=file, JobStatus=status_id,
+                                                                                     FileType=file_type_id,
+                                                                                     TranscribeFilePath=audio_file_path)
+                                            parent_record = create_audio_file_entry(session, audio_transcribe_model)
+                                            if parent_record is not None:
+                                                logger.info(f'New Item Created ID is {parent_record.Id}')
+                                            chunk_transcribe_model = AudioTranscribeTracker(
+                                                ClientId=client_id,
+                                                AudioId=parent_record.Id,
+                                                ChunkFileType=file_type_id,
+                                                ChunkFileName=file, ChunkSequence=1, ChunkText='',
+                                                ChunkFilePath=audio_file_path, ChunkStatus=status_id
+                                            )
+                                            child_record = create_audio_file_entry(session, chunk_transcribe_model)
+                                            logger.info(f'Chunk New Item Created ID is {child_record.Id}')
                                     else:
-                                        audio_transcribe_model = AudioTranscribe(ClientId=client_id,
-                                                                                 AudioFileName=file, JobStatus=status_id,
-                                                                                 FileType=file_type_id,
-                                                                                 TranscribeFilePath=audio_file_path)
-                                        parent_record = create_audio_file_entry(session, audio_transcribe_model)
-                                        if parent_record is not None:
-                                            logger.info(f'New Item Created ID is {parent_record.Id}')
-                                        chunk_transcribe_model = AudioTranscribeTracker(
-                                            ClientId=client_id,
-                                            AudioId=parent_record.Id,
-                                            ChunkFileType=file_type_id,
-                                            ChunkFileName=file, ChunkSequence=1, ChunkText='',
-                                            ChunkFilePath=audio_file_path, ChunkStatus=status_id
-                                        )
-                                        child_record = create_audio_file_entry(session, chunk_transcribe_model)
-                                        logger.info(f'Chunk New Item Created ID is {child_record.Id}')
+                                        logger.info(f"{file} is not copied  in the destination folder {dir_folder_url}")
                                 else:
-                                    logger.info(f"{file} is not copied  in the destination folder {dir_folder_url}")
+                                    logger.info(f"Folder is not created for the file {file}")
                             else:
-                                logger.info(f"Folder is not created for the file {file}")
-                        else:
-                            return get_json_format([],RESOURCE_NOT_FOUND, False, f"{file} is not supported."),RESOURCE_NOT_FOUND
-                    return get_json_format([], SUCCESS,True, "All files copied and created Successfully."),SUCCESS
+                                return get_json_format([],RESOURCE_NOT_FOUND, False, f"{file} is not supported."),RESOURCE_NOT_FOUND
+                        return get_json_format([], SUCCESS,True, "All files copied and created Successfully."),SUCCESS
+                    else:
+                        return get_json_format([],INTERNAL_SERVER_ERROR,  False, 'There is no container at the specified path.'),INTERNAL_SERVER_ERROR
                 else:
-                    return get_json_format([],INTERNAL_SERVER_ERROR,  False, 'There is no container at the specified path.'),INTERNAL_SERVER_ERROR
+                    return get_json_format([], INTERNAL_SERVER_ERROR, False, 'There is no configuration found in the table'),INTERNAL_SERVER_ERROR
             else:
-                return get_json_format([], INTERNAL_SERVER_ERROR, False, 'There is no configuration found in the table'),INTERNAL_SERVER_ERROR
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         except Exception as e:
             return get_json_format([], INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
         finally:
@@ -900,7 +985,7 @@ def open_ai_transcribe_audio(transcribe_file, model="whisper-1"):
             return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e)),RESOURCE_NOT_FOUND
 
 
-def update_transcribe_audio_text(server_name, database_name, client_id, file_id):
+def update_transcribe_audio_text(server_name, database_name, client_id,user_name, file_id):
     transcript = None
     from datetime import datetime
     connection_string, status = get_connection_string(server_name, database_name, client_id)
@@ -909,68 +994,79 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results_config = session.query(Configurations).filter(
-                (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
-            result_config_array = []
-            if len(results_config) > 0:
-                for result_elm in results_config:
-                    result_config_array.append(result_elm.toDict())
-            if len(result_config_array) > 0:
-                whisper_model = global_utility.get_configuration_by_key_name(result_config_array, CONFIG.WHISPER_MODEL)
-                subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,
-                                                                                   CONFIG.SUBSCRIPTION_TYPE)
-                processing_status = JobStatusEnum.CompletedTranscript
-                status_id= processing_status.value
-                audio_results = session.query(AudioTranscribeTracker).filter(
-                    (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
-                if len(audio_results) > 0:
-                    audio_result_array = []
-                    for result_elm in audio_results:
-                        audio_result_array.append(result_elm.toDict())
-                    file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
-                    check_file = os.path.isfile(file_path)
-                    if not check_file:
-                        error_message = 'The requested file path does not exist: '+file_path
-                        logger.error('update_transcribe_audio_text:- ', error_message)
-                        return set_json_format([error_message], RESOURCE_NOT_FOUND, False,
-                                               error_message), RESOURCE_NOT_FOUND
-                    file_size = os.path.getsize(file_path)
-                    file_size_mb = int(file_size / (1024 * 1024))
-                    if file_size_mb > 15:
-                        msg = 'File size greater than 10 mb so we are processing this file'
-                        logger.info(msg)
-                        #Need to debug this code on the server
-                        # error_array = []
-                        # error_array.append(msg)
-                        # return set_json_format(error_array, 400, False, msg)
-                else:
-                    msg = 'The file might have been deleted, renamed, moved to a different location.'
-                    error_array = []
-                    error_array.append(msg)
-                    logger.info(msg)
-                    return set_json_format(error_array, RESOURCE_NOT_FOUND, False, msg),RESOURCE_NOT_FOUND
-                start_transcribe_time = datetime.utcnow()
-                if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
-                    transcript,status = open_ai_transcribe_audio(file_path)
-                    if status != 200:
-                        return transcript,status
-                elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
-                    transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
-                    if status == 200:
-                        transcript = transcript_whisper['text']
+            response_message, auth_status = get_authentication(session,client_id,user_name)
+            if auth_status == SUCCESS:
+                results_config = session.query(Configurations).filter(
+                    (Configurations.ClientId == client_id) & (Configurations.IsActive)).all()
+                result_config_array = []
+                if len(results_config) > 0:
+                    for result_elm in results_config:
+                        result_config_array.append(result_elm.toDict())
+                if len(result_config_array) > 0:
+                    whisper_model = global_utility.get_configuration_by_key_name(result_config_array, CONFIG.WHISPER_MODEL)
+                    subscriptions_model = global_utility.get_configuration_by_key_name(result_config_array,
+                                                                                       CONFIG.SUBSCRIPTION_TYPE)
+                    processing_status = JobStatusEnum.CompletedTranscript
+                    status_id= processing_status.value
+                    audio_results = session.query(AudioTranscribeTracker).filter(
+                        (AudioTranscribeTracker.ClientId == client_id) & (AudioTranscribeTracker.Id == file_id)).all()
+                    if len(audio_results) > 0:
+                        audio_result_array = []
+                        for result_elm in audio_results:
+                            audio_result_array.append(result_elm.toDict())
+                        file_path = global_utility.get_values_from_json_array(audio_result_array, CONFIG.TRANSCRIBE_FILE_PATH)
+                        check_file = os.path.isfile(file_path)
+                        if not check_file:
+                            error_message = 'The requested file path does not exist: '+file_path
+                            logger.error('update_transcribe_audio_text:- ', error_message)
+                            return set_json_format([error_message], RESOURCE_NOT_FOUND, False,
+                                                   error_message), RESOURCE_NOT_FOUND
+                        file_size = os.path.getsize(file_path)
+                        file_size_mb = int(file_size / (1024 * 1024))
+                        if file_size_mb > 15:
+                            msg = 'File size greater than 10 mb so we are processing this file'
+                            logger.info(msg)
+                            #Need to debug this code on the server
+                            # error_array = []
+                            # error_array.append(msg)
+                            # return set_json_format(error_array, 400, False, msg)
                     else:
-                        return transcript_whisper,status
-                else:
-                    transcript,status = open_ai_transcribe_audio(file_path)
-                    if status != 200:
-                        return transcript,status
+                        msg = 'The file might have been deleted, renamed, moved to a different location.'
+                        error_array = []
+                        error_array.append(msg)
+                        logger.info(msg)
+                        return set_json_format(error_array, RESOURCE_NOT_FOUND, False, msg),RESOURCE_NOT_FOUND
+                    start_transcribe_time = datetime.utcnow()
+                    if subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_PREMIUM.lower():
+                        transcript,status = open_ai_transcribe_audio(file_path)
+                        if status != 200:
+                            return transcript,status
+                    elif subscriptions_model.lower() == CONSTANT.SUBSCRIPTION_TYPE_ECONOMY.lower():
+                        transcript_whisper, status = open_source_transcribe_audio(file_path, whisper_model.lower())
+                        if status == 200:
+                            transcript = transcript_whisper['text']
+                        else:
+                            return transcript_whisper,status
+                    else:
+                        transcript,status = open_ai_transcribe_audio(file_path)
+                        if status != 200:
+                            return transcript,status
 
-                end_transcribe_time = datetime.utcnow()
-                update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
-                                       "ChunkTranscribeStart": start_transcribe_time,
-                                       "ChunkTranscribeEnd": end_transcribe_time}
-                updated_result = update_audio_transcribe_tracker_status(session, file_id, status_id, update_child_values)
-                return updated_result
+                    end_transcribe_time = datetime.utcnow()
+                    update_child_values = {"ChunkText": transcript, "ChunkStatus": status_id,
+                                           "ChunkTranscribeStart": start_transcribe_time,
+                                           "ChunkTranscribeEnd": end_transcribe_time}
+                    updated_result = update_audio_transcribe_tracker_status(session, file_id, status_id, update_child_values)
+                    return updated_result
+                else:
+                    error_message = str(
+                        f"For the passed client ID {client_id}, no configuration could be retrieved. Please try it once more with valid client ID.")
+                    error_msg_array = []
+                    error_msg_array.append(error_message)
+                    return set_json_format(error_msg_array, RESOURCE_NOT_FOUND, False, error_message), RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}',response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), response_message['status_code']
         except Exception as e:
             error_array = []
             error_array.append(str(e).replace('[WinError 3]',''))
@@ -983,57 +1079,63 @@ def update_transcribe_audio_text(server_name, database_name, client_id, file_id)
     else:
         return set_json_format([connection_string['message']], RESOURCE_NOT_FOUND, False, str(connection_string['message'])), RESOURCE_NOT_FOUND
 
-def get_file_name_pattern(server_name, database_name, client_id, file_name):
+def get_file_name_pattern(server_name, database_name, client_id,user_name, file_name):
     connection_string, status = get_connection_string(server_name, database_name, client_id)
     if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
         try:
             session = get_database_session(connection_string[0]['transaction'])
             session_logger = get_database_session(connection_string[0]['logger'])
             logger_handler = logger.log_entry_into_sql_table(session_logger, client_id, False)
-            results = session.query(AudioFileNamePattern).filter(
-                (AudioFileNamePattern.ClientId == client_id) & (AudioFileNamePattern.IsActive)).order_by(
-                AudioFileNamePattern.Sequence.asc()).all()
-            result_array = []
-            pattern_parts = []
-            final_string = ''
-            separator = '-'
-            if len(results) > 0:
-                for result_elm in results:
-                    result_array.append(result_elm.toDict())
-                separator = result_array[0]['Separator']
-                file_parts = file_name.split(separator)
-                for i in range(len(result_array)):
-                    row = result_array[i];
-                    if is_index_found(file_parts, i):
-                        final_string += row['PatternName'] + separator
-                file_name_pattern =final_string[:-1]
-                print(file_name_pattern)
-                file_name_length = len(file_name.split(separator))
-                file_name_pattern_length = len(file_name_pattern.split(separator)) +1
-                if file_name_length >= file_name_pattern_length:
-                    file_pattern_parts = file_name_pattern.split(separator)
-                    key_value_pairs = []
-                    # for i in range(0, len(file_pattern_parts), 2):
-                    is_caseid_passed =False
-                    for i in range(len(file_pattern_parts)):
-                        # key, value = file_parts[i], file_parts[i + 1]
-                        if file_pattern_parts[i] == 'Caseid' and separator == '-':
-                            is_caseid_passed = True
-                            value_file = file_parts[i] +'-'+ file_parts[i+1]
-                            key, value = file_pattern_parts[i], value_file
-                            key_value_pairs.append((key, value))
-                        else:
-                            value_file = file_parts[i]
-                            if is_caseid_passed:
-                                value_file =  file_parts[i+1]
-                            key, value = file_pattern_parts[i], value_file
-                            key_value_pairs.append((key, value))
-                    data = dict(key_value_pairs)
-                    return get_json_format(data,SUCCESS,True,'Pattern matched with File Name'),SUCCESS
-                else:
-                    return get_json_format([],RESOURCE_NOT_FOUND,True,'Pattern does not matched with File Name'),RESOURCE_NOT_FOUND
-            elif len(results) == 0:
-                return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            response_message, auth_status = get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                results = session.query(AudioFileNamePattern).filter(
+                    (AudioFileNamePattern.ClientId == client_id) & (AudioFileNamePattern.IsActive)).order_by(
+                    AudioFileNamePattern.Sequence.asc()).all()
+                result_array = []
+                pattern_parts = []
+                final_string = ''
+                separator = '-'
+                if len(results) > 0:
+                    for result_elm in results:
+                        result_array.append(result_elm.toDict())
+                    separator = result_array[0]['Separator']
+                    file_parts = file_name.split(separator)
+                    for i in range(len(result_array)):
+                        row = result_array[i];
+                        if is_index_found(file_parts, i):
+                            final_string += row['PatternName'] + separator
+                    file_name_pattern =final_string[:-1]
+                    print(file_name_pattern)
+                    file_name_length = len(file_name.split(separator))
+                    file_name_pattern_length = len(file_name_pattern.split(separator)) +1
+                    if file_name_length >= file_name_pattern_length:
+                        file_pattern_parts = file_name_pattern.split(separator)
+                        key_value_pairs = []
+                        # for i in range(0, len(file_pattern_parts), 2):
+                        is_caseid_passed =False
+                        for i in range(len(file_pattern_parts)):
+                            # key, value = file_parts[i], file_parts[i + 1]
+                            if file_pattern_parts[i] == 'Caseid' and separator == '-':
+                                is_caseid_passed = True
+                                value_file = file_parts[i] +'-'+ file_parts[i+1]
+                                key, value = file_pattern_parts[i], value_file
+                                key_value_pairs.append((key, value))
+                            else:
+                                value_file = file_parts[i]
+                                if is_caseid_passed:
+                                    value_file =  file_parts[i+1]
+                                key, value = file_pattern_parts[i], value_file
+                                key_value_pairs.append((key, value))
+                        data = dict(key_value_pairs)
+                        return get_json_format(data,SUCCESS,True,'Pattern matched with File Name'),SUCCESS
+                    else:
+                        return get_json_format([],RESOURCE_NOT_FOUND,True,'Pattern does not matched with File Name'),RESOURCE_NOT_FOUND
+                elif len(results) == 0:
+                    return get_json_format([],RESOURCE_NOT_FOUND, True, 'There is no record found in the database'),RESOURCE_NOT_FOUND
+            else:
+                logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
         except Exception as e:
             return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
         finally:

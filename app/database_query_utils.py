@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine,text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.engine.reflection import Inspector
-from db_layer.models import AudioTranscribe
+from app.db_layer.models import AudioTranscribe
 from sqlalchemy.sql import select
 from app.utilities.utility import GlobalUtility
 from app.services.logger import Logger
@@ -81,33 +81,39 @@ class DBRecord:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
-    def get_all_record(self, server_name, database_name, client_id,table_name):
+    def get_all_record(self, server_name, database_name, client_id,user_name,table_name):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             try:
+                session = self.global_utility.get_database_session(connection_string[0]['transaction'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    raw_sql = f"SELECT * FROM {table}"
-                    cursor.execute(raw_sql)
-                    result = self.list_of_dictionary_conversion(cursor)
-                    if len(result) > 0:
-                        api_object = self.global_utility.get_json_format(result,SUCCESS)
-                        return api_object,SUCCESS
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        raw_sql = f"SELECT * FROM {table}"
+                        cursor.execute(raw_sql)
+                        result = self.list_of_dictionary_conversion(cursor)
+                        if len(result) > 0:
+                            api_object = self.global_utility.get_json_format(result,SUCCESS)
+                            return api_object,SUCCESS
+                        else:
+                            api_object = self.global_utility.get_json_format(result,RESOURCE_NOT_FOUND,True,'There is no record in the database'),RESOURCE_NOT_FOUND
+                            return api_object
                     else:
-                        api_object = self.global_utility.get_json_format(result,RESOURCE_NOT_FOUND,True,'There is no record in the database'),RESOURCE_NOT_FOUND
-                        return api_object
+                        api_object = {
+                            "result": [],
+                            "message": f"Table {table_name} not found ! ",
+                            "status": 'failure',
+                            'status_code': RESOURCE_NOT_FOUND
+                        }
+                        return api_object,RESOURCE_NOT_FOUND
                 else:
-                    api_object = {
-                        "result": [],
-                        "message": f"Table {table_name} not found ! ",
-                        "status": 'failure',
-                        'status_code': RESOURCE_NOT_FOUND
-                    }
-                    return api_object,RESOURCE_NOT_FOUND
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']), \
+                    response_message['status_code']
             except Exception as e:
                 api_object = {
                     "result": [],
@@ -125,28 +131,33 @@ class DBRecord:
             return result, INTERNAL_SERVER_ERROR
 
 
-    def get_record_by_id(self, server_name, database_name, client_id,table_name, id):
+    def get_record_by_id(self, server_name, database_name, client_id,user_name,table_name, id):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             try:
                 session = self.global_utility.get_database_session(connection_string[0]['transaction'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
-                    cursor.execute(raw_sql)
-                    result = self.list_of_dictionary_conversion(cursor)
-                    result = {"status": SUCCESS, "result": result},SUCCESS
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        raw_sql = f"SELECT * FROM  {table_name} WHERE Id = {id}"
+                        cursor.execute(raw_sql)
+                        result = self.list_of_dictionary_conversion(cursor)
+                        result = {"status": SUCCESS, "result": result},SUCCESS
+                    else:
+                        result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
+
+                    if result == []:
+                        result = {"status": RESOURCE_NOT_FOUND, "Info": f"Information is not available for {table_name} Id {id} !"},RESOURCE_NOT_FOUND
+
+                    return {'data': result}
                 else:
-                    result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
-
-                if result == []:
-                    result = {"status": RESOURCE_NOT_FOUND, "Info": f"Information is not available for {table_name} Id {id} !"},RESOURCE_NOT_FOUND
-
-                return {'data': result}
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 self.logger.error(".........Error in get_record_by_id...........", str(e))
                 api_object = {
@@ -164,29 +175,39 @@ class DBRecord:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_data_by_column_name(self,server_name, database_name, client_id, table_name, column_name, column_value):
+    def get_data_by_column_name(self,server_name, database_name, client_id,user_name, table_name, column_name, column_value):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             try:
+                session = self.global_utility.get_database_session(connection_string[0]['transaction'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    check_column = inspector.get_columns(table_name)
-                    column_exists = any(column['name'] == column_name for column in check_column)
-                    if column_exists:
-                        raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
-                        cursor.execute(raw_sql)
-                        result = self.list_of_dictionary_conversion(cursor)
-                        api_object = {
-                            "result": result,
-                            "message": 'The data result set that the service provided.',
-                            "status": 'success',
-                            'status_code': SUCCESS
-                        }
-                        return api_object,SUCCESS
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        check_column = inspector.get_columns(table_name)
+                        column_exists = any(column['name'] == column_name for column in check_column)
+                        if column_exists:
+                            raw_sql = f"SELECT * FROM {table_name} WHERE {column_name} = '{column_value}'"
+                            cursor.execute(raw_sql)
+                            result = self.list_of_dictionary_conversion(cursor)
+                            api_object = {
+                                "result": result,
+                                "message": 'The data result set that the service provided.',
+                                "status": 'success',
+                                'status_code': SUCCESS
+                            }
+                            return api_object,SUCCESS
+                        else:
+                            api_object = {
+                                "result": [],
+                                "message": f"Column  {column_name} not found!",
+                                "status": 'failure',
+                                'status_code': RESOURCE_NOT_FOUND
+                            }
+                            return api_object,RESOURCE_NOT_FOUND
                     else:
                         api_object = {
                             "result": [],
@@ -196,13 +217,9 @@ class DBRecord:
                         }
                         return api_object,RESOURCE_NOT_FOUND
                 else:
-                    api_object = {
-                        "result": [],
-                        "message": f"Column  {column_name} not found!",
-                        "status": 'failure',
-                        'status_code': RESOURCE_NOT_FOUND
-                    }
-                    return api_object,RESOURCE_NOT_FOUND
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                    return self.global_utility.set_json_format([response_message['message']], response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 api_object = {
                     "result": [],
@@ -218,28 +235,35 @@ class DBRecord:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def update_record_by_column(self,server_name, database_name, client_id, table_name, column_to_update, new_value, condition_column, condition_value):
+    def update_record_by_column(self,server_name, database_name, client_id,user_name, table_name, column_to_update, new_value, condition_column, condition_value):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             try:
+                session = self.global_utility.get_database_session(connection_string[0]['logger'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    check_column = inspector.get_columns(table_name)
-                    column_exists = any(column['name'] == column_to_update for column in check_column)
-                    if column_exists:
-                        raw_sql = f"UPDATE {table_name} SET {column_to_update} = '{new_value}' WHERE {condition_column} = '{condition_value}'"
-                        cursor.execute(raw_sql)
-                        result = {"status":SUCCESS, "msg": f"Successfully updated the record"},SUCCESS
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables,inspector = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        check_column = inspector.get_columns(table_name)
+                        column_exists = any(column['name'] == column_to_update for column in check_column)
+                        if column_exists:
+                            raw_sql = f"UPDATE {table_name} SET {column_to_update} = '{new_value}' WHERE {condition_column} = '{condition_value}'"
+                            cursor.execute(raw_sql)
+                            result = {"status":SUCCESS, "msg": f"Successfully updated the record"},SUCCESS
+                        else:
+                            result = {"status": RESOURCE_NOT_FOUND, "Info": f"Column  {column_to_update} not found!"},RESOURCE_NOT_FOUND
                     else:
-                        result = {"status": RESOURCE_NOT_FOUND, "Info": f"Column  {column_to_update} not found!"},RESOURCE_NOT_FOUND
-                else:
-                    result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
+                        result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
 
-                return {'data': result}
+                    return {'data': result}
+                else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                    return self.global_utility.set_json_format([response_message['message']],
+                                                               response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 api_object = {
                     "result": [],
@@ -255,23 +279,30 @@ class DBRecord:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def delete_record_by_id(self, server_name, database_name, client_id,table_name, id):
+    def delete_record_by_id(self, server_name, database_name, client_id,user_name,table_name, id):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-        # if len(connection_string) > 0:
             try:
+                session = self.global_utility.get_database_session(connection_string[0]['transaction'])
                 session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
                 logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                cursor, all_tables = self.get_sql_cursor(connection_string)
-                table = self.global_utility.get_table_name(all_tables, table_name)
-                if table is not None:
-                    raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
-                    cursor.execute(raw_sql)
-                    result = {"status": SUCCESS, "msg": f"Successfully deleted record {id}"},SUCCESS
-                else:
-                    result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
+                response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+                if auth_status == SUCCESS:
+                    cursor, all_tables = self.get_sql_cursor(connection_string)
+                    table = self.global_utility.get_table_name(all_tables, table_name)
+                    if table is not None:
+                        raw_sql = f"DELETE FROM  {table_name} WHERE Id = {id}"
+                        cursor.execute(raw_sql)
+                        result = {"status": SUCCESS, "msg": f"Successfully deleted record {id}"},SUCCESS
+                    else:
+                        result = {"status": RESOURCE_NOT_FOUND, "Info": f"Table {table_name} not found !"},RESOURCE_NOT_FOUND
 
-                return {'data': result}
+                    return {'data': result}
+                else:
+                    self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                    return self.global_utility.set_json_format([response_message['message']],
+                                                               response_message['status_code'], False,
+                                                               response_message['message']), response_message['status_code']
             except Exception as e:
                 api_object = {
                     "result": [],

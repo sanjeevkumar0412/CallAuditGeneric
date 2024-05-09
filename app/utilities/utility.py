@@ -12,7 +12,7 @@ import secrets
 from datetime import datetime
 from app.configs.config import CONFIG
 from app.services.logger import Logger
-from app.db_layer.models import (MasterConnectionString,MasterTable)
+from app.db_layer.models import (MasterConnectionString,MasterTable,AuthTokenManagement)
 from app.configs.error_code_enum import *
 
 load_dotenv()
@@ -464,3 +464,37 @@ class GlobalUtility:
         if len(filtered_data) > 0:
             value = filtered_data[0]
         return value
+
+    def get_authentication(self,session, client_id, user_name):
+        try:
+            record = session.query(AuthTokenManagement).filter(
+                (AuthTokenManagement.UserName == user_name) & (AuthTokenManagement.ClientId == client_id) & (
+                    AuthTokenManagement.IsActive)).all()
+            if len(record) > 0:
+                result = self.get_configuration_by_column(record)
+                token = self.get_list_array_value(result,CONFIG.TOKEN)
+                secret_key = self.get_list_array_value(result,CONFIG.SECRETKEY)
+                decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
+                auth_message = str("Authentication Token successfully validated")
+                msg_array = []
+                msg_array.append(auth_message)
+                return self.set_json_format(msg_array, SUCCESS, True, auth_message), SUCCESS
+            else:
+                auth_message = str(f"Please register user {user_name} as they are not yet registered.")
+                msg_array = []
+                msg_array.append(auth_message)
+                return self.set_json_format(msg_array, UNAUTHORIZED_ACCESS, False, auth_message), UNAUTHORIZED_ACCESS
+        except jwt.ExpiredSignatureError:
+            error_message = str("The token has lost its validity(expired). Kindly update the token and try it again.")
+            error_msg_array = []
+            error_msg_array.append(error_message)
+            return self.set_json_format(error_msg_array, PERMISSION_ERROR, False, error_message), PERMISSION_ERROR
+        except jwt.InvalidTokenError:
+            error_message = str("The token that was passed is invalid. Kindly try again with the correct credentials.")
+            error_msg_array = []
+            error_msg_array.append(error_message)
+            return self.set_json_format(error_msg_array, BAD_REQUEST, False, error_message), BAD_REQUEST
+        except Exception as e:
+            error_msg_array = []
+            error_msg_array.append(str(e))
+            return self.set_json_format(error_msg_array, INTERNAL_SERVER_ERROR, False, str(e)), INTERNAL_SERVER_ERROR

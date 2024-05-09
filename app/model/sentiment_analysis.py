@@ -169,209 +169,226 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
+    def get_data_from_transcribe_table(self, server_name, database_name, client_id,user_name,audio_file):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            try:
-                audio_dictionary = {}
-                transcribe_text = []
-                trans_dic={}
-                check_audio_id_exits = session.query(AudioTranscribe).filter(
-                    AudioTranscribe.AudioFileName == audio_file).all()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                try:
+                    audio_dictionary = {}
+                    transcribe_text = []
+                    trans_dic={}
+                    check_audio_id_exits = session.query(AudioTranscribe).filter(
+                        AudioTranscribe.AudioFileName == audio_file).all()
 
-                if len(check_audio_id_exits) > 0:
-                    audio_id_query = session.query(AudioTranscribe.Id).filter(
-                        AudioTranscribe.AudioFileName == audio_file)
-                    query_audio_id_results = audio_id_query.all()
-                    check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
-                        AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                    chunk_results_check = check_chunk_exist.all()
+                    if len(check_audio_id_exits) > 0:
+                        audio_id_query = session.query(AudioTranscribe.Id).filter(
+                            AudioTranscribe.AudioFileName == audio_file)
+                        query_audio_id_results = audio_id_query.all()
+                        check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
+                            AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
+                        chunk_results_check = check_chunk_exist.all()
 
-                    if len(chunk_results_check) == 0:
-                        data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
-                        return data, RESOURCE_NOT_FOUND
+                        if len(chunk_results_check) == 0:
+                            data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
+                            return data, RESOURCE_NOT_FOUND
 
-                    if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
-                        query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
-                                              AudioTranscribeTracker.ChunkFilePath,
-                                              AudioTranscribeTracker.ChunkSequence,
-                                              AudioTranscribeTracker.ChunkText).filter(
-                            AudioTranscribeTracker.AudioId == audio_id_query)
-                        results = query.all()
-                        for row in results:
-                            print("row outpupt", row.ClientId)
-                            transcribe_text.append(row.ChunkText)
-                            audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
-                                                     "ChunkSequence": row.ChunkSequence,
-                                                     "TranscribeMergeText": transcribe_text})
+                        if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
+                            query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
+                                                  AudioTranscribeTracker.ChunkFilePath,
+                                                  AudioTranscribeTracker.ChunkSequence,
+                                                  AudioTranscribeTracker.ChunkText).filter(
+                                AudioTranscribeTracker.AudioId == audio_id_query)
+                            results = query.all()
+                            for row in results:
+                                print("row outpupt", row.ClientId)
+                                transcribe_text.append(row.ChunkText)
+                                audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
+                                                         "ChunkSequence": row.ChunkSequence,
+                                                         "TranscribeMergeText": transcribe_text})
+                        else:
+                            self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
+                            data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                            return data,RESOURCE_NOT_FOUND
                     else:
-                        self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
-                        data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                        self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
+                        data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
                         return data,RESOURCE_NOT_FOUND
-                else:
-                    self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
-                    data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
-                    return data,RESOURCE_NOT_FOUND
-                result = {"message": ''.join(transcribe_text), "status": SUCCESS}
-                return result,SUCCESS
-            except Exception as e:
-                self.logger.error(f": get_data_from_transcribe_table {e}",e)
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+                    result = {"message": ''.join(transcribe_text), "status": SUCCESS}
+                    return result,SUCCESS
+                except Exception as e:
+                    self.logger.error(f": get_data_from_transcribe_table {e}",e)
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return self.global_utility.set_json_format([response_message['message']],
+                                                           response_message['status_code'], False,
+                                                           response_message['message']), response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
 
 
-    def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file):
+    def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,user_name,audio_file):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            # session = self.global_utility.get_database_session(connection_string)
-            try:
-                audio_dictionary = {}
-                transcribe_text = []
-                check_audio_file_exits = session.query(AudioTranscribe).filter(
-                    AudioTranscribe.AudioFileName == audio_file).all()
-                if len(check_audio_file_exits) > 0:
-                    audio_id_query = session.query(AudioTranscribe.Id).filter(
-                        AudioTranscribe.AudioFileName == audio_file)
-                    query_audio_id_results = audio_id_query.all()
-                    check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
-                        AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
-                    chunk_results_check = check_chunk_exist.all()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                try:
+                    audio_dictionary = {}
+                    transcribe_text = []
+                    check_audio_file_exits = session.query(AudioTranscribe).filter(
+                        AudioTranscribe.AudioFileName == audio_file).all()
+                    if len(check_audio_file_exits) > 0:
+                        audio_id_query = session.query(AudioTranscribe.Id).filter(
+                            AudioTranscribe.AudioFileName == audio_file)
+                        query_audio_id_results = audio_id_query.all()
+                        check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
+                            AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
+                        chunk_results_check = check_chunk_exist.all()
 
-                    if len(chunk_results_check) == 0:
-                        data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
-                        return data, RESOURCE_NOT_FOUND
-                    if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
-                        query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
-                                              AudioTranscribeTracker.ChunkFilePath,
-                                              AudioTranscribeTracker.ChunkSequence,
-                                              AudioTranscribeTracker.ChunkText).filter(
-                            AudioTranscribeTracker.AudioId == audio_id_query)
-                        results = query.all()
-                        for row in results:
-                            print("row outpupt", row.ClientId)
-                            transcribe_text.append(row.ChunkText)
-                            audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
-                                                     "ChunkSequence": row.ChunkSequence,
-                                                     "TranscribeMergeText": transcribe_text,"filename":audio_file})
+                        if len(chunk_results_check) == 0:
+                            data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
+                            return data, RESOURCE_NOT_FOUND
+                        if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
+                            query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
+                                                  AudioTranscribeTracker.ChunkFilePath,
+                                                  AudioTranscribeTracker.ChunkSequence,
+                                                  AudioTranscribeTracker.ChunkText).filter(
+                                AudioTranscribeTracker.AudioId == audio_id_query)
+                            results = query.all()
+                            for row in results:
+                                print("row outpupt", row.ClientId)
+                                transcribe_text.append(row.ChunkText)
+                                audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
+                                                         "ChunkSequence": row.ChunkSequence,
+                                                         "TranscribeMergeText": transcribe_text,"filename":audio_file})
+                        else:
+                            self.logger.info(f":Transcribe Job Status is pending")
+                            data= {"status":RESOURCE_NOT_FOUND,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                            return data,RESOURCE_NOT_FOUND
                     else:
-                        self.logger.info(f":Transcribe Job Status is pending")
-                        data= {"status":RESOURCE_NOT_FOUND,"message":f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                        self.logger.info(f":Record not found {audio_file}")
+                        data= {"status":RESOURCE_NOT_FOUND,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                else:
-                    self.logger.info(f":Record not found {audio_file}")
-                    data= {"status":RESOURCE_NOT_FOUND,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
-                    return data,RESOURCE_NOT_FOUND
-                return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
-            except Exception as e:
-                # self.logger.error(f": Error {e}",e)
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error('Error in Method get_connection_string ', str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-                # result.close()
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+                    return self.dump_data_into_sentiment_database(server_name, database_name, client_id, audio_dictionary)
+                except Exception as e:
+                    # self.logger.error(f": Error {e}",e)
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error('Error in Method get_connection_string ', str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                    # result.close()
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return self.global_utility.set_json_format([response_message['message']],
+                                                           response_message['status_code'], False,
+                                                           response_message['message']), response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
+    def get_sentiment_data_from_table(self, server_name, database_name, client_id,user_name,audio_file):
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                check_audio_file_exits = session.query(SentimentAnalysis).filter(
+                    SentimentAnalysis.AudioFileName == audio_file).all()
+                try:
+                    if len(check_audio_file_exits) > 0:
+                        sentiment_dic={}
+                        data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
+                        sentiment_dic.update({"ClientId":data[0].ClientId,
+                                              "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
+                                              "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
+                                              "FoulLanguage":data[0].FoulLanguage,
+                                              "ActionItemsOwners":data[0].Owners,
+                                              "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
+                        result = sentiment_dic
+                        self.logger.info(f":Get Data from SentimentAnalysis table successfully for AudioFile {audio_file}")
+                        return result,SUCCESS
+                    else:
+                        data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                        self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
+                        return data,RESOURCE_NOT_FOUND
+                except Exception as e:
+                    self.logger.error(f"Found error in get_sentiment_data_from_table", str(e))
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False,
+                                       response_message['message']), response_message['status_code']
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result,INTERNAL_SERVER_ERROR
+
+    def get_prohibited_data_from_table(self, server_name, database_name, client_id,user_name):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
-            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            # session = self.global_utility.get_database_session(connection_string)
-            check_audio_file_exits = session.query(SentimentAnalysis).filter(
-                SentimentAnalysis.AudioFileName == audio_file).all()
+            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
+            if auth_status == SUCCESS:
+                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+                check_data_exist = session.query(ProhibitedKeyword).all()
 
-            try:
-                if len(check_audio_file_exits) > 0:
-                    sentiment_dic={}
-                    data = session.query(SentimentAnalysis).filter_by(AudioFileName=audio_file).all()
-                    sentiment_dic.update({"ClientId":data[0].ClientId,
-                                          "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
-                                          "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
-                                          "FoulLanguage":data[0].FoulLanguage,
-                                          "ActionItemsOwners":data[0].Owners,
-                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
-                    # result = {"sentimentdata": sentiment_dic}
-                    result = sentiment_dic
-                    self.logger.info(f":Get Data from SentimentAnalysis table successfully for AudioFile {audio_file}")
-                    return result,SUCCESS
-                else:
-                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {audio_file} in AudioTranscribe Table"}
-                    self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
-                    return data,RESOURCE_NOT_FOUND
-            except Exception as e:
-                self.logger.error(f"Found error in get_sentiment_data_from_table", str(e))
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
-                # self.logger.error(f": Error {e}",e)
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
-        else:
-            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
-            return result,INTERNAL_SERVER_ERROR
+                try:
+                    if len(check_data_exist) > 0:
+                        prohibited_data=[]
+                        data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
+                        for key_data in data:
+                            prohibited_data.append(key_data.Keywords)
 
-    def get_prohibited_data_from_table(self, server_name, database_name, client_id):
-        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
-        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
-            # if len(connection_string) > 0:
-            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
-            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
-            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            check_data_exist = session.query(ProhibitedKeyword).all()
+                        result=','.join(prohibited_data)
 
-            try:
-                if len(check_data_exist) > 0:
-                    prohibited_data=[]
-                    data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
-                    for key_data in data:
-                        prohibited_data.append(key_data.Keywords)
-
-                    result=','.join(prohibited_data)
-
-                    return result,SUCCESS
-                else:
-                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
-                    return data,RESOURCE_NOT_FOUND
-            except Exception as e:
-                self.logger.error(f"Found error in ProhibitedKeyword", str(e))
-                error_array = []
-                error_array.append(str(e))
-                self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
-                # self.logger.error(f": Error {e}",e)
-            finally:
-                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                session.close()
-                session_logger.close()
+                        return result,SUCCESS
+                    else:
+                        data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
+                        return data,RESOURCE_NOT_FOUND
+                except Exception as e:
+                    self.logger.error(f"Found error in ProhibitedKeyword", str(e))
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
+                    return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
+                    # self.logger.error(f": Error {e}",e)
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                    session.close()
+                    session_logger.close()
+            else:
+                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']),response_message['status_code']
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
