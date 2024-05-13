@@ -7,11 +7,12 @@ $(document).ready(function() {
                 alert('Please fill in all fields');
                 return; // Exit function if fields are empty
             }
+            $('#sentimentTable').hide();
             $('.loader').show();
             // $('#sentimentTable').show();
             // Make AJAX call to retrieve sentiment data
             $.ajax({
-                url: 'http://flm-vm-cogaidev:4091/get_data_from_sentiment_table',
+                url: '/get_data_from_sentiment_table',
                 type: 'GET',
                 dataType: 'json',
                 data: {
@@ -20,58 +21,51 @@ $(document).ready(function() {
                 },
                 success: function(data) {
                     // Hide loader
+                    $('#audio-filename').text(data.AudioFileName);
+                    $('#sentiment').text(data.Sentiment);
+                    $('#foul_lang').text(data.FoulLanguage);
+                    $('#summary_report').text(data.SummaryReport);
+                    $('#reminder').text(data.Reminder);
 					console.log(2222222222,data);
                     $('.loader').hide();
                     $('.form-group').hide();
                     $('#submitButton').hide();
                     $('#sentimentTable').show();
                     $('#backsentiment').show();
-                    // Remove ClientId and Id keys from the response
-
-                    delete data.ClientId;
-                    delete data.Created;
-                    delete data.Modified;
-                    delete data.SentimentStatus;
-                    delete data.SentimentScore;
-                    delete data.Id;
                     // Populate table body with data
+                    $('#sentimentTable').show();
                     var sentimentData = data;
-                    var tableBody = $('#sentimentData');
-                    // Append AudioFileName first
+                    // var tableBody = $('#sentimentData');
+                    var action_owner=data.ActionItemsOwners;
+                    var jsonStringWithDoubleQuotes = action_owner.replace(/'/g, '"');
+                    var action_owner_data=JSON.parse(jsonStringWithDoubleQuotes);
+                    var summary_topics=data.Topics;
+                    var topics_jsonStringWithDoubleQuotes = summary_topics.replace(/'/g, '"');
+                    var summary_topics_data=JSON.parse(topics_jsonStringWithDoubleQuotes);
+                    var html = '';
+                       $.each(action_owner_data, function(key, value) {
+                           // console.log("Key",key);
+                           // console.log("Date value", value.Date);
 
-				row = $('<tr></tr>');
-						row.append($('<td></td>').text('AudioFileName'));
-						row.append($('<td class="td_break_all"></td>').text(sentimentData.AudioFileName));
-						//$('.audio_cls').show();
-						tableBody.append(row);
-				row = $('<tr></tr>');
-                    row.append($('<td></td>').text('ActionItemsOwners'));
-                    row.append($('<td class="td_break_all"></td>').text(sentimentData.ActionItemsOwners));
-                    tableBody.append(row);
-                row = $('<tr></tr>');
-                row.append($('<td></td>').text('Sentiment'));
-                row.append($('<td class="td_break_all"></td>').text(sentimentData.Sentiment));
-                tableBody.append(row);
+                           html += '<tr>';
+                           html += '<td>' + (value.ActionItem) + '</td>';
+                           html += '<td>' + value.ActionOwner + '</td>';
+                           html += '<td>' + value.ActionDate + '</td>';
+                       });
+                        $('#action_item_owner tbody').html(html);
 
-                row = $('<tr></tr>');
-                    row.append($('<td></td>').text('FoulLanguage'));
-                    row.append($('<td class="td_break_all"></td>').text(sentimentData.FoulLanguage));
-                    tableBody.append(row);
+                        var html_topics = '';
+                    $.each(summary_topics_data, function(index, item) {
+                            // console.log("Key",index);
+                            // console.log("value",item);
+                            html_topics += '<tr>';
+                            html_topics += '<td>' + item.Topic + '</td>';
+                            html_topics += '<td>' + item.Description + '</td>';
+                            html_topics += '<td>' + item.Sentiment + '</td>';
+                            html_topics += '</tr>';
+                        });
 
-                row = $('<tr></tr>');
-                    row.append($('<td></td>').text('SummaryReport'));
-                    row.append($('<td class="td_break_all"></td>').text(sentimentData.SummaryReport));
-                    tableBody.append(row);
-
-                row = $('<tr></tr>');
-                    row.append($('<td></td>').text('Topics'));
-                    row.append($('<td class="td_break_all"></td>').text(sentimentData.Topics));
-                    tableBody.append(row);
-
-                     row = $('<tr></tr>');
-                    row.append($('<td></td>').text('Reminder'));
-                    row.append($('<td class="td_break_all"></td>').text(sentimentData.Reminder));
-                    tableBody.append(row);
+                       $('#summary_topics tbody').html(html_topics);
 				if(sentimentData.ActionItems === undefined) {
 					console.log('If Condition');
 							$('.audio_cls').hide();
@@ -91,4 +85,5 @@ $(document).ready(function() {
                 }
             });
         });
+        $('#sentimentTable').hide();
     });

@@ -4,44 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sentiment Analysis</title>
-    <script src="../static/jquery-3.6.js"></script>
-    <script src="../static/common.js"></script>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
-            color: #333;
+            box-sizing: border-box;
         }
+
         .container {
-            width: 45%;
-            margin: 50px auto;
+            max-width: 800px;
+            margin: 0 auto;
             padding: 20px;
             background-color: #fff;
-            border-radius: 5px;
+            border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         h2 {
             text-align: center;
+            color: #333;
+        }
+
+        form {
             margin-bottom: 20px;
         }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        input[type="text"],
+        input[type="file"],
+        input[type="submit"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+  body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            border-spacing: 0;
-            margin-bottom: 20px;
+            border: 2px solid #dddddd;
+            background-color: #ffffff;
+
         }
+
         th, td {
-            padding: 12px;
+            border: 1px solid #dddddd;
             text-align: left;
-            border-bottom: 1px solid #ddd;
+            padding: 10px;
         }
+
         th {
             background-color: #f2f2f2;
+            color: #333333;
         }
-        tr:hover {
+
+        tr:nth-child(even) {
             background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
         }
         .form-group {
             margin-bottom: 20px;
@@ -87,43 +134,82 @@
             margin-left:-180px;
             margin-bottom: 26px;
         }
-        .td_break_all{
-            word-break:break-word;
-        }
     </style>
+      <script src="../static/jquery-3.6.js"></script>
+        <script src="../static/common.js"></script>
 </head>
 <body>
     <div class="container">
-        <div id="backsentiment" style="float: right"><a href="/sentiment">click here to Sentiment Form</a> </div>
+        <div id="backcompliance" style="float: right"><a href="/sentiment">click here to Sentiment Form</a> </div>
         <h2>Sentiment Analysis</h2>
          <div class="loader">
     Sentiment data is prepearing.... <img src="../static/loader-large.gif" alt="Loader">
 </div>
         <div class="form-group">
-            <label for="clientId">Client ID:</label>
+           <label for="clientId">Client ID:</label>
             <input type="text" id="clientId" placeholder="Enter Client ID">
         </div>
         <div class="form-group">
-            <label for="audioFileName">Audio File Name:</label>
+           <label for="audioFileName">Audio File Name:</label>
             <input type="text" id="audioFileName" placeholder="Enter Audio File Name">
         </div>
-        <button class="btn-submit" id="submitButton">Submit</button>
-        <table id="sentimentTable">
-            <thead>
-			<div id="head_id">
-                <tr>
-                    <th>Attribute</th>
-                    <th>Value</th>
-                </tr>
-				</div>
-            </thead>
-            <tbody id="sentimentData">
-                <!-- Table body will be populated dynamically using jQuery -->
-            </tbody>
-        </table>
-    </div>
+            <button class="btn-submit" id="submitButton">Submit</button>
+    <table id="sentimentTable">
+        <tr>
+            <td>AudioFileName:</td>
+            <td id="audio-filename"></td>
+        </tr>
+        <tr>
+            <td>ActionItemsOwners:</td>
+            <td id="scorecard-value">
+                <table id="action_item_owner">
+                    <thead>
+                        <tr>
+                            <th>Action Items</th>
+                            <th style="width: 23%;">ActionOwner</th>
+                            <th>ActionDate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sentimentData">
+                        <!-- Scorecard data will be inserted here -->
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>FoulLanguage:</td>
+            <td id="foul_lang"></td>
+        </tr>
+        <tr>
+            <td>Sentiment:</td>
+            <td id="sentiment"></td>
+        </tr>
+         <tr>
+            <td>SummaryReport:</td>
+            <td id="summary_report"></td>
+        </tr>
 
+        <tr>
+            <td>Summary Toics:</td>
+            <td>
+                <table id="summary_topics">
+                    <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Description</th>
+                            <th>Sentiment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Scorecard data will be inserted here -->
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        <tr>
+            <td>Reminder:</td>
+            <td id="reminder"></td>
+        </tr>
+    </table>
 </body>
-    <script> $('#sentimentTable').hide();$('.loader').hide();$('#backsentiment').hide()</script>
-
 </html>
