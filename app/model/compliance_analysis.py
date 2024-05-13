@@ -263,16 +263,3 @@ class ComplianceAnalysisCreation:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
-
-    def replace_quotes(self, json_string):
-        # Load JSON string into a dictionary
-        data = json.loads(json_string)
-
-        # Convert single quotes to double quotes for keys and values
-        for key in data:
-            data[key] = {k.replace("'", '"'): v.replace("'", "’") if isinstance(v, str) else v for k, v in
-                         data[key].items()}
-
-        # Convert dictionary back to JSON string
-        json_string_updated = json.dumps(data, indent=4)
-        return json_string_updated
