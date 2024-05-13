@@ -54,7 +54,7 @@ class ComplianceAnalysisCreation:
                 OverallScore=f"{roundund_off_score}%"
             else:
                 OverallScore="0"
-            data = {'OverallScore':OverallScore,'Scorecard':results,'prompt':prompt}
+            data = {'OverallScore':OverallScore,'Scorecard':json_string_cleaned,'prompt':prompt}
             return status, data
         except Exception as e:
             status = 'failure'

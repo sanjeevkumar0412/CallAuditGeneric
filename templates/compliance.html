@@ -188,8 +188,7 @@
                     var inner_scorecard = data.ScoreCard;
                     if (inner_scorecard != undefined) {
                         console.log("inner_scorecard Double >>>>>>>>", inner_scorecard);
-                        var jsonStringWithDoubleQuotes = inner_scorecard.replace(/'/g, '"');
-                        var res_obj = JSON.parse(jsonStringWithDoubleQuotes);
+                        var res_obj = JSON.parse(inner_scorecard);
                     }
                     var html='';
                     $.each(res_obj, function (key, value) {

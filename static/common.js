@@ -37,11 +37,11 @@ $(document).ready(function() {
                     var sentimentData = data;
                     // var tableBody = $('#sentimentData');
                     var action_owner=data.ActionItemsOwners;
-                    var jsonStringWithDoubleQuotes = action_owner.replace(/'/g, '"');
-                    var action_owner_data=JSON.parse(jsonStringWithDoubleQuotes);
+                    // var jsonStringWithDoubleQuotes = action_owner.replace(/'/g, '"');
+                    var action_owner_data=JSON.parse(action_owner);
                     var summary_topics=data.Topics;
-                    var topics_jsonStringWithDoubleQuotes = summary_topics.replace(/'/g, '"');
-                    var summary_topics_data=JSON.parse(topics_jsonStringWithDoubleQuotes);
+                    // var topics_jsonStringWithDoubleQuotes = summary_topics.replace(/'/g, '"');
+                    var summary_topics_data=JSON.parse(summary_topics);
                     var html = '';
                        $.each(action_owner_data, function(key, value) {
                            // console.log("Key",key);
