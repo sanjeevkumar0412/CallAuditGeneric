@@ -47,7 +47,8 @@ class ComplianceAnalysisCreation:
             compliance_met_values = [value['compliance_met'] for value in results.values() if isinstance(value, dict)]
             if len(compliance_met_values) > 0:
                 total_compliance_met_length= len(compliance_met_values)
-                compliance_met_true_values = sum(compliance_met_values)
+                compliance_met_true_values = compliance_met_values.count('Yes')
+                # compliance_met_true_values = sum(compliance_met_values)
                 score= (compliance_met_true_values / total_compliance_met_length) * 100
                 roundund_off_score=round(float(score))
                 OverallScore=f"{roundund_off_score}%"
@@ -241,8 +242,8 @@ class ComplianceAnalysisCreation:
                                           "AnalysisDateTime":data[0].AnalysisDateTime,"AudioFileName":data[0].AudioFileName,
                                           "Created":data[0].Created,"ScoreCard":data[0].ScoreCard,"OverallScore":data[0].OverallScore,
                                           "Modified":data[0].Modified})
-                    result = {"Compliance": compliance_dic}
-                    # result = compliance_dic
+                    # result = {"Compliance": compliance_dic}
+                    result = compliance_dic
                     self.logger.info(f":Get Data from ScoreCardAnalysis table successfully for AudioFile {audio_file}")
                     return result,SUCCESS
                 else:

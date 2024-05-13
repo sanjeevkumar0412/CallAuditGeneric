@@ -7,15 +7,18 @@ The conversation text will be available between two @@@.
 
 For the JSON response, include the following key-value pairs separately from each other:
 
-Summary: A summary of the conversation in 50 to 700 words along with the date and time.
-Topics: A list of topics discussed, with their summary descriptions and remove the column ActionItemsOwners from this:
+Summary: A summary of the conversation in 50 to 700 words along with the discussed date and time in text format only.
+Topics: A list of topics discussed, with their summary descriptions,Sentiment and remove the column ActionItemsOwners from this and remove aphostopias(' or ") symbol from "Description" key value.In the Topics subkeys called Topic never be blank. 
 Sentiment: The sentiment (Positive/Negative/Neutral) of the topic.
-FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/NO).
-ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and date of action.
+FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/No).
+ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and Action date of action.if the action Owner have date then move to the ActionDate columns.ActionDate never be blank.
 AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.
 Good bye reminder message: Based on their current discussion a reminder given by the virtual agent to the debtor for any future action along with the date and time before closing the discussion.
 
-Make sure that you are always adding the above JSON keys in the resonse. 
+Make sure that you are always adding the above JSON keys in the response. 
+
+ActionItemsOwners or Description never contain the aphostopias(' or ") symbol.
+Summary will contain summarized details along with information of all dates and times, SSN, Address, Identity, Loan or debt, future action etc.  discussed in conversation. 
 
 If any address is confirmed in transcript and mail is supposed to be delivered at that address in the future, then mention this in related action item along with address details.
 
@@ -54,4 +57,4 @@ compliance_prompt_after_checklist="""###.Return the data as given the JSON forma
 "balance_information": {"compliance_met": ,"details": ""},
 "avoidance_of_negative_statements": {"compliance_met": ,"details": ""},
 "professional_tone_and_active_listening": {"compliance_met": ,"details": ""},
-"closure_of_call": {"compliance_met": ,"details": ""}}.compliance_met key value always return in true/false """
+"closure_of_call": {"compliance_met": ,"details": ""}}.compliance_met key value always return Yes or No.Remove the aphostopias symbol(' or ") from the keys or subkeys value or subvalues from "details" key.It is mandatory to remove the aphostopias symbol. """
