@@ -86,9 +86,9 @@ class SentimentAnalysisCreation:
                 reminder_message = 'N/A'
 
 
-            data = {'summary_report': summary_report, 'topics': topics, 'foul_language': foul_language,
-                    'action_items': action_items, 'owners': owners, 'sentiment_score': sentiment_score,
-                    'average_sentiment': average_sentiment,'prompt': prompt,'reminder_message':reminder_message}
+            data = {"summary_report": summary_report, "topics": topics, "foul_language": foul_language,
+                    "action_items": action_items, "owners": owners, "sentiment_score": sentiment_score,
+                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -116,12 +116,12 @@ class SentimentAnalysisCreation:
                         dump_data_into_table = SentimentAnalysis(ClientId=clientid,
                                                                  AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
                                                                  AudioFileName=current_file,Created=created_sentiment_date,
-                                                                 SentimentScore=str(sentiment_call_data['sentiment_score']),
+                                                                 SentimentScore=str(sentiment_call_data["sentiment_score"]),
                                                                  SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
-                                                                 Sentiment=str(sentiment_call_data['average_sentiment']),Summary=str(sentiment_call_data['summary_report']),
-                                                                 Topics=str(sentiment_call_data['topics']),FoulLanguage=str(sentiment_call_data['foul_language']),
-                                                                 ActionItems=str(sentiment_call_data['action_items']),Owners=str(sentiment_call_data['owners']),
-                                                                 prompt=str(sentiment_call_data['prompt']),Reminder=str(sentiment_call_data['reminder_message']))
+                                                                 Sentiment=str(sentiment_call_data["average_sentiment"]),Summary=str(sentiment_call_data["summary_report"]),
+                                                                 Topics=str(sentiment_call_data["topics"]),FoulLanguage=str(sentiment_call_data["foul_language"]),
+                                                                 ActionItems=str(sentiment_call_data["action_items"]),Owners=str(sentiment_call_data["owners"]),
+                                                                 prompt=str(sentiment_call_data["prompt"]),Reminder=str(sentiment_call_data["reminder_message"]))
                         session.add(dump_data_into_table)
                         session.commit()
                         result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
@@ -132,15 +132,15 @@ class SentimentAnalysisCreation:
                     #Update Logic
                     status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
                     if status == "success":
-                        update_column_dic = {SentimentAnalysis.Sentiment:str(sentiment_call_data['average_sentiment']),
+                        update_column_dic = {SentimentAnalysis.Sentiment:str(sentiment_call_data["average_sentiment"]),
                                              SentimentAnalysis.Modified:modified_sentiment_date,
-                                             SentimentAnalysis.SentimentScore:str(sentiment_call_data['sentiment_score']),
-                                             SentimentAnalysis.ActionItems:str(sentiment_call_data['action_items']),
-                                             SentimentAnalysis.Topics:str(sentiment_call_data['topics']),SentimentAnalysis.Owners:str(sentiment_call_data['owners']),
-                                             SentimentAnalysis.FoulLanguage:str(sentiment_call_data['foul_language']),
-                                             SentimentAnalysis.prompt:str(sentiment_call_data['prompt']),
-                                             SentimentAnalysis.Reminder:str(sentiment_call_data['reminder_message']),
-                                             SentimentAnalysis.Summary:str(sentiment_call_data['summary_report'])
+                                             SentimentAnalysis.SentimentScore:str(sentiment_call_data["sentiment_score"]),
+                                             SentimentAnalysis.ActionItems:str(sentiment_call_data["action_items"]),
+                                             SentimentAnalysis.Topics:str(sentiment_call_data["topics"]),SentimentAnalysis.Owners:str(sentiment_call_data["owners"]),
+                                             SentimentAnalysis.FoulLanguage:str(sentiment_call_data["foul_language"]),
+                                             SentimentAnalysis.prompt:str(sentiment_call_data["prompt"]),
+                                             SentimentAnalysis.Reminder:str(sentiment_call_data["reminder_message"]),
+                                             SentimentAnalysis.Summary:str(sentiment_call_data["summary_report"])
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
