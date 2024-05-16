@@ -12,7 +12,7 @@ Topics: A list of topics discussed, with their summary descriptions,Sentiment an
 Sentiment: The sentiment (Positive/Negative/Neutral) of the topic.
 FoulLanguage: Whether foul language or bad language was used in the discussion (Yes/No).
 ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and Action date of action.if the action Owner have date then move to the ActionDate columns.ActionDate never be blank.
-AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.
+AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.Remove the apostrophe from "ActionItem".
 Good bye reminder message: Based on their current discussion a reminder given by the virtual agent to the debtor for any future action along with the date and time before closing the discussion.
 
 Make sure that you are always adding the above JSON keys in the response. 
