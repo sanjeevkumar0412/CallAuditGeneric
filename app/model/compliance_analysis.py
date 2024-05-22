@@ -263,3 +263,52 @@ class ComplianceAnalysisCreation:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
+
+    def get_compliance_data_by_report_type(self, server_name, database_name, client_id,column_name,column_value,page,per_page):
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            column = getattr(AudioTranscribe, column_name)
+            audio_file = session.query(AudioTranscribe.AudioFileName).filter(column == column_value)
+            offset = (page - 1) * per_page
+            query = audio_file.order_by(AudioTranscribe.Id)
+            offset_data = query.offset(offset).limit(per_page).all()
+            merged_data=[]
+            compliance_dic = {}
+            for audio_file_val, in offset_data:
+                check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
+                    ScoreCardAnalysis.AudioFileName == audio_file_val).all()
+                try:
+                    if len(check_audio_file_exits) > 0:
+                        data = session.query(ScoreCardAnalysis).filter_by(AudioFileName=audio_file_val).all()
+                        compliance_dic.update({"Id": data[0].Id, "ClientId": data[0].ClientId,
+                                               "AnalysisDateTime": data[0].AnalysisDateTime,
+                                               "AudioFileName": data[0].AudioFileName,
+                                               "Created": data[0].Created, "ScoreCard": data[0].ScoreCard,
+                                               "OverallScore": data[0].OverallScore,
+                                               "Modified": data[0].Modified})
+                        merged_data.append(compliance_dic)
+                        compliance_dic={}
+                        self.logger.info(f":Get Data from ScoreCardAnalysis table successfully for AudioFile {audio_file}")
+                    else:
+                        data = {"status": RESOURCE_NOT_FOUND,
+                                "message": f"Record not found {audio_file} in AudioTranscribe Table"}
+                        self.logger.error(f"Record not found {audio_file} in AudioTranscribe Table", RESOURCE_NOT_FOUND)
+                        return data, RESOURCE_NOT_FOUND
+                except Exception as e:
+                    self.logger.error(f"Found error in get_compliance_data_from_table", str(e))
+                    error_array = []
+                    error_array.append(str(e))
+                    self.logger.error(f" Fetch record from Compliance table Error in method get_compliance_data_from_table",
+                                      str(e))
+                    return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+                finally:
+                    self.logger.log_entry_into_sql_table(session_logger, client_id, True, logger_handler)
+                    session.close()
+                    session_logger.close()
+            return merged_data
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result, INTERNAL_SERVER_ERROR
