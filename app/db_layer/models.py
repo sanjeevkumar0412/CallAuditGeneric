@@ -260,6 +260,8 @@ class AudioTranscribe(Base):
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, default=True, nullable=True)
     IsDeleted = Column(Boolean, default=False, nullable=True)
+    CaseID = Column(String, nullable=False)
+    DateofDiscussion = Column(String, nullable=False)
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}

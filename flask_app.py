@@ -603,6 +603,47 @@ def get_compliance_data():
 def compliance_data():
     return render_template('compliance.html')
 
+@app.route('/sentiment_data_by_report_type', methods=['GET','POST'])
+def get_sentiment_data_by_report_type():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    report_type = request.args.get('report_type')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    data = sentiment_instance.get_sentiment_data_from_table_by_column_name(server_name, database_name, client_id,column_name,column_value,report_type,page,per_page)
+    return data
+
+@app.route('/compliance_data_by_report_type', methods=['GET','POST'])
+def get_compliance_data_by_column_name():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    data = compliance_instance.get_compliance_data_by_report_type(server_name, database_name, client_id,column_name,column_value,page,per_page)
+    return data
+
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(threaded=True)
