@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request,render_template
+from flask import Flask, request,render_template,jsonify
 from app.configs.error_code_enum import *
 from flask_cors import CORS
 app = Flask(__name__)
@@ -8,15 +8,24 @@ from app.database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,update_authentication_token,generate_authentication_token,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
                                       get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,open_ai_transcribe_audio,
-                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio)
+                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio,register_user,login_method,unlock_account)
 
-
+from flask_bcrypt import Bcrypt
+# import datetime
+import secrets
+from datetime import timedelta, datetime
+from flask_jwt_extended import JWTManager,create_access_token,jwt_required,get_jwt_identity,get_jwt,verify_jwt_in_request
+# app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
+app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
+jwt = JWTManager(app)
+bcrypt = Bcrypt(app)
 db_instance = DBRecord()
 server_name = os.environ.get("SERVER_NAME")
 # Below configuration dev environment while running application in Dev Environment
 database_name = os.environ.get("DATABASE_NAME_DEV")
 # Below configuration QA environment while running application in QA Environment
 #database_name = os.environ.get("DATABASE_NAME_QA")
+from app.db_layer.models import RegisterUser
 
 from app.model.sentiment_analysis import SentimentAnalysisCreation
 sentiment_instance = SentimentAnalysisCreation()
@@ -380,12 +389,18 @@ def add_update_transcribe_tracker():
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
 
+
 @app.route('/get_data_from_sentiment_table', methods=['GET','POST'])
+@jwt_required()
 def get_sentiment_data():
+    current_user = get_jwt_identity()
+    print("current_user>>>>>>>>>>>", current_user)
     client_id_val = request.args.get('clientid')
-    user_name = request.args.get('username')
+    # user_name = request.args.get('username')
     audio_file_name = request.args.get('audio_file')
-    if client_id_val and user_name and audio_file_name:
+    # token = request.headers.get('Authorization')
+
+    if client_id_val and audio_file_name:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -396,7 +411,7 @@ def get_sentiment_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,user_name,audio_file_name)
+        data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
@@ -406,6 +421,7 @@ def get_sentiment_data():
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
+
 
 
 @app.route('/get_all_configurations', methods=['GET','POST'])
@@ -810,6 +826,80 @@ def get_compliance_data():
 @app.route('/compliance',methods=['GET'])
 def compliance_data():
     return render_template('compliance.html')
+
+
+@app.route('/register', methods=['GET','POST'])
+def register():
+    username=request.headers.get('username')
+    password=request.headers.get('password')
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    client_id_val=request.headers.get('clientid')
+    if client_id_val and username:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        result = register_user(server_name, database_name, client_id,username,hashed_password)
+        return result
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+    username = request.headers.get('username')
+    password = request.headers.get('password')
+    client_id_val = request.headers.get('clientid')
+    if client_id_val and username:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        data = login_method(server_name, database_name, client_id,username,password)
+        return data
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
+        return {
+                   "result": [response_message],
+                   "message": response_message,
+                   "status": 'failed',
+                   'status_code': RESOURCE_NOT_FOUND
+               }, RESOURCE_NOT_FOUND
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    username = request.headers.get('username')
+    password = request.headers.get('password')
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    client_id_val = request.headers.get('clientid')
+    data = unlock_account(server_name, database_name, client_id_val, username, hashed_password)
+    return data
+
+#
+# @app.route('/protected', methods=['GET'])
+# @refresh_token_required
+# def protected(new_access_token):
+#     current_user = get_jwt_identity()
+#     return jsonify(logged_in_as=current_user, new_access_token=new_access_token), 200
+#
 
 if __name__ == '__main__':
     # app.run(debug=True)

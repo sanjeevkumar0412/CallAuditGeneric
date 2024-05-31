@@ -306,14 +306,17 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_sentiment_data_from_table(self, server_name, database_name, client_id,user_name,audio_file):
+    def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
+            # from flask_end_points_service import get_exp_token_from_database
+            # check_token_status =get_exp_token_from_database(access_token)
+            access_token=True
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            if session:
                 check_audio_file_exits = session.query(SentimentAnalysis).filter(
                     SentimentAnalysis.AudioFileName == audio_file).all()
                 try:
@@ -344,9 +347,11 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return set_json_format([response_message['message']], response_message['status_code'], False,
-                                       response_message['message']), response_message['status_code']
+                # self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
+                # return set_json_format([response_message['message']], response_message['status_code'], False,
+                #                        response_message['message']), response_message['status_code']
+                data={'status':"Token has been expired please relogin AgAIN"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR

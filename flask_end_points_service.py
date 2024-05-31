@@ -5,7 +5,6 @@ from sqlalchemy import create_engine
 from app.configs.config import CONFIG
 from app.configs.job_status_enum import JobStatusEnum
 from app.configs.error_code_enum import *
-
 from sqlalchemy.orm import sessionmaker
 import jwt
 import os
@@ -19,8 +18,8 @@ from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import (Client, Configurations, FileTypesInfo, Subscriptions, AudioTranscribeTracker,
                              AudioTranscribe, ClientMaster, AuthTokenManagement, JobStatus, SubscriptionPlan,
                              AudioFileNamePattern,MasterTable,
-                             MasterConnectionString)
-
+                             MasterConnectionString,RegisterUser,LoginDetails)
+from flask_jwt_extended import create_access_token, JWTManager, jwt_required, get_jwt_identity, get_jwt, decode_token
 global_utility = GlobalUtility()
 logger = Logger()
 db_connection = DbConnection()
@@ -443,9 +442,7 @@ def get_token_based_authentication(server_name, database_name, client_id, user_n
                 result = global_utility.get_configuration_by_column(record)
                 token = global_utility.get_list_array_value(result,
                                                             CONFIG.TOKEN)
-                secret_key = global_utility.get_list_array_value(result,
-                                                                 CONFIG.SECRETKEY)
-
+                secret_key = global_utility.get_list_array_value(result,CONFIG.SECRETKEY)
                 decoded_token = jwt.decode(token, secret_key, algorithms=['HS256'])
                 error_message = str("Authentication Token successfully validated")
                 msg_array = []
@@ -1152,3 +1149,204 @@ def is_index_found(array, index):
     except IndexError:
         return False
 
+def register_user(server_name, database_name, client_id,username,password):
+    connection_string, status = global_utility.get_connection_string(server_name, database_name, client_id)
+    # get_connection_string(server_name, database_name, client_id)
+    if status == SUCCESS and connection_string[0]['transaction'] != None:
+        session = global_utility.get_database_session(connection_string[0]['transaction'])
+        try:
+            user_creation = RegisterUser(Username=username, Password=password,ClientID=client_id)
+            session.add(user_creation)
+            session.commit()
+            logger.info(f"username—the {username} successfully added user in RegisterUser table.")
+            data ={'status':200,'message':f"{username} successfully added user in RegisterUser table"}
+            return data
+        except Exception as e:
+            logger.error(f'Error Ocurred while adding {username}', e)
+
+            print(e)
+    else:
+        result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+        return result, INTERNAL_SERVER_ERROR
+
+
+def login_method_old(server_name, database_name, client_id,username,password):
+    connection_string, status = global_utility.get_connection_string(server_name, database_name, client_id)
+    if status == SUCCESS and connection_string[0]['transaction'] != None:
+        session = global_utility.get_database_session(connection_string[0]['transaction'])
+        try:
+            from flask_app import bcrypt
+            user = session.query(RegisterUser).filter_by(Username=username).first()
+            if user and user.attempts == 0:
+                if bcrypt.check_password_hash(user.Password, password):
+                    user.attempts = 0  # Reset attempts if login successfull
+                    check_user_exit=session.query(AuthTokenManagement).filter_by(UserName=username).first()
+                    if check_user_exit:
+                        token_status = get_token_based_authentication(server_name, database_name, client_id, username)
+                        if token_status[0]['status'] == 'failure':
+                            update_authentication_token(server_name, database_name, client_id, username)
+                            data = {'status': '200','message': f'Token has been successfully updated for user {username}.'}
+                            logger.info(f"Token has been successfully updated for user  {username}.")
+                            return data, 200
+                        else:
+                            data = {'status': '401', 'message': f'Token is active for this {username}.'}
+                            logger.info(f"Token is active for this  {username}.")
+                            return data, 401
+                    else:
+                        generate_authentication_token(server_name, database_name, client_id, username)
+                        # print(token_generate)
+                        data = {'status': '200', 'message': f'Token created successfully for user {username}.'}
+                        logger.info(f"Token created successfully for user  {username}.")
+                        return data, 200
+                else:
+                    user.attempts += 1
+                    session.commit()
+                    if user.attempts >= 4:
+                        user.locked = True
+                        session.commit()
+                        data = {'status': '401','message': f'Account locked due to too many failed attempts for {username}.'}
+                        logger.info(f"Account locked due to too many failed attempts for {username}.")
+                        return data, 401
+                    data = {'status': '401', 'message': 'Invalid credentials.'}
+                    logger.info(f"Invalid credentials.")
+                    return data, 401
+            else:
+                data = {'status': '401', 'message': 'Invalid User or account locked.'}
+                logger.info(f"Invalid User or account locked.")
+                return data, 401
+        except Exception as e:
+            logger.error(f'Error Ocurred while adding {username}', e)
+            print(e)
+    else:
+        result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+        return result, INTERNAL_SERVER_ERROR
+
+def unlock_account(server_name, database_name, client_id,username,password):
+    connection_string, status = global_utility.get_connection_string(server_name, database_name, client_id)
+    if status == SUCCESS and connection_string[0]['transaction'] != None:
+        session = global_utility.get_database_session(connection_string[0]['transaction'])
+        try:
+            from flask_app import bcrypt
+            from datetime import datetime
+            user = session.query(RegisterUser).filter_by(Username=username).first()
+            if user:
+                user.Password = password
+                user.attempts = 0
+                user.CreatedAt = datetime.utcnow()
+                user.locked = False
+                session.commit()
+                data = {'status': '401', 'message': f'Account Successfuly unlocked with your new password'}
+                logger.info(f'Account Successfuly unlocked with your new password')
+                return data
+            else:
+                data = {'status': '401', 'message': 'Invalid User'}
+                logger.info(f'Invalid User')
+                return data
+        except Exception as e:
+            print(e)
+    else:
+        result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+        return result, INTERNAL_SERVER_ERROR
+
+def get_exp_token_from_database(encoded_token):
+    try:
+        decoded_token = decode_token(encoded_token)
+        # decoded_token = jwt.decode(encoded_token, algorithms=['HS256'], options={"verify_signature": False})
+
+        exp_time = decoded_token['exp']
+        data={'status':200,'message':'Token is Activated','exp_time':str(exp_time)}
+        return data
+    except jwt.ExpiredSignatureError:
+        data={'message':'Your Token has expired.Please relogin.','status':'expire','status_code':401}
+        # Handle the case where the token has expired
+        return data
+    except jwt.InvalidTokenError:
+        data={'message':'Invalid token.','status':'expire','status_code':401}
+        return data
+
+def login_method(server_name, database_name, client_id,username,password):
+    connection_string, status = global_utility.get_connection_string(server_name, database_name, client_id)
+    if status == SUCCESS and connection_string[0]['transaction'] != None:
+        session = global_utility.get_database_session(connection_string[0]['transaction'])
+        try:
+            from flask_app import bcrypt
+            user = session.query(RegisterUser).filter_by(Username=username).first()
+            if user:
+                if bcrypt.check_password_hash(user.Password, password):
+                    user.attempts = 0  # Reset attempts if login successful
+                    session.commit()
+                    #create New Token
+                    import datetime
+                    check_user_exit=session.query(LoginDetails).filter_by(Username=username).first()
+                    if not check_user_exit:
+                        import datetime
+                        from flask_jwt_extended import create_access_token
+                        expires_minutes = datetime.timedelta(minutes=10)
+                        generate_token = create_access_token(identity=user.Id, expires_delta=expires_minutes)
+                        import datetime
+                        created_login_date = datetime.datetime.utcnow()
+                        modified_login_date = datetime.datetime.utcnow()
+                        create_login_details=LoginDetails(Username=username,ClientID=client_id,token=generate_token,Created=created_login_date,TokenModified=modified_login_date)
+                        session.add(create_login_details)
+                        session.commit()
+                        data={'status':SUCCESS,'message':f'Token Successfully created for user {username}','token':generate_token}
+                        return data
+                    else:
+                        get_token = session.query(LoginDetails.token).filter_by(Username=username).first()[0]
+                        token_exp_time=get_exp_token_from_database(get_token)
+                        if token_exp_time["status"]=="expire":
+                            result=update_token(server_name, database_name, client_id, username)
+                            return result
+                        else:
+                            data={'status':200,'message':'Token is Already activated '}
+                            return data
+                else:
+                    user.attempts += 1
+                    session.commit()
+                    if user.attempts >= 4:
+                        user.locked = True
+                        session.commit()
+                        data = {'status': '401','message': f'Account locked due to too many failed attempts for {username}.'}
+                        logger.info(f"Account locked due to too many failed attempts for {username}.")
+                        return data, 401
+                    data = {'status': '401', 'message': 'Invalid credentials.'}
+                    logger.info(f"Invalid credentials.")
+                    return data, 401
+            else:
+                data = {'status': '401', 'message': 'Invalid User or account locked.'}
+                logger.info(f"Invalid User or account locked.")
+                return data, 401
+        except Exception as e:
+            data={'message':str(e),'status':RESOURCE_NOT_FOUND}
+            logger.error(f'Error Ocurred while adding {username}', e)
+            return data
+    else:
+        result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+        return result, INTERNAL_SERVER_ERROR
+
+
+def update_token(server_name, database_name, client_id, username):
+    connection_string, status = global_utility.get_connection_string(server_name, database_name, client_id)
+    if status == SUCCESS and connection_string[0]['transaction'] != None:
+        session = global_utility.get_database_session(connection_string[0]['transaction'])
+        get_token = session.query(LoginDetails.token).filter(
+            (LoginDetails.Username == username) & (LoginDetails.ClientID == client_id) & (
+                Client.IsActive)).first()[0]
+        user=session.query(RegisterUser).filter((RegisterUser.Username == username) & (RegisterUser.ClientID == client_id) & (
+            Client.IsActive)).first()
+
+        if user:
+            import datetime
+            from flask_jwt_extended import create_access_token
+            expires_minutes = datetime.timedelta(minutes=10)
+            generate_updated_token = create_access_token(identity=user.Id, expires_delta=expires_minutes)
+            created_login_date = datetime.datetime.utcnow()
+            modified_login_date = datetime.datetime.utcnow()
+            update_column_dic ={"token":generate_updated_token,"Created":created_login_date, "TokenModified":modified_login_date}
+            session.query(LoginDetails).filter_by(Username=username).update(update_column_dic)
+            session.commit()
+            data ={'message': 'Token updated successfully', 'updated_token': generate_updated_token}
+            return data
+        else:
+            data ={'message': 'User not found'}
+            return data
