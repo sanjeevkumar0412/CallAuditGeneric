@@ -15,8 +15,8 @@ from flask_bcrypt import Bcrypt
 import secrets
 from datetime import timedelta, datetime
 from flask_jwt_extended import JWTManager,create_access_token,jwt_required,get_jwt_identity,get_jwt,verify_jwt_in_request
-# app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
-app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
+app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
+# app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 db_instance = DBRecord()
@@ -398,7 +398,8 @@ def get_sentiment_data():
     client_id_val = request.args.get('clientid')
     # user_name = request.args.get('username')
     audio_file_name = request.args.get('audio_file')
-    # token = request.headers.get('Authorization')
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
 
     if client_id_val and audio_file_name:
         try:
@@ -411,7 +412,7 @@ def get_sentiment_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name)
+        data = sentiment_instance.get_sentiment_data_from_table(server_name, database_name, client_id,audio_file_name,remove_bearer)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'

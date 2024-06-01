@@ -3,7 +3,7 @@ import os
 import json
 from app.utilities.utility import GlobalUtility
 from datetime import datetime
-from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,ProhibitedKeyword,JobStatus
+from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,ProhibitedKeyword,JobStatus,LoginDetails
 from sqlalchemy.exc import IntegrityError
 from app.configs.error_code_enum import *
 from app import prompt_check_list
@@ -306,7 +306,7 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file):
+    def get_sentiment_data_from_table(self, server_name, database_name, client_id,audio_file,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
@@ -314,9 +314,18 @@ class SentimentAnalysisCreation:
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
             # from flask_end_points_service import get_exp_token_from_database
             # check_token_status =get_exp_token_from_database(access_token)
-            access_token=True
+            get_refresh_token =  session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db =  session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
             # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
-            if session:
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+
+            if check_refresh_token_status["status"]==200 and client_identifier == get_client_identifier_from_db:
                 check_audio_file_exits = session.query(SentimentAnalysis).filter(
                     SentimentAnalysis.AudioFileName == audio_file).all()
                 try:
@@ -350,7 +359,7 @@ class SentimentAnalysisCreation:
                 # self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
                 # return set_json_format([response_message['message']], response_message['status_code'], False,
                 #                        response_message['message']), response_message['status_code']
-                data={'status':"Token has been expired please relogin AgAIN"}
+                data={'status':"Token has been expired.Please re-login Again"}
                 return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
