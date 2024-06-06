@@ -8,20 +8,21 @@ from app.database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,update_authentication_token,generate_authentication_token,
                                       update_audio_transcribe_table, copy_audio_files_process, update_audio_transcribe_tracker_table,
                                       get_client_master_table_configurations, get_audio_transcribe_tracker_table_data, get_file_name_pattern,open_ai_transcribe_audio,
-                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio,register_user,login_method,unlock_account)
+                                      get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio)
 
+from authenticaion_process import register_user,login_method,unlock_account
 from flask_bcrypt import Bcrypt
-# import datetime
 import secrets
 from datetime import timedelta, datetime
 from flask_jwt_extended import JWTManager,create_access_token,jwt_required,get_jwt_identity,get_jwt,verify_jwt_in_request
-app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
-# app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
+# app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
+app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 db_instance = DBRecord()
 server_name = os.environ.get("SERVER_NAME")
 # Below configuration dev environment while running application in Dev Environment
+# database_name = os.environ.get("DATABASE_NAME_DEV")
 database_name = os.environ.get("DATABASE_NAME_DEV")
 # Below configuration QA environment while running application in QA Environment
 #database_name = os.environ.get("DATABASE_NAME_QA")
@@ -894,13 +895,6 @@ def reset_password():
     data = unlock_account(server_name, database_name, client_id_val, username, hashed_password)
     return data
 
-#
-# @app.route('/protected', methods=['GET'])
-# @refresh_token_required
-# def protected(new_access_token):
-#     current_user = get_jwt_identity()
-#     return jsonify(logged_in_as=current_user, new_access_token=new_access_token), 200
-#
 
 if __name__ == '__main__':
     # app.run(debug=True)
