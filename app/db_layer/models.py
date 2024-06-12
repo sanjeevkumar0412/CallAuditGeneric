@@ -262,6 +262,7 @@ class AudioTranscribe(Base):
     IsDeleted = Column(Boolean, default=False, nullable=True)
     CaseID = Column(String, nullable=False)
     DateofDiscussion = Column(String, nullable=False)
+    FileSize = Column(String, nullable=False)
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}

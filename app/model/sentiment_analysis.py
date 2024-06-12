@@ -86,7 +86,6 @@ class SentimentAnalysisCreation:
             else:
                 reminder_message = 'N/A'
 
-
             data = {"summary_report": summary_report, "topics": topics, "foul_language": foul_language,
                     "action_items": action_items, "owners": owners, "sentiment_score": sentiment_score,
                     "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message}
@@ -106,6 +105,9 @@ class SentimentAnalysisCreation:
                 transcribe_merged_string = '.'.join(transcribe_audio_data)
                 clientid=transcribe_data.get("ClientId")
                 current_file=transcribe_data.get("filename")
+                from flask_end_points_service import get_file_size
+                file_size = get_file_size(current_file)
+                print("File_Size >>>>>>>>",file_size)
                 created_sentiment_date = datetime.utcnow()
                 analysis_sentiment_date = datetime.utcnow()
                 modified_sentiment_date = datetime.utcnow()
@@ -307,6 +309,9 @@ class SentimentAnalysisCreation:
             check_audio_file_exits = session.query(SentimentAnalysis).filter(
                 SentimentAnalysis.AudioFileName == audio_file).all()
 
+            audio_file_size = session.query(AudioTranscribe.FileSize).filter(
+                AudioTranscribe.AudioFileName == audio_file).first()[0]
+
             try:
                 if len(check_audio_file_exits) > 0:
                     sentiment_dic={}
@@ -316,7 +321,7 @@ class SentimentAnalysisCreation:
                                           "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
                                           "FoulLanguage":data[0].FoulLanguage,
                                           "ActionItemsOwners":data[0].Owners,
-                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder})
+                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder,"FileSize":audio_file_size})
                     # result = {"sentimentdata": sentiment_dic}
                     result = sentiment_dic
                     self.logger.info(f":Get Data from SentimentAnalysis table successfully for AudioFile {audio_file}")
