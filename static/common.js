@@ -26,7 +26,8 @@ $(document).ready(function() {
                     $('#foul_lang').text(data.FoulLanguage);
                     $('#summary_report').text(data.SummaryReport);
                     $('#reminder').text(data.Reminder);
-					console.log(2222222222,data);
+                    $('#audio-filsize').text(data.FileSize +' mb');
+					console.log(2222222222,data.FileSize);
                     $('.loader').hide();
                     $('.form-group').hide();
                     $('#submitButton').hide();
