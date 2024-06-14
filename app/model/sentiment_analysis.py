@@ -105,9 +105,6 @@ class SentimentAnalysisCreation:
                 transcribe_merged_string = '.'.join(transcribe_audio_data)
                 clientid=transcribe_data.get("ClientId")
                 current_file=transcribe_data.get("filename")
-                from flask_end_points_service import get_file_size
-                file_size = get_file_size(current_file)
-                print("File_Size >>>>>>>>",file_size)
                 created_sentiment_date = datetime.utcnow()
                 analysis_sentiment_date = datetime.utcnow()
                 modified_sentiment_date = datetime.utcnow()
