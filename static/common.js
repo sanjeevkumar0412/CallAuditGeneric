@@ -26,8 +26,14 @@ $(document).ready(function() {
                     $('#foul_lang').text(data.FoulLanguage);
                     $('#summary_report').text(data.SummaryReport);
                     $('#reminder').text(data.Reminder);
-                    $('#audio-filsize').text(data.FileSize +' mb');
-					console.log(2222222222,data.FileSize);
+                    var filesize_check= data.FileSize;
+                    if (filesize_check !=null)
+                        {
+                        $('#audio-filsize').text(data.FileSize +' mb');
+                        }
+                    else{
+                        $('#audio-filsize').text('N/A');
+                    }
                     $('.loader').hide();
                     $('.form-group').hide();
                     $('#submitButton').hide();
