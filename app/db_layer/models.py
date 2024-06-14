@@ -223,7 +223,6 @@ class SentimentAnalysis(Base):
     Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
     ClientId = Column(Integer, ForeignKey('Client.ClientId'), nullable=False)
     SentimentScore = Column(Float, nullable=False)
-    SentimentText = Column(String, nullable=True)
     AnalysisDateTime = Column(DateTime, default=datetime.utcnow(), nullable=True)
     SentimentStatus = Column(String, nullable=True)
     Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
@@ -241,7 +240,7 @@ class SentimentAnalysis(Base):
     Reminder = Column(String, nullable=False)
 
     def __repr__(self):
-        return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentText='{self.SentimentText}',SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
+        return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
                f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}',prompt='{self.prompt}',Reminder='{self.Reminder}')>"
 
 class AudioTranscribe(Base):

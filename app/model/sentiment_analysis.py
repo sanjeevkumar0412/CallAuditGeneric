@@ -117,7 +117,7 @@ class SentimentAnalysisCreation:
                                                                  AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
                                                                  AudioFileName=current_file,Created=created_sentiment_date,
                                                                  SentimentScore=str(sentiment_call_data["sentiment_score"]),
-                                                                 SentimentText=transcribe_merged_string,Modified=modified_sentiment_date,
+                                                                 Modified=modified_sentiment_date,
                                                                  Sentiment=str(sentiment_call_data["average_sentiment"]),Summary=str(sentiment_call_data["summary_report"]),
                                                                  Topics=str(sentiment_call_data["topics"]),FoulLanguage=str(sentiment_call_data["foul_language"]),
                                                                  ActionItems=str(sentiment_call_data["action_items"]),Owners=str(sentiment_call_data["owners"]),
