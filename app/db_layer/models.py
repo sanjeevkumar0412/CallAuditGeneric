@@ -259,8 +259,10 @@ class AudioTranscribe(Base):
     Modified = Column(DateTime, default=datetime.utcnow(), nullable=True)
     IsActive = Column(Boolean, default=True, nullable=True)
     IsDeleted = Column(Boolean, default=False, nullable=True)
+    AgentID = Column(String, nullable=False)
     CaseID = Column(String, nullable=False)
     DateofDiscussion = Column(String, nullable=False)
+    DiscussionType = Column(String, nullable=False)
     FileSize = Column(String, nullable=False)
 
     def toDict(self):
