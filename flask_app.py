@@ -606,6 +606,11 @@ def compliance_data():
 @app.route('/sentiment_data_by_report_type', methods=['GET','POST'])
 def get_sentiment_data_by_report_type():
     client_id_val = request.args.get('clientid')
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    report_type = request.args.get('report_type')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
     try:
         client_id = int(client_id_val)
     except Exception as e:
@@ -616,15 +621,18 @@ def get_sentiment_data_by_report_type():
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    column_name = request.args.get('column_name')
-    column_value = request.args.get('column_value')
-    report_type = request.args.get('report_type')
-    page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
-    data = sentiment_instance.get_sentiment_data_from_table_by_column_name(server_name, database_name, client_id,column_name,column_value,report_type,page,per_page)
+    try:
+        data = sentiment_instance.get_sentiment_data_from_table_by_column_name(server_name, database_name, client_id,column_name,column_value,report_type,page,per_page)
+    except Exception as e:
+        response_message = 'Invalid column name parameter.Please try again with a valid parameter.'
+        return {
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     return data
 
-@app.route('/compliance_data_by_report_type', methods=['GET','POST'])
+@app.route('/nested_compliance_data', methods=['GET','POST'])
 def get_compliance_data_by_column_name():
     client_id_val = request.args.get('clientid')
     try:
@@ -641,7 +649,15 @@ def get_compliance_data_by_column_name():
     column_value = request.args.get('column_value')
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
-    data = compliance_instance.get_compliance_data_by_report_type(server_name, database_name, client_id,column_name,column_value,page,per_page)
+    try:
+        data = compliance_instance.get_compliance_data_by_report_type(server_name, database_name, client_id,column_name,column_value,page,per_page)
+    except Exception as e:
+        response_message = 'Invalid column name parameter.Please try again with a valid parameter.'
+        return {
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
     return data
 
 if __name__ == '__main__':
