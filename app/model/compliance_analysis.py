@@ -3,7 +3,7 @@ import os
 import json
 from app.utilities.utility import GlobalUtility
 from datetime import datetime
-from db_layer.models import AudioTranscribeTracker,ScoreCardAnalysis,AudioTranscribe,ComplianceScore,JobStatus
+from db_layer.models import AudioTranscribeTracker,ScoreCardAnalysis,AudioTranscribe,ComplianceScore,JobStatus,LoginDetails
 from sqlalchemy.exc import IntegrityError
 from app.configs.error_code_enum import *
 from app import prompt_check_list
@@ -61,7 +61,7 @@ class ComplianceAnalysisCreation:
             return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
 
-    def data_dump_into_compliance_database(self, server_name, database_name, client_id,user_name,transcribe_data):
+    def data_dump_into_compliance_database(self, server_name, database_name, client_id,transcribe_data,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
@@ -76,7 +76,7 @@ class ComplianceAnalysisCreation:
                 modified_compliance_date = datetime.utcnow()
                 file_entry_check = session.query(ScoreCardAnalysis).filter_by(AudioFileName=current_file).all()
                 if len(file_entry_check) == 0:
-                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,user_name)
+                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,access_token)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
                     if status == 'success':
                         dump_data_into_table = ScoreCardAnalysis(ClientId=clientid,
@@ -99,7 +99,7 @@ class ComplianceAnalysisCreation:
                         return compliance_data,RESOURCE_NOT_FOUND
                 else:
                     #Update logic written Here
-                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,user_name)
+                    compliance_check_list= self.get_data_from_compliance_score(server_name, database_name, client_id,access_token)
                     status, compliance_data = self.compliance_analysis(transcribe_merged_string,compliance_check_list[0])
                     if status == "success":
                         update_column_dic = {ScoreCardAnalysis.ScoreCard:str(compliance_data['Scorecard']),ScoreCardAnalysis.Modified:modified_compliance_date,ScoreCardAnalysis.OverallScore:str(compliance_data['OverallScore']),ScoreCardAnalysis.prompt:str(compliance_data['prompt'])}
@@ -128,14 +128,25 @@ class ComplianceAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,user_name,audio_file):
+    def get_transcribe_data_for_compliance(self, server_name, database_name, client_id,audio_file,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
+            get_refresh_token = session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db = \
+            session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+
+            if check_refresh_token_status["status"] == 200 and client_identifier == get_client_identifier_from_db:
                 try:
                     audio_dictionary = {}
                     transcribe_text = []
@@ -174,7 +185,7 @@ class ComplianceAnalysisCreation:
                         self.logger.info(f":Record not found {audio_file}")
                         data= {"status":RESOURCE_NOT_FOUND, "message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                    return self.data_dump_into_compliance_database(server_name, database_name, client_id,user_name,audio_dictionary)
+                    return self.data_dump_into_compliance_database(server_name, database_name, client_id,audio_dictionary,access_token)
                 except Exception as e:
                     # self.logger.error(f": Error {e}",e)
                     error_array = []
@@ -187,22 +198,31 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return self.global_utility.set_json_format([response_message['message']],
-                                                           response_message['status_code'], False,
-                                                           response_message['message']), response_message['status_code']
+                self.logger.error(f'Token has been expired.Please re-login Again', 'token expired')
+                data = {'status': "Token has been expired.Please re-login Again"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_data_from_compliance_score(self, server_name, database_name, client_id,user_name):
+    def get_data_from_compliance_score(self, server_name, database_name, client_id, access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
+            get_refresh_token =  session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db =  session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+            # if auth_status == SUCCESS:
+            if check_refresh_token_status["status"]==200 and client_identifier == get_client_identifier_from_db:
                 try:
                     compliance_score = session.query(ComplianceScore).all()
                     compliance_data=""
@@ -227,25 +247,34 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return self.global_utility.set_json_format([response_message['message']],
-                                                           response_message['status_code'], False,
-                                                           response_message['message']), response_message['status_code']
+                self.logger.error(f'Token has been expired.Please re-login Again ','token expired')
+                data = {'status': "Token has been expired.Please re-login Again"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
 
-    def get_compliance_data_from_table(self, server_name, database_name, client_id,user_name,audio_file):
+    def get_compliance_data_from_table(self, server_name, database_name, client_id,audio_file,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
+            get_refresh_token = session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db = session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+            # if auth_status == SUCCESS:
+            if check_refresh_token_status["status"]==200 and client_identifier == get_client_identifier_from_db:
+                check_audio_file_exits = session.query(ScoreCardAnalysis).filter(
                 ScoreCardAnalysis.AudioFileName == audio_file).all()
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
                 try:
                     if len(check_audio_file_exits) > 0:
                         compliance_dic={}
@@ -273,10 +302,8 @@ class ComplianceAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return self.global_utility.set_json_format([response_message['message']],
-                                                           response_message['status_code'], False,
-                                                           response_message['message']), response_message['status_code']
+                data = {'status': "Token has been expired.Please re-login Again"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR

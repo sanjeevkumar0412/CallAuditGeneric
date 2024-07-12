@@ -95,12 +95,12 @@ class SentimentAnalysisCreation:
             self.logger.error(f" Sentiment Error in method get_sentiment",str(e))
             return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
 
-    def dump_data_into_sentiment_database(self, server_name, database_name, client_id,user_name,transcribe_data):
+    def dump_data_into_sentiment_database(self, server_name, database_name, client_id,transcribe_data,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             try:
-                prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id,user_name)
+                prohibited_prompt_inject= self.get_prohibited_data_from_table(server_name, database_name, client_id)
                 transcribe_audio_data=transcribe_data.get("TranscribeMergeText")
                 transcribe_merged_string = '.'.join(transcribe_audio_data)
                 clientid=transcribe_data.get("ClientId")
@@ -169,14 +169,24 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_data_from_transcribe_table(self, server_name, database_name, client_id,user_name,audio_file):
+    def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
+            get_refresh_token = session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db = \
+                session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+            if check_refresh_token_status["status"] == 200 and client_identifier == get_client_identifier_from_db:
                 try:
                     audio_dictionary = {}
                     transcribe_text = []
@@ -230,24 +240,33 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return self.global_utility.set_json_format([response_message['message']],
-                                                           response_message['status_code'], False,
-                                                           response_message['message']), response_message['status_code']
+                self.logger.error(f'Token has been expired.Please re-login Again', 'token expired')
+                data = {'status': "Token has been expired.Please re-login Again"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
 
 
-    def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,user_name,audio_file):
+    def get_transcribe_data_for_sentiment(self, server_name, database_name, client_id,audio_file,access_token):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
             logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
+            get_refresh_token = session.query(LoginDetails.refresh_token).filter_by(token=access_token).first()[0]
+            get_client_identifier_from_db = session.query(LoginDetails.clientIdentifier).filter_by(token=access_token).first()[0]
+            # access_token=True
+            from flask_end_points_service import get_exp_token_from_database
+            import hashlib
+            from flask import request
+            # response_message, auth_status = self.global_utility.get_authentication(session, client_id)
+            check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+            # check_refresh_token_status["status"]
+            client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+            # if auth_status == SUCCESS:
+            if check_refresh_token_status["status"] == 200 and client_identifier == get_client_identifier_from_db:
                 try:
                     audio_dictionary = {}
                     transcribe_text = []
@@ -285,7 +304,7 @@ class SentimentAnalysisCreation:
                         self.logger.info(f":Record not found {audio_file}")
                         data= {"status":RESOURCE_NOT_FOUND,"message":f":Record not found {audio_file} in AudioTranscribe Table"}
                         return data,RESOURCE_NOT_FOUND
-                    return self.dump_data_into_sentiment_database(server_name, database_name, client_id,user_name,audio_dictionary)
+                    return self.dump_data_into_sentiment_database(server_name, database_name, client_id,audio_dictionary,access_token)
                 except Exception as e:
                     # self.logger.error(f": Error {e}",e)
                     error_array = []
@@ -298,10 +317,9 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return self.global_utility.set_json_format([response_message['message']],
-                                                           response_message['status_code'], False,
-                                                           response_message['message']), response_message['status_code']
+                self.logger.error(f'Token has been expired.Please re-login Again', 'token expired')
+                data = {'status': "Token has been expired.Please re-login Again"}
+                return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
@@ -356,53 +374,45 @@ class SentimentAnalysisCreation:
                     session.close()
                     session_logger.close()
             else:
-                # self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                # return set_json_format([response_message['message']], response_message['status_code'], False,
-                #                        response_message['message']), response_message['status_code']
                 data={'status':"Token has been expired.Please re-login Again"}
                 return data
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
 
-    def get_prohibited_data_from_table(self, server_name, database_name, client_id,user_name):
+    def get_prohibited_data_from_table(self, server_name, database_name, client_id):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             # if len(connection_string) > 0:
             session = self.global_utility.get_database_session(connection_string[0]['transaction'])
             session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
-            response_message, auth_status = self.global_utility.get_authentication(session, client_id, user_name)
-            if auth_status == SUCCESS:
-                logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
-                check_data_exist = session.query(ProhibitedKeyword).all()
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            check_data_exist = session.query(ProhibitedKeyword).all()
 
-                try:
-                    if len(check_data_exist) > 0:
-                        prohibited_data=[]
-                        data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
-                        for key_data in data:
-                            prohibited_data.append(key_data.Keywords)
+            try:
+                if len(check_data_exist) > 0:
+                    prohibited_data=[]
+                    data = session.query(ProhibitedKeyword).filter_by(ClientID=client_id).all()
+                    for key_data in data:
+                        prohibited_data.append(key_data.Keywords)
 
-                        result=','.join(prohibited_data)
+                    result=','.join(prohibited_data)
 
-                        return result,SUCCESS
-                    else:
-                        data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
-                        return data,RESOURCE_NOT_FOUND
-                except Exception as e:
-                    self.logger.error(f"Found error in ProhibitedKeyword", str(e))
-                    error_array = []
-                    error_array.append(str(e))
-                    self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
-                    return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
-                    # self.logger.error(f": Error {e}",e)
-                finally:
-                    self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
-                    session.close()
-                    session_logger.close()
-            else:
-                self.logger.error(f'Token found a issue for user {user_name}', response_message['message'])
-                return set_json_format([response_message['message']], response_message['status_code'], False, response_message['message']),response_message['status_code']
+                    return result,SUCCESS
+                else:
+                    data = {"status":RESOURCE_NOT_FOUND,"message": f"Record not found {client_id} in ProhibitedKeyword Table"}
+                    return data,RESOURCE_NOT_FOUND
+            except Exception as e:
+                self.logger.error(f"Found error in ProhibitedKeyword", str(e))
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error(f" Fetch record from Sentiment table Error in method get_sentiment_data_from_table", str(e))
+                return set_json_format(error_array, RESOURCE_NOT_FOUND, False, str(e))
+                # self.logger.error(f": Error {e}",e)
+            finally:
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session.close()
+                session_logger.close()
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR

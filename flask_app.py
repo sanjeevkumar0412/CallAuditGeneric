@@ -15,8 +15,8 @@ from flask_bcrypt import Bcrypt
 import secrets
 from datetime import timedelta, datetime
 from flask_jwt_extended import JWTManager,create_access_token,jwt_required,get_jwt_identity,get_jwt,verify_jwt_in_request
-# app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
-app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
+app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
+# app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 db_instance = DBRecord()
@@ -194,10 +194,13 @@ def delete_recordby_id():
         }, RESOURCE_NOT_FOUND
 
 @app.route('/merge_chunk_transcribe_text', methods=['GET','POST'])
+@jwt_required()
 def get_transcribe_sentiment():
+    current_user = get_jwt_identity()
     client_id_val = request.args.get('clientid')
-    user_name = request.args.get('username')
-    if client_id_val and user_name:
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
+    if client_id_val:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -209,7 +212,7 @@ def get_transcribe_sentiment():
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
         audio_file_name = request.args.get('audio_file')
-        data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,user_name,audio_file_name)
+        data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,remove_bearer)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
@@ -395,7 +398,7 @@ def add_update_transcribe_tracker():
 @jwt_required()
 def get_sentiment_data():
     current_user = get_jwt_identity()
-    print("current_user>>>>>>>>>>>", current_user)
+    # print("current_user>>>>>>>>>>>", current_user)
     client_id_val = request.args.get('clientid')
     # user_name = request.args.get('username')
     audio_file_name = request.args.get('audio_file')
@@ -515,11 +518,15 @@ def match_file_name_pettern():
         }, RESOURCE_NOT_FOUND
 
 @app.route('/dump_data_into_sentiment', methods=['GET','POST'])
+@jwt_required()
 def dump_data_sentiment_table():
+    current_user = get_jwt_identity()
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
     audio_file_name = request.args.get('audio_file')
-    if client_id_val and user_name and audio_file_name:
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
+    if client_id_val and audio_file_name:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -531,7 +538,7 @@ def dump_data_sentiment_table():
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
         if len(prompt_check_list.open_ai_key) > 0:
-            data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,user_name,audio_file_name)
+            data = sentiment_instance.get_transcribe_data_for_sentiment(server_name, database_name, client_id,audio_file_name,remove_bearer)
             return data
         else:
             data={"message":"Open AI key can't be blank","status":RESOURCE_NOT_FOUND}
@@ -739,11 +746,14 @@ def get_prohibited_data():
         }, RESOURCE_NOT_FOUND
 
 @app.route('/dump_data_into_compliance', methods=['GET','POST'])
+@jwt_required()
 def dump_data_compliance_table():
+    current_user = get_jwt_identity()
     client_id_val = request.args.get('clientid')
-    user_name = request.args.get('username')
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
     audio_file_name = request.args.get('audio_file')
-    if client_id_val and user_name and audio_file_name:
+    if client_id_val and audio_file_name:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -755,7 +765,7 @@ def dump_data_compliance_table():
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
         if len(prompt_check_list.open_ai_key) > 0:
-            data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,user_name,audio_file_name)
+            data = compliance_instance.get_transcribe_data_for_compliance(server_name, database_name, client_id,audio_file_name,remove_bearer)
             return data
         else:
             data={"message":"Open AI key can't be blank","status":RESOURCE_NOT_FOUND}
@@ -771,10 +781,13 @@ def dump_data_compliance_table():
 
 
 @app.route('/get_data_from_compliance_score', methods=['GET'])
+@jwt_required()
 def get_compliance_score_data():
+    current_user = get_jwt_identity()
     client_id_val = request.args.get('clientid')
-    user_name = request.args.get('username')
-    if client_id_val and user_name:
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
+    if client_id_val:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -785,7 +798,7 @@ def get_compliance_score_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id,user_name)
+        data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id,remove_bearer)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
@@ -798,11 +811,15 @@ def get_compliance_score_data():
 
 
 @app.route('/get_data_from_compliance_table', methods=['GET'])
+@jwt_required()
 def get_compliance_data():
+    current_user = get_jwt_identity()
     client_id_val = request.args.get('clientid')
     user_name = request.args.get('username')
+    access_token = request.headers.get('Authorization')
+    remove_bearer = access_token.split()[1]
     audio_file_name = request.args.get('audio_file')
-    if client_id_val and user_name and audio_file_name:
+    if client_id_val and audio_file_name:
         try:
             client_id = int(client_id_val)
         except Exception as e:
@@ -813,7 +830,7 @@ def get_compliance_data():
                 "status": 'failed',
                 'status_code': RESOURCE_NOT_FOUND
             }, RESOURCE_NOT_FOUND
-        data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,user_name,audio_file_name)
+        data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name,remove_bearer)
         return data
     else:
         response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
