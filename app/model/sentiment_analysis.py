@@ -445,3 +445,76 @@ class SentimentAnalysisCreation:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
+
+    def get_data_multi_transcribe(self, server_name, database_name, client_id,column_name,column_value,page,per_page):
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            column = getattr(AudioTranscribe, column_name)
+            audio_file = session.query(AudioTranscribe.AudioFileName).filter(column == column_value)
+            offset = (page - 1) * per_page
+            query = audio_file.order_by(AudioTranscribe.Id)
+            offset_data = query.offset(offset).limit(per_page).all()
+            merged_data = []
+            multi_trans_dic = {}
+
+            try:
+                audio_dictionary = {}
+                transcribe_text = []
+                trans_dic={}
+                for audio_file_val, in offset_data:
+                    check_audio_id_exits = session.query(AudioTranscribe).filter_by(
+                       AudioFileName = audio_file_val).all()
+                    if len(check_audio_id_exits) > 0:
+                        audio_id_query = session.query(AudioTranscribe.Id).filter_by(
+                            AudioFileName = audio_file_val)
+                        query_audio_id_results = audio_id_query.all()
+                        check_chunk_exist = session.query(AudioTranscribeTracker.ChunkText).filter(
+                            AudioTranscribeTracker.AudioId == query_audio_id_results[0][0])
+                        chunk_results_check = check_chunk_exist.all()
+
+                        if len(chunk_results_check) == 0:
+                            data = {"status": RESOURCE_NOT_FOUND,"message": f":{audio_file} file not exist in AudioTranscribeTracker Table"}
+                            return data, RESOURCE_NOT_FOUND
+
+                        if len(query_audio_id_results) > 0 and chunk_results_check[0][0] !=None:
+                            query = session.query(AudioTranscribeTracker.ClientId, AudioTranscribeTracker.AudioId,
+                                                  AudioTranscribeTracker.ChunkFilePath,
+                                                  AudioTranscribeTracker.ChunkSequence,
+                                                  AudioTranscribeTracker.ChunkText).filter(
+                                AudioTranscribeTracker.AudioId == audio_id_query)
+                            results = query.all()
+
+                            for row in results:
+                                # print("row outpupt", row.ClientId)
+                                transcribe_text.append(row.ChunkText)
+                                audio_dictionary.update({"ClientId": row.ClientId, "TranscribeId": row.AudioId,
+                                                         "ChunkSequence": row.ChunkSequence,
+                                                         "TranscribeMergeText": transcribe_text})
+                            multi_trans_dic.update({"AudioFilename": audio_file_val, "TranscribeMergeText": transcribe_text[0]})
+                            merged_data.append(multi_trans_dic)
+                            multi_trans_dic={}
+                        else:
+                            self.logger.info(f":ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table")
+                            data = {"status":RESOURCE_NOT_FOUND,"message": f"ChunkText is not exist for {audio_file} in AudioTranscribeTracker Table"}
+                            return data,RESOURCE_NOT_FOUND
+                    else:
+                        self.logger.info(f":Record not found {audio_file} in AudioTranscribe Table")
+                        data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
+                        return data,RESOURCE_NOT_FOUND
+            except Exception as e:
+                self.logger.error(f": get_data_from_transcribe_table {e}",e)
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error('Error in Method get_data_from_transcribe_table ', str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+            finally:
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session.close()
+                session_logger.close()
+            return merged_data, SUCCESS
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result,INTERNAL_SERVER_ERROR

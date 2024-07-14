@@ -632,7 +632,7 @@ def get_sentiment_data_by_report_type():
         }, RESOURCE_NOT_FOUND
     return data
 
-@app.route('/nested_compliance_data', methods=['GET','POST'])
+@app.route('/multi_compliance_reports', methods=['GET','POST'])
 def get_compliance_data_by_column_name():
     client_id_val = request.args.get('clientid')
     try:
@@ -660,6 +660,28 @@ def get_compliance_data_by_column_name():
         }, RESOURCE_NOT_FOUND
     return data
 
+
+@app.route('/multi_transcribe_text', methods=['GET','POST'])
+def get_transcribe_multi_data():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
+    # audio_file_name = request.args.get('audio_file')
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    data = sentiment_instance.get_data_multi_transcribe(server_name, database_name, client_id,column_name,column_value,page,per_page)
+    return data
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(threaded=True)
