@@ -1,8 +1,9 @@
 import os
-from flask import Flask, request,render_template
+from flask import Flask, request,render_template,send_file, abort, make_response,url_for,redirect,jsonify
 from app.configs.error_code_enum import *
 from flask_cors import CORS
 app = Flask(__name__)
+app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024
 CORS(app)
 from database_query_utils import DBRecord
 from flask_end_points_service import (get_json_format, set_json_format, get_token_based_authentication, get_app_configurations,update_authentication_token,generate_authentication_token,
@@ -585,6 +586,8 @@ def get_compliance_data():
     client_id_val = request.args.get('clientid')
     try:
         client_id = int(client_id_val)
+        audio_file_name = request.args.get('audio_file')
+        data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name)
     except Exception as e:
         response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
         return {
@@ -593,9 +596,6 @@ def get_compliance_data():
             "status": 'failed',
             'status_code': RESOURCE_NOT_FOUND
         }, RESOURCE_NOT_FOUND
-    # client_id = int(request.args.get('clientid'))
-    audio_file_name = request.args.get('audio_file')
-    data = compliance_instance.get_compliance_data_from_table(server_name, database_name, client_id,audio_file_name)
     return data
 
 
@@ -682,6 +682,99 @@ def get_transcribe_multi_data():
     per_page = int(request.args.get('per_page'))
     data = sentiment_instance.get_data_multi_transcribe(server_name, database_name, client_id,column_name,column_value,page,per_page)
     return data
+
+
+BASE_DIRECTORY = "AICogent/ICFiles/Done/"
+
+@app.route('/download/<path:filename>', methods=['GET'])
+def download_files(filename):
+    # Resolve the absolute file path
+    safe_path = os.path.abspath(os.path.join(BASE_DIRECTORY, filename))
+
+    # Ensure the file is within the base directory to prevent directory traversal attacks
+    if os.path.commonprefix([safe_path, os.path.abspath(BASE_DIRECTORY)]) == os.path.abspath(BASE_DIRECTORY):
+        if os.path.exists(safe_path):
+            print("File successfully sanjeev downloaded")
+            send_file(safe_path, as_attachment=True)
+            response = make_response(send_file(safe_path, as_attachment=True))
+            response.headers['X-Success-Message'] = 'File successfully sanjeev downloaded'
+            # data = {'response':response,'message':'File successfully sanjeev downloaded'}
+            if response.status_code ==304:
+                data = {'message':'File successfully sanjeev downloaded','status':SUCCESS},SUCCESS
+                # return data
+            else:
+                data ={'message':'Error while dowloading file'},RESOURCE_NOT_FOUND
+            return data
+        else:
+            abort(404, description="File not found")
+    else:
+        abort(403, description="Access denied")
+
+@app.route('/get_audio_filename', methods=['GET'])
+def get_all_audio_file():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+                   "result": [response_message],
+                   "message": response_message,
+                   "status": 'failed',
+                   'status_code': RESOURCE_NOT_FOUND
+               }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    data = sentiment_instance.get_audio_file_name_from_table(server_name, database_name, client_id, column_name,column_value, page, per_page)
+    return data
+
+@app.route('/get_call_status', methods=['GET'])
+def get_call_status():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+                   "result": [response_message],
+                   "message": response_message,
+                   "status": 'failed',
+                   'status_code': RESOURCE_NOT_FOUND
+               }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
+    column_name = request.args.get('column_name')
+    column_value = request.args.get('column_value')
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    to_date = request.args.get('to_date')
+    from_date = request.args.get('from_date')
+    data = sentiment_instance.get_job_staus_from_audiotranscribe_table(server_name, database_name, client_id, column_name,column_value, page, per_page,from_date,to_date)
+    return data
+
+UPLOAD_FOLDER = 'AICogent/ICFiles/'
+ALLOWED_EXTENSIONS = {'wav','mp3'}
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+from werkzeug.utils import secure_filename
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+    if file and allowed_file(file.filename):
+        filename = secure_filename(file.filename)
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        return jsonify({'message': f'File {filename} uploaded successfully!'}), 200
+    return jsonify({'error': 'File type not allowed'}), 400
+
+
 if __name__ == '__main__':
     # app.run(debug=True)
     app.run(threaded=True)

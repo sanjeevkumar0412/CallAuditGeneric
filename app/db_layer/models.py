@@ -264,6 +264,9 @@ class AudioTranscribe(Base):
     DateofDiscussion = Column(String, nullable=False)
     DiscussionType = Column(String, nullable=False)
     FileSize = Column(String, nullable=False)
+    SADone = Column(String, nullable=False)
+    SCDone = Column(String, nullable=False)
+
 
     def toDict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
