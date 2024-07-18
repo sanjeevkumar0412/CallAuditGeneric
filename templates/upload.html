@@ -113,10 +113,17 @@
     </style>
   </head>
   <body>
-    <h1>Upload a File</h1>
-    <form method="post" enctype="multipart/form-data" action="/upload_file">
-      <input type="file" name="file">
-      <input type="submit" value="Upload">
-    </form>
-  </body>
+    <div class="container">
+        <h1>Upload Files</h1>
+        <form method="post" enctype="multipart/form-data" action="/upload_file">
+            <div class="file-upload">
+                <label for="file">Choose files:</label>
+                <input type="file" name="file" id="file" multiple>
+            </div>
+            <div class="submit-btn">
+                <input type="submit" value="Upload">
+            </div>
+        </form>
+    </div>
+</body>
 </html>
