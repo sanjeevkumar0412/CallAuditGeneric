@@ -684,7 +684,7 @@ def get_transcribe_multi_data():
     return data
 
 
-BASE_DIRECTORY = "AICogent/ICFiles/Done/"
+BASE_DIRECTORY = "C:/AICogent/ICFiles/Done/"
 
 @app.route('/download/<path:filename>', methods=['GET'])
 def download_files(filename):
@@ -754,25 +754,34 @@ def get_call_status():
     data = sentiment_instance.get_job_staus_from_audiotranscribe_table(server_name, database_name, client_id, column_name,column_value, page, per_page,from_date,to_date)
     return data
 
-UPLOAD_FOLDER = 'AICogent/ICFiles/'
+UPLOAD_FOLDER = 'C:/AICogent/ICFiles/'
 ALLOWED_EXTENSIONS = {'wav','mp3'}
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 from werkzeug.utils import secure_filename
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@app.route('/upload', methods=['POST'])
+@app.route('/upload_file', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
+        return redirect(request.url)
     file = request.files['file']
     if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+        return redirect(request.url)
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-        return jsonify({'message': f'File {filename} uploaded successfully!'}), 200
-    return jsonify({'error': 'File type not allowed'}), 400
+        return redirect(url_for('uploaded_file', filename=filename))
+    return redirect(request.url)
+
+@app.route('/upload_page')
+def upload_page():
+    return render_template('upload.html')
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return f'File {filename} uploaded successfully!'
+
 
 
 if __name__ == '__main__':
