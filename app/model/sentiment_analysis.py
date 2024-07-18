@@ -5,6 +5,7 @@ from app.utilities.utility import GlobalUtility
 from datetime import datetime
 from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTranscribe,ProhibitedKeyword,JobStatus
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import and_,desc
 from app.configs.error_code_enum import *
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
@@ -518,3 +519,81 @@ class SentimentAnalysisCreation:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
+
+    def get_audio_file_name_from_table(self, server_name, database_name, client_id, column_name, column_value, page,
+                                       per_page):
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            column = getattr(AudioTranscribe, column_name)
+            audio_file = session.query(AudioTranscribe.TranscribeFilePath).filter(column == column_value)
+            # query_res = audio_file.all() # For all record
+            offset = (page - 1) * per_page
+            query = audio_file.order_by(AudioTranscribe.Id)
+            offset_data = query.offset(offset).limit(per_page).all()
+            data = [x.split("\\")[3] for x, in offset_data]
+            return data
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result, INTERNAL_SERVER_ERROR
+
+
+    def get_job_staus_from_audiotranscribe_table(self, server_name, database_name, client_id, column_name, column_value, page,
+                                       per_page,from_date,to_date):
+        connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
+        if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+            session = self.global_utility.get_database_session(connection_string[0]['transaction'])
+            session_logger = self.global_utility.get_database_session(connection_string[0]['logger'])
+            logger_handler = self.logger.log_entry_into_sql_table(session_logger, client_id, False)
+            try:
+                column = getattr(AudioTranscribe, column_name)
+                audio_file = session.query(
+                            AudioTranscribe.AudioFileName,
+                            AudioTranscribe.JobStatus,
+                            AudioTranscribe.SADone,
+                            AudioTranscribe.SCDone
+                        ).filter(
+                            and_(
+                                column== column_value,
+                                AudioTranscribe.Created >= from_date,
+                                AudioTranscribe.Created <= to_date)
+                            ).order_by(desc(AudioTranscribe.Created))
+                offset = (page - 1) * per_page
+                query = audio_file.order_by(AudioTranscribe.Id)
+                offset_data = query.offset(offset).limit(per_page).all()
+                data_update ={}
+                merged_data=[]
+                for record in offset_data:
+                    if record[1]==3:
+                        trans_status='Done'
+                    else:
+                        trans_status ='Inprogress'
+
+                    if record[2]==True:
+                        sc_status="Done"
+                    else:
+                        sc_status ="Inprogress"
+
+                    if record[3]==True:
+                        compliance_status="Done"
+                    else:
+                        compliance_status="False"
+                    data_update.update({"AudioFIleName":record[0],"TranscribeStatus":trans_status,"CallAnanlysis":sc_status,"ComplianceStatus":compliance_status})
+                    merged_data.append(data_update)
+                    data_update={}
+                return merged_data
+            except Exception as e:
+                self.logger.error(f": get_call_staus_from_audiotranscribe_table {e}", e)
+                error_array = []
+                error_array.append(str(e))
+                self.logger.error('Error in Method get_call_staus_from_audiotranscribe_table ', str(e))
+                return set_json_format(error_array, INTERNAL_SERVER_ERROR, False, str(e))
+            finally:
+                self.logger.log_entry_into_sql_table(session_logger, client_id, True,logger_handler)
+                session.close()
+                session_logger.close()
+        else:
+            result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
+            return result, INTERNAL_SERVER_ERROR
