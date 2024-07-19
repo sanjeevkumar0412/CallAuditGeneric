@@ -12,6 +12,8 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
                                       get_ldap_authentication, get_audio_transcribe_table_data, update_transcribe_audio_text, get_all_configurations_table,open_source_transcribe_audio)
 
 
+from common_utils import get_data_multi_transcribe,get_job_staus_from_audiotranscribe_table,get_audio_file_name_from_table
+
 db_instance = DBRecord()
 server_name = os.environ.get("SERVER_NAME")
 # Below configuration dev environment while running application in Dev Environment
@@ -680,7 +682,7 @@ def get_transcribe_multi_data():
     column_value = request.args.get('column_value')
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
-    data = sentiment_instance.get_data_multi_transcribe(server_name, database_name, client_id,column_name,column_value,page,per_page)
+    data = get_data_multi_transcribe(server_name, database_name, client_id,column_name,column_value,page,per_page)
     return data
 
 
@@ -688,20 +690,17 @@ BASE_DIRECTORY = "C:/AICogent/ICFiles/Done/"
 
 @app.route('/download/<path:filename>', methods=['GET'])
 def download_files(filename):
-    # Resolve the absolute file path
-    safe_path = os.path.abspath(os.path.join(BASE_DIRECTORY, filename))
 
-    # Ensure the file is within the base directory to prevent directory traversal attacks
+    safe_path = os.path.abspath(os.path.join(BASE_DIRECTORY, filename))
     if os.path.commonprefix([safe_path, os.path.abspath(BASE_DIRECTORY)]) == os.path.abspath(BASE_DIRECTORY):
         if os.path.exists(safe_path):
             print("File successfully sanjeev downloaded")
             send_file(safe_path, as_attachment=True)
             response = make_response(send_file(safe_path, as_attachment=True))
-            response.headers['X-Success-Message'] = 'File successfully sanjeev downloaded'
-            # data = {'response':response,'message':'File successfully sanjeev downloaded'}
+            response.headers['X-Success-Message'] = 'File successfully downloaded'
+            # data = {'response':response,'message':'File successfully  downloaded'}
             if response.status_code ==304:
-                data = {'message':'File successfully sanjeev downloaded','status':SUCCESS},SUCCESS
-                # return data
+                data = {'message':'File successfully downloaded','status':SUCCESS},SUCCESS
             else:
                 data ={'message':'Error while dowloading file'},RESOURCE_NOT_FOUND
             return data
@@ -728,10 +727,10 @@ def get_all_audio_file():
     column_value = request.args.get('column_value')
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
-    data = sentiment_instance.get_audio_file_name_from_table(server_name, database_name, client_id, column_name,column_value, page, per_page)
+    data = get_audio_file_name_from_table(server_name, database_name, client_id, column_name,column_value, page, per_page)
     return data
 
-@app.route('/get_call_status', methods=['GET'])
+@app.route('/get_job_status', methods=['GET'])
 def get_call_status():
     client_id_val = request.args.get('clientid')
     try:
@@ -751,7 +750,7 @@ def get_call_status():
     per_page = int(request.args.get('per_page'))
     to_date = request.args.get('to_date')
     from_date = request.args.get('from_date')
-    data = sentiment_instance.get_job_staus_from_audiotranscribe_table(server_name, database_name, client_id, column_name,column_value, page, per_page,from_date,to_date)
+    data = get_job_staus_from_audiotranscribe_table(server_name, database_name, client_id, column_name,column_value, page, per_page,from_date,to_date)
     return data
 
 UPLOAD_FOLDER = 'C:/AICogent/ICFiles/'
