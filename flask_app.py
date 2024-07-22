@@ -699,11 +699,7 @@ def download_files(filename):
             response = make_response(send_file(safe_path, as_attachment=True))
             response.headers['X-Success-Message'] = 'File successfully downloaded'
             # data = {'response':response,'message':'File successfully  downloaded'}
-            if response.status_code ==304:
-                data = {'message':'File successfully downloaded','status':SUCCESS},SUCCESS
-            else:
-                data ={'message':'Error while dowloading file'},RESOURCE_NOT_FOUND
-            return data
+            return response
         else:
             abort(404, description="File not found")
     else:
