@@ -431,3 +431,35 @@ class ComplianceScore(Base):
     def __repr__(self):
         return f"<ComplianceScore(ClientID={self.ClientID},Compliance='{self.Compliance}')>"
 
+
+class RegisterUser(Base):
+    __tablename__ = 'RegisterUser'
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    Username = Column(String(50), unique=True, nullable=False)
+    Password = Column(String(100), nullable=False)
+    attempts = Column(Integer, default=0)
+    locked = Column(Boolean, default=False)
+    ClientID = Column(Integer, default=0)
+    CreatedAt = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
+
+    def __repr__(self):
+        return f'<RegisterUser{self.Username}>'
+
+class LoginDetails(Base):
+    __tablename__ = 'LoginDetails'
+    Id = Column(Integer, primary_key=True, unique=True, nullable=False, autoincrement=True)
+    Username = Column(String(50), unique=True, nullable=False)
+    token = Column(String(100), nullable=False)
+    refresh_token = Column(String(100), nullable=False)
+    clientIdentifier = Column(String(500), nullable=False)
+    ClientID = Column(Integer, default=0)
+    Created = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    TokenModified = Column(DateTime, default=datetime.utcnow(), nullable=True)
+    IsActive = Column(Boolean, unique=False, default=True)
+    IsDeleted = Column(Boolean, unique=False, default=False)
+
+    def __repr__(self):
+        return f'<LoginDetails{self.Username}>'
+
