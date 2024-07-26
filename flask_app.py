@@ -14,6 +14,17 @@ from flask_end_points_service import (get_json_format, set_json_format, get_toke
 
 from common_utils import get_data_multi_transcribe,get_job_staus_from_audiotranscribe_table,get_audio_file_name_from_table
 
+
+from authenticaion_process import register_user,login_method,unlock_account
+
+from flask_bcrypt import Bcrypt
+import secrets
+from datetime import timedelta, datetime
+from flask_jwt_extended import JWTManager,create_access_token,jwt_required,get_jwt_identity,get_jwt,verify_jwt_in_request
+app.config['JWT_SECRET_KEY'] = 'your_secret_key'  # Change this to a secret key of your choice
+# app.config['JWT_SECRET_KEY'] = secrets.token_hex(32)  # Change this to a secret key of your choice
+jwt = JWTManager(app)
+bcrypt = Bcrypt(app)
 db_instance = DBRecord()
 server_name = os.environ.get("SERVER_NAME")
 # Below configuration dev environment while running application in Dev Environment
@@ -28,6 +39,41 @@ compliance_instance = ComplianceAnalysisCreation()
 
 from app import prompt_check_list
 
+from functools import wraps
+
+from db_layer.models import LoginDetails
+def check_authorization(func):
+    access_token = os.environ.get("access_token")
+    if access_token == "Yes":
+        @wraps(func)
+        @jwt_required()
+        def decorated_function(*args, **kwargs):
+            get_jwt_identity()
+            from flask import request
+            token = request.headers.get('Authorization')
+            client_id = request.headers.get('clientid')
+            remove_bearer = token.split()[1]
+            connection_string, status = compliance_instance.global_utility.get_connection_string(server_name, database_name, client_id)
+            if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
+                session = compliance_instance.global_utility.get_database_session(connection_string[0]['transaction'])
+                get_refresh_token = session.query(LoginDetails.refresh_token).filter_by(token=remove_bearer).first()[0]
+                get_client_identifier_from_db = session.query(LoginDetails.clientIdentifier).filter_by(token=remove_bearer).first()[0]
+                from authenticaion_process import get_exp_token_from_database
+                import hashlib
+                from flask import request
+                check_refresh_token_status = get_exp_token_from_database(get_refresh_token)
+                client_identifier = hashlib.sha256(request.remote_addr.encode()).hexdigest()
+                if check_refresh_token_status["status"] == 'expire' and client_identifier == get_client_identifier_from_db:
+                    return jsonify({'status': "Token has been expired.Please re-login Again"})
+            else:
+                return jsonify({'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"})
+            return func(*args, **kwargs)
+    else:
+        @wraps(func)
+        def decorated_function(*args, **kwargs):
+            return func(*args, **kwargs)
+
+    return decorated_function
 
 
 @app.route('/get_all_data', methods=['GET','POST'])
@@ -73,6 +119,7 @@ def get_recordby_id():
 
 
 @app.route('/get_record_by_column_name', methods=['GET','POST'])
+@check_authorization
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
     # client_id = int(request.args.get('clientid'))
@@ -94,6 +141,7 @@ def get_recordby_column_name():
 
 
 @app.route('/update_record_by_column', methods=['GET','POST'])
+@check_authorization
 def get_update_by_column_name():
     table_name = request.args.get('table_name')
     # client_id = int(request.args.get('clientid'))
@@ -122,6 +170,7 @@ def get_update_by_column_name():
 
 
 @app.route('/delete_record_by_id', methods=['DELETE'])
+@check_authorization
 def delete_recordby_id():
     table_name = request.args.get('table_name')
     # client_id = int(request.args.get('clientid'))
@@ -146,6 +195,7 @@ def delete_recordby_id():
 
 
 @app.route('/merge_chunk_transcribe_text', methods=['GET','POST'])
+@check_authorization
 def get_transcribe_sentiment():
     client_id_val = request.args.get('clientid')
     try:
@@ -285,6 +335,7 @@ def add_update_transcribe_tracker():
     return update_status
 
 @app.route('/get_data_from_sentiment_table', methods=['GET','POST'])
+@check_authorization
 def get_sentiment_data():
     client_id_val = request.args.get('clientid')
     try:
@@ -386,6 +437,7 @@ def match_file_name_pettern():
     return json_result
 
 @app.route('/dump_data_into_sentiment', methods=['GET','POST'])
+@check_authorization
 def dump_data_sentiment_table():
     client_id_val = request.args.get('clientid')
     try:
@@ -543,6 +595,7 @@ def get_prohibited_data():
     return data
 
 @app.route('/dump_data_into_compliance', methods=['GET','POST'])
+@check_authorization
 def dump_data_compliance_table():
     client_id_val = request.args.get('clientid')
     try:
@@ -566,6 +619,7 @@ def dump_data_compliance_table():
 
 
 @app.route('/get_data_from_compliance_score', methods=['GET'])
+@check_authorization
 def get_compliance_score_data():
     client_id_val = request.args.get('clientid')
     try:
@@ -582,8 +636,8 @@ def get_compliance_score_data():
     data = compliance_instance.get_data_from_compliance_score(server_name, database_name, client_id)
     return data
 
-
 @app.route('/get_data_from_compliance_table', methods=['GET'])
+@check_authorization
 def get_compliance_data():
     client_id_val = request.args.get('clientid')
     try:
@@ -606,6 +660,7 @@ def compliance_data():
     return render_template('compliance.html')
 
 @app.route('/sentiment_data_by_report_type', methods=['GET','POST'])
+@check_authorization
 def get_sentiment_data_by_report_type():
     client_id_val = request.args.get('clientid')
     column_name = request.args.get('column_name')
@@ -635,6 +690,7 @@ def get_sentiment_data_by_report_type():
     return data
 
 @app.route('/multi_compliance_reports', methods=['GET','POST'])
+@check_authorization
 def get_compliance_data_by_column_name():
     client_id_val = request.args.get('clientid')
     try:
@@ -664,6 +720,7 @@ def get_compliance_data_by_column_name():
 
 
 @app.route('/multi_transcribe_text', methods=['GET','POST'])
+@check_authorization
 def get_transcribe_multi_data():
     client_id_val = request.args.get('clientid')
     try:
@@ -689,12 +746,13 @@ def get_transcribe_multi_data():
 BASE_DIRECTORY = "C:/AICogent/ICFiles/Done/"
 
 @app.route('/download/<path:filename>', methods=['GET'])
+@check_authorization
 def download_files(filename):
 
     safe_path = os.path.abspath(os.path.join(BASE_DIRECTORY, filename))
     if os.path.commonprefix([safe_path, os.path.abspath(BASE_DIRECTORY)]) == os.path.abspath(BASE_DIRECTORY):
         if os.path.exists(safe_path):
-            print("File successfully sanjeev downloaded")
+            print("File successfully downloaded")
             send_file(safe_path, as_attachment=True)
             response = make_response(send_file(safe_path, as_attachment=True))
             response.headers['X-Success-Message'] = 'File successfully downloaded'
@@ -706,6 +764,7 @@ def download_files(filename):
         abort(403, description="Access denied")
 
 @app.route('/get_audio_filename', methods=['GET'])
+@check_authorization
 def get_all_audio_file():
     client_id_val = request.args.get('clientid')
     try:
@@ -727,6 +786,7 @@ def get_all_audio_file():
     return data
 
 @app.route('/get_job_status', methods=['GET'])
+@check_authorization
 def get_call_status():
     client_id_val = request.args.get('clientid')
     try:
@@ -785,7 +845,70 @@ def upload_page():
 def uploaded_file(filename):
     return f'File {filename} uploaded successfully!'
 
+@app.route('/register', methods=['GET','POST'])
+def register():
+    username=request.headers.get('username')
+    password=request.headers.get('password')
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    client_id_val=request.headers.get('clientid')
+    if client_id_val and username:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        result = register_user(server_name, database_name, client_id,username,hashed_password)
+        return result
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
 
+
+@app.route('/login', methods=['GET','POST'])
+def login():
+    username = request.headers.get('username')
+    password = request.headers.get('password')
+    client_id_val = request.headers.get('clientid')
+    if client_id_val and username:
+        try:
+            client_id = int(client_id_val)
+        except Exception as e:
+            response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+            return {
+                "result": [response_message],
+                "message": response_message,
+                "status": 'failed',
+                'status_code': RESOURCE_NOT_FOUND
+            }, RESOURCE_NOT_FOUND
+        data = login_method(server_name, database_name, client_id,username,password)
+        return data
+    else:
+        response_message = 'The api does not send you all of the necessary parameters. Please give it another go using every parameter.'
+        return {
+                   "result": [response_message],
+                   "message": response_message,
+                   "status": 'failed',
+                   'status_code': RESOURCE_NOT_FOUND
+               }, RESOURCE_NOT_FOUND
+
+@app.route('/reset_password', methods=['POST'])
+def reset_password():
+    username = request.headers.get('username')
+    password = request.headers.get('password')
+    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    client_id_val = request.headers.get('clientid')
+    data = unlock_account(server_name, database_name, client_id_val, username, hashed_password)
+    return data
 
 if __name__ == '__main__':
     # app.run(debug=True)
