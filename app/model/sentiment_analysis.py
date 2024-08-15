@@ -7,8 +7,17 @@ from db_layer.models import AudioTranscribeTracker,SentimentAnalysis,AudioTransc
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import and_,desc
 from app.configs.error_code_enum import *
+bussiness_model = os.environ.get("bussiness_model")
+if bussiness_model=="cogent":
+    from app import prompt_check_list
+    prompt_data = prompt_check_list
+else:
+    from app import genric_prompt
+    prompt_data = genric_prompt
+
 from app import prompt_check_list
 os.environ["OPENAI_API_KEY"] = prompt_check_list.open_ai_key
+# os.environ["OPENAI_API_KEY"] = genric_prompt.open_ai_key
 from flask_end_points_service import set_json_format
 from flask import request
 from openai import OpenAI
@@ -28,16 +37,13 @@ class SentimentAnalysisCreation:
     def get_sentiment(self,text,prohibited_prompt_inject):
         try:
             status = 'success'
-            prompt = "{} {} {} @@@ {}.@@@. {}".format(prompt_check_list.sentiment_prompt,prohibited_prompt_inject,prompt_check_list.sentiment_prompt_after_inject,text,prompt_check_list.prompt_for_data_key_never_blank)
+            prompt = "{} {} {} @@@ {}.@@@. {}".format(prompt_data.sentiment_prompt,prohibited_prompt_inject,prompt_data.sentiment_prompt_after_inject,text,prompt_data.prompt_for_data_key_never_blank)
             response = client.chat.completions.create(
                 model=open_ai_model,
-                # model="gpt-4-1106-preview",
-                # model="gpt-4",
                 messages=[
                     # {"role": "system", "content": prompt},
                     {"role": "user", "content": prompt}
                 ],
-
                 max_tokens=2000,
                 n=1,
                 presence_penalty=0.8,
@@ -319,8 +325,13 @@ class SentimentAnalysisCreation:
                                           "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
                                           "FoulLanguage":data[0].FoulLanguage,
                                           "ActionItemsOwners":data[0].Owners,
-                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder,"FileSize":audio_file_size})
+                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder,"FileDuration":audio_file_size})
                     # result = {"sentimentdata": sentiment_dic}
+                    if bussiness_model == "cogent":
+                        sentiment_dic = sentiment_dic
+                    else:
+                        del sentiment_dic["Reminder"]
+
                     result = sentiment_dic
                     self.logger.info(f":Get Data from SentimentAnalysis table successfully for AudioFile {audio_file}")
                     return result,SUCCESS
