@@ -238,10 +238,13 @@ class SentimentAnalysis(Base):
     Owners = Column(String, nullable=False)
     prompt = Column(String, nullable=False)
     Reminder = Column(String, nullable=False)
+    OrgName = Column(String, nullable=False)
+    DebtorName = Column(String, nullable=False)
+    EmployeeName = Column(String, nullable=False)
 
     def __repr__(self):
         return f"<SentimentAnalysis(ClientId={self.ClientId},SentimentScore='{self.SentimentScore},AnalysisDateTime='{self.AnalysisDateTime}" \
-               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}',prompt='{self.prompt}',Reminder='{self.Reminder}')>"
+               f",SentimentStatus='{self.SentimentStatus}',Created='{self.Created}',Modified='{self.Modified}',IsActive='{self.IsActive}',IsDeleted='{self.IsDeleted}'),Sentiment='{self.Sentiment}',AudioFileName='{self.AudioFileName}',Summary='{self.Summary}',Topics='{self.Topics}',FoulLanguage='{self.FoulLanguage},ActionItems='{self.ActionItems}',Owners='{self.Owners}',prompt='{self.prompt}',Reminder='{self.Reminder}',OrgName='{self.OrgName}',DebtorName='{self.DebtorName}',EmployeeName='{self.EmployeeName}')>"
 
 class AudioTranscribe(Base):
     __tablename__ = 'AudioTranscribe'
@@ -266,6 +269,7 @@ class AudioTranscribe(Base):
     FileSize = Column(String, nullable=False)
     SADone = Column(String, nullable=False)
     SCDone = Column(String, nullable=False)
+    DebtorName = Column(String, nullable=False)
 
 
     def toDict(self):

@@ -41,7 +41,7 @@ from app import prompt_check_list
 
 from functools import wraps
 
-from db_layer.models import LoginDetails
+from db_layer.models import LoginDetails,ScoreCardAnalysis,SentimentAnalysis
 def check_authorization(func):
     access_token = os.environ.get("access_token")
     if access_token == "Yes":
@@ -210,7 +210,8 @@ def get_transcribe_sentiment():
         }, RESOURCE_NOT_FOUND
     # client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
-    data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name)
+    transcribe_text = request.args.get('transcribe')#pass True of Transcribe data only
+    data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,transcribe_text)
     return data
 
 
@@ -847,10 +848,17 @@ def uploaded_file(filename):
 
 @app.route('/register', methods=['GET','POST'])
 def register():
+    ###Through postman Header
     username=request.headers.get('username')
     password=request.headers.get('password')
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     client_id_val=request.headers.get('clientid')
+    ###############
+    #Through Ajax call
+    # username = request.form.get('username')
+    # password = request.form.get('password')
+    # hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
+    # client_id_val = request.form.get('clientid')
     if client_id_val and username:
         try:
             client_id = int(client_id_val)
@@ -908,6 +916,44 @@ def reset_password():
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
     client_id_val = request.headers.get('clientid')
     data = unlock_account(server_name, database_name, client_id_val, username, hashed_password)
+    return data
+
+import subprocess
+def run_llama_model(prompt):
+    command = ["ollama", "run", "llama3.1"]
+    process = subprocess.run(command, input=prompt, text=True, stderr=subprocess.PIPE,capture_output=True, check=True,encoding='utf-8')
+    output = process.stdout.strip()
+    return {"response": output}
+
+@app.route('/text_generate', methods=['GET'])
+def generate_text():
+    prompt = request.headers.get('prompt', '')
+    if not prompt:
+        return jsonify({"error": "Prompt is required"}), 400
+    result = run_llama_model(prompt)
+
+    return jsonify(result)
+
+
+
+@app.route('/client_audio_information', methods=['GET','POST'])
+@check_authorization
+def get_client_audio_info():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    transcribe_param = request.args.get('transcribe')#pass False for openAi info
+    data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,transcribe_param)
     return data
 
 if __name__ == '__main__':

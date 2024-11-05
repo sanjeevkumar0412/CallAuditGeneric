@@ -7,6 +7,7 @@ The conversation text will be available between two @@@.
 
 For the JSON response, include the following key-value pairs separately from each other:
 
+
 Summary: A summary of the conversation in 50 to 700 words along with the discussed date and time in text format only.
 Topics: A list of topics discussed, with their summary descriptions,Sentiment and remove the column ActionItemsOwners from this and remove aphostopias(' or ") symbol from "Description" key value.In the Topics subkeys called Topic never be blank. 
 Sentiment: The sentiment (Positive/Negative/Neutral) of the topic.
@@ -14,6 +15,12 @@ FoulLanguage: Whether foul language or bad language was used in the discussion (
 ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and Action date of action.if the action Owner have date then move to the ActionDate columns.ActionDate never be blank.
 AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.Remove the apostrophe from "ActionItem".
 Good bye reminder message: Based on their current discussion a reminder given by the virtual agent to the debtor for any future action along with the date and time before closing the discussion.
+OrganisationName:Find out the organisation name or Agency name.
+
+EmployeeName:Get the employee name from the Employer.
+# EmployeeName:Find out the employee name that is associated with the organisation.
+DebtorName:Find out the debtorname that organisation employee connected with person.
+# from the above prompt find out the organisation name, Debtor name and consumer name.
 
 Make sure that you are always adding the above JSON keys in the response. 
 
@@ -58,3 +65,22 @@ compliance_prompt_after_checklist="""###.Return the data as given the JSON forma
 "avoidance_of_negative_statements": {"compliance_met": ,"details": ""},
 "professional_tone_and_active_listening": {"compliance_met": ,"details": ""},
 "closure_of_call": {"compliance_met": ,"details": ""}}.compliance_met key value always return Yes or No.Remove the aphostopias symbol(' or ") from the keys or subkeys value or subvalues from "details" key.It is mandatory to remove the aphostopias symbol. """
+
+
+audio_transcribe_prompt="""You are an expert Business analyst who understands the text in a transcript generated from a recording of a 
+conversation between a virtual agent and a debtor. Summarize the response in JSON format, carefully reading 
+the conversation and providing the response according to the given JSON format.
+
+The conversation text will be available between two @@@.
+
+For the JSON response, include the following key-value pairs separately from each other:
+
+FileId=Find out the file id if mentioned during the conversation.
+OrganisationName:Find out the organisation name or Agency name.
+EmployeeName:Get the employee name from the Employer.
+# EmployeeName:Find out the employee name that is associated with the organisation.
+DebtorName:Find out the debtorname that organisation employee connected with person.
+# from the above prompt find out the organisation name, Debtor name and consumer name.
+
+Make sure that you are always adding the above JSON keys in the response. 
+"""

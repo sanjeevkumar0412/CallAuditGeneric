@@ -51,6 +51,10 @@ class SentimentAnalysisCreation:
                 top_p=0.8,
                 stop=None
                 # stop=["\n"]
+                #OrgName
+                #DebtorName
+                #EmployeeName
+
             )
             sentiment = response.choices[0].message.content
             json_string_cleaned = sentiment.replace('```', '').replace('\n', '').replace('json', '')
@@ -93,9 +97,29 @@ class SentimentAnalysisCreation:
             else:
                 reminder_message = 'N/A'
 
+            if 'OrganisationName' in results:
+                org_name = results['OrganisationName']
+            else:
+                org_name = 'N/A'
+
+            if 'EmployeeName' in results:
+                emp_name = results['EmployeeName']
+            else:
+                emp_name = 'N/A'
+
+            if 'DebtorName' in results:
+                debtor_name = results['DebtorName']
+            else:
+                debtor_name = 'N/A'
+
+            if 'FileId' in results:
+                file_id = results['FileId']
+            else:
+                file_id = 'N/A'
+
             data = {"summary_report": summary_report, "topics": topics, "foul_language": foul_language,
                     "action_items": action_items, "owners": owners, "sentiment_score": sentiment_score,
-                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message}
+                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message,"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -120,6 +144,9 @@ class SentimentAnalysisCreation:
                 if len(file_entry_check) == 0:
                     status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
                     if status == 'success':
+                        add_value_transcribe=AudioTranscribe(CaseID=str(sentiment_call_data["file_id"]),AgentID=str(sentiment_call_data["emp_name"]),DebtorName=str(sentiment_call_data["debtor_name"]))
+                        session.add(add_value_transcribe)
+                        session.commit()
                         dump_data_into_table = SentimentAnalysis(ClientId=clientid,
                                                                  AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
                                                                  AudioFileName=current_file,Created=created_sentiment_date,
@@ -128,7 +155,10 @@ class SentimentAnalysisCreation:
                                                                  Sentiment=str(sentiment_call_data["average_sentiment"]),Summary=str(sentiment_call_data["summary_report"]),
                                                                  Topics=str(sentiment_call_data["topics"]),FoulLanguage=str(sentiment_call_data["foul_language"]),
                                                                  ActionItems=str(sentiment_call_data["action_items"]),Owners=str(sentiment_call_data["owners"]),
-                                                                 prompt=str(sentiment_call_data["prompt"]),Reminder=str(sentiment_call_data["reminder_message"]))
+                                                                 prompt=str(sentiment_call_data["prompt"]),Reminder=str(sentiment_call_data["reminder_message"]),
+                                                                 OrgName=str(sentiment_call_data["org_name"]),DebtorName=str(sentiment_call_data["debtor_name"]),
+                                                                 EmployeeName=str(sentiment_call_data["emp_name"])
+                                                                 )
                         session.add(dump_data_into_table)
                         session.commit()
                         result=set_json_format([], SUCCESS, True, f"Sentiment Record successfully recorded for the file {current_file}")
@@ -138,7 +168,16 @@ class SentimentAnalysisCreation:
                 else:
                     #Update Logic
                     status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
+
                     if status == "success":
+                        update_audio_transcribe_column_dic = {
+                            AudioTranscribe.CaseID: str(sentiment_call_data["file_id"]),
+                            AudioTranscribe.DebtorName: str(sentiment_call_data["debtor_name"]),
+                            AudioTranscribe.AgentID: str(sentiment_call_data["emp_name"]),
+                            }
+                        session.query(AudioTranscribe).filter_by(AudioFileName=current_file).update(
+                            update_audio_transcribe_column_dic)
+                        session.commit()
                         update_column_dic = {SentimentAnalysis.Sentiment:str(sentiment_call_data["average_sentiment"]),
                                              SentimentAnalysis.Modified:modified_sentiment_date,
                                              SentimentAnalysis.SentimentScore:str(sentiment_call_data["sentiment_score"]),
@@ -147,7 +186,10 @@ class SentimentAnalysisCreation:
                                              SentimentAnalysis.FoulLanguage:str(sentiment_call_data["foul_language"]),
                                              SentimentAnalysis.prompt:str(sentiment_call_data["prompt"]),
                                              SentimentAnalysis.Reminder:str(sentiment_call_data["reminder_message"]),
-                                             SentimentAnalysis.Summary:str(sentiment_call_data["summary_report"])
+                                             SentimentAnalysis.Summary:str(sentiment_call_data["summary_report"]),
+                                             SentimentAnalysis.OrgName:str(sentiment_call_data["org_name"]),
+                                             SentimentAnalysis.DebtorName:str(sentiment_call_data["debtor_name"]),
+                                             SentimentAnalysis.EmployeeName:str(sentiment_call_data["emp_name"]),
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
@@ -176,7 +218,7 @@ class SentimentAnalysisCreation:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result, INTERNAL_SERVER_ERROR
 
-    def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file):
+    def get_data_from_transcribe_table(self, server_name, database_name, client_id,audio_file,transcribe_param):
         connection_string, status = self.global_utility.get_connection_string(server_name, database_name, client_id)
         if status == SUCCESS and connection_string[0]['transaction'] != None and connection_string[0]['logger'] != None:
             # if len(connection_string) > 0:
@@ -224,7 +266,15 @@ class SentimentAnalysisCreation:
                     data = {"message": f"Record not found {audio_file} in AudioTranscribe Table","status":RESOURCE_NOT_FOUND}
                     return data,RESOURCE_NOT_FOUND
                 result = {"message": ''.join(transcribe_text), "status": SUCCESS}
-                return result,SUCCESS
+                if transcribe_param =="True":
+                    return result,SUCCESS
+                else:
+                    pass#sanjeev
+                    transcribe_audio_data=''.join(transcribe_text)
+                    # audion_transcribe_info = self.audio_client_info_through_prompt(transcribe_audio_data)
+                    return self.audio_client_info_through_prompt(transcribe_audio_data)
+                    # data = {"audio_info":audion_transcribe_info,"status":SUCCESS}
+                    # return data
             except Exception as e:
                 self.logger.error(f": get_data_from_transcribe_table {e}",e)
                 error_array = []
@@ -315,7 +365,6 @@ class SentimentAnalysisCreation:
 
             audio_file_size = session.query(AudioTranscribe.FileSize).filter(
                 AudioTranscribe.AudioFileName == audio_file).first()[0]
-
             try:
                 if len(check_audio_file_exits) > 0:
                     sentiment_dic={}
@@ -457,3 +506,53 @@ class SentimentAnalysisCreation:
         else:
             result = {'status': INTERNAL_SERVER_ERROR, "message": "Unable to connect to the database"}
             return result,INTERNAL_SERVER_ERROR
+
+
+    def audio_client_info_through_prompt(self,text):
+        try:
+            status = 'success'
+            prompt = "{}.@@@. {}".format(prompt_data.audio_transcribe_prompt,text)
+            response = client.chat.completions.create(
+                model=open_ai_model,
+                messages=[
+                    # {"role": "system", "content": prompt},
+                    {"role": "user", "content": prompt}
+                ],
+                max_tokens=2000,
+                n=1,
+                presence_penalty=0.8,
+                temperature=0.2,
+                top_p=0.8,
+                stop=None
+                # stop=["\n"]
+            )
+            sentiment = response.choices[0].message.content
+            json_string_cleaned = sentiment.replace('```', '').replace('\n', '').replace('json', '')
+            results = json.loads(json_string_cleaned)
+
+            if 'OrganisationName' in results:
+                org_name = results['OrganisationName']
+            else:
+                org_name = 'N/A'
+
+            if 'EmployeeName' in results:
+                emp_name = results['EmployeeName']
+            else:
+                emp_name = 'N/A'
+
+            if 'DebtorName' in results:
+                debtor_name = results['DebtorName']
+            else:
+                debtor_name = 'N/A'
+
+            if 'FileId' in results:
+                file_id = results['FileId']
+            else:
+                file_id = 'N/A'
+
+            data = {"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id}
+            return {"data":data,"status":SUCCESS},SUCCESS
+        except Exception as e:
+            status = 'failure'
+            self.logger.error(f" Error in method audio_client_info_through_prompt",str(e))
+            return status, set_json_format([str(e)], e.args[0].split(":")[1].split("-")[0].strip(), False, str(e))
