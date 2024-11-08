@@ -15,12 +15,14 @@ FoulLanguage: Whether foul language or bad language was used in the discussion (
 ActionItemsOwners: it will give two JSON keys. first key will be ActionItem and it will return name of action item and also share detailed complete address. the second key will be ActionOwner and it will return the name of action owner and Action date of action.if the action Owner have date then move to the ActionDate columns.ActionDate never be blank.
 AggregateSentiment: The aggregate sentiment (Positive/Negative/Neutral) of the conversation.Remove the apostrophe from "ActionItem".
 Good bye reminder message: Based on their current discussion a reminder given by the virtual agent to the debtor for any future action along with the date and time before closing the discussion.
+
 OrganisationName:Find out the organisation name or Agency name.
 
-EmployeeName:Get the employee name from the Employer.
-# EmployeeName:Find out the employee name that is associated with the organisation.
+#EmployeeName:Get the employee name from the Employer.
+EmployeeName:Find out the employee name that is associated with the organisation.
 DebtorName:Find out the debtorname that organisation employee connected with person.
-# from the above prompt find out the organisation name, Debtor name and consumer name.
+FileId:Find out the attorney file number or File number.
+from the above prompt find out the organisation name, Debtor name and consumer name.
 
 Make sure that you are always adding the above JSON keys in the response. 
 
