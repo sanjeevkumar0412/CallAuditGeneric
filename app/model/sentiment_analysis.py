@@ -144,8 +144,13 @@ class SentimentAnalysisCreation:
                 if len(file_entry_check) == 0:
                     status, sentiment_call_data = self.get_sentiment(transcribe_merged_string, prohibited_prompt_inject[0])
                     if status == 'success':
-                        add_value_transcribe=AudioTranscribe(CaseID=str(sentiment_call_data["file_id"]),AgentID=str(sentiment_call_data["emp_name"]),DebtorName=str(sentiment_call_data["debtor_name"]))
-                        session.add(add_value_transcribe)
+                        update_audio_transcribe_column_first_dump = {
+                            AudioTranscribe.CaseID: str(sentiment_call_data["file_id"]),
+                            AudioTranscribe.DebtorName: str(sentiment_call_data["debtor_name"]),
+                            AudioTranscribe.AgentID: str(sentiment_call_data["emp_name"]),
+                        }
+                        session.query(AudioTranscribe).filter_by(AudioFileName=current_file).update(
+                            update_audio_transcribe_column_first_dump)
                         session.commit()
                         dump_data_into_table = SentimentAnalysis(ClientId=clientid,
                                                                  AnalysisDateTime=analysis_sentiment_date, SentimentStatus=21,
@@ -269,12 +274,9 @@ class SentimentAnalysisCreation:
                 if transcribe_param =="True":
                     return result,SUCCESS
                 else:
-                    pass#sanjeev
                     transcribe_audio_data=''.join(transcribe_text)
                     # audion_transcribe_info = self.audio_client_info_through_prompt(transcribe_audio_data)
                     return self.audio_client_info_through_prompt(transcribe_audio_data)
-                    # data = {"audio_info":audion_transcribe_info,"status":SUCCESS}
-                    # return data
             except Exception as e:
                 self.logger.error(f": get_data_from_transcribe_table {e}",e)
                 error_array = []
