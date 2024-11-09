@@ -22,10 +22,11 @@ OrganisationName:Find out the organisation name or Agency name.
 EmployeeName:Find out the employee name that is associated with the organisation.
 DebtorName:Find out the debtorname that organisation employee connected with person.
 FileId:Find out the attorney file number or File number.
+DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
+
 from the above prompt find out the organisation name, Debtor name and consumer name.
 
 Make sure that you are always adding the above JSON keys in the response. 
-
 ActionItemsOwners or Description never contain the aphostopias(' or ") symbol.
 Summary will contain summarized details along with information of all dates and times, SSN, Address, Identity, Loan or debt, future action etc.  discussed in conversation. 
 
@@ -77,12 +78,15 @@ The conversation text will be available between two @@@.
 
 For the JSON response, include the following key-value pairs separately from each other:
 
-FileId=Find out the file id if mentioned during the conversation.
+# FileId=Find out the file id if mentioned during the conversation.
+
 OrganisationName:Find out the organisation name or Agency name.
-EmployeeName:Get the employee name from the Employer.
-# EmployeeName:Find out the employee name that is associated with the organisation.
+# EmployeeName:Get the employee name from the Employer.
+EmployeeName:Find out the employee name that is associated with the organisation.
 DebtorName:Find out the debtorname that organisation employee connected with person.
-# from the above prompt find out the organisation name, Debtor name and consumer name.
+FileId:Find out the attorney file number or File number.
+DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
+from the above prompt find out the organisation name, Debtor name and consumer name.
 
 Make sure that you are always adding the above JSON keys in the response. 
 """

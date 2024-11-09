@@ -117,9 +117,14 @@ class SentimentAnalysisCreation:
             else:
                 file_id = 'N/A'
 
+            if 'DiscssionType' in results:
+                discussion_type = results['DiscssionType']
+            else:
+                discussion_type = 'N/A'
+
             data = {"summary_report": summary_report, "topics": topics, "foul_language": foul_language,
                     "action_items": action_items, "owners": owners, "sentiment_score": sentiment_score,
-                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message,"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id}
+                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message,"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -148,6 +153,7 @@ class SentimentAnalysisCreation:
                             AudioTranscribe.CaseID: str(sentiment_call_data["file_id"]),
                             AudioTranscribe.DebtorName: str(sentiment_call_data["debtor_name"]),
                             AudioTranscribe.AgentID: str(sentiment_call_data["emp_name"]),
+                            AudioTranscribe.DiscussionType: str(sentiment_call_data["discussion_type"]),
                         }
                         session.query(AudioTranscribe).filter_by(AudioFileName=current_file).update(
                             update_audio_transcribe_column_first_dump)
@@ -179,6 +185,7 @@ class SentimentAnalysisCreation:
                             AudioTranscribe.CaseID: str(sentiment_call_data["file_id"]),
                             AudioTranscribe.DebtorName: str(sentiment_call_data["debtor_name"]),
                             AudioTranscribe.AgentID: str(sentiment_call_data["emp_name"]),
+                            AudioTranscribe.DiscussionType: str(sentiment_call_data["discussion_type"]),
                             }
                         session.query(AudioTranscribe).filter_by(AudioFileName=current_file).update(
                             update_audio_transcribe_column_dic)
@@ -552,7 +559,12 @@ class SentimentAnalysisCreation:
             else:
                 file_id = 'N/A'
 
-            data = {"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id}
+            if 'DiscssionType' in results:
+                discussion_type = results['DiscssionType']
+            else:
+                discussion_type = 'N/A'
+
+            data = {"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type}
             return {"data":data,"status":SUCCESS},SUCCESS
         except Exception as e:
             status = 'failure'
