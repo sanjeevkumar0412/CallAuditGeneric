@@ -122,9 +122,15 @@ class SentimentAnalysisCreation:
             else:
                 discussion_type = 'N/A'
 
+            if 'DebtorSentiment' in results:
+                debtor_sentiment = results['DebtorSentiment']
+            else:
+                debtor_sentiment = 'N/A'
+
+
             data = {"summary_report": summary_report, "topics": topics, "foul_language": foul_language,
                     "action_items": action_items, "owners": owners, "sentiment_score": sentiment_score,
-                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message,"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type}
+                    "average_sentiment": average_sentiment,"prompt": prompt,"reminder_message":reminder_message,"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type,"debtor_sentiment":debtor_sentiment}
             return status, data
         except Exception as e:
             status = 'failure'
@@ -168,7 +174,9 @@ class SentimentAnalysisCreation:
                                                                  ActionItems=str(sentiment_call_data["action_items"]),Owners=str(sentiment_call_data["owners"]),
                                                                  prompt=str(sentiment_call_data["prompt"]),Reminder=str(sentiment_call_data["reminder_message"]),
                                                                  OrgName=str(sentiment_call_data["org_name"]),DebtorName=str(sentiment_call_data["debtor_name"]),
-                                                                 EmployeeName=str(sentiment_call_data["emp_name"])
+                                                                 EmployeeName=str(sentiment_call_data["emp_name"]),
+                                                                 DebtorSentiment=str(sentiment_call_data["debtor_sentiment"]),
+
                                                                  )
                         session.add(dump_data_into_table)
                         session.commit()
@@ -202,6 +210,7 @@ class SentimentAnalysisCreation:
                                              SentimentAnalysis.OrgName:str(sentiment_call_data["org_name"]),
                                              SentimentAnalysis.DebtorName:str(sentiment_call_data["debtor_name"]),
                                              SentimentAnalysis.EmployeeName:str(sentiment_call_data["emp_name"]),
+                                             SentimentAnalysis.DebtorSentiment:str(sentiment_call_data["debtor_sentiment"]),
                                              }
                         session.query(SentimentAnalysis).filter_by(AudioFileName=current_file).update(update_column_dic)
                         session.commit()
@@ -564,7 +573,12 @@ class SentimentAnalysisCreation:
             else:
                 discussion_type = 'N/A'
 
-            data = {"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type}
+            if 'DebtorSentiment' in results:
+                debtor_sentiment = results['DebtorSentiment']
+            else:
+                debtor_sentiment = 'N/A'
+
+            data = {"org_name":org_name,"debtor_name":debtor_name,"emp_name":emp_name,"file_id":file_id,"discussion_type":discussion_type,"debtor_sentiment":debtor_sentiment}
             return {"data":data,"status":SUCCESS},SUCCESS
         except Exception as e:
             status = 'failure'
