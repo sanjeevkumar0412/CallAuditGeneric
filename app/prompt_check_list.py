@@ -1,4 +1,6 @@
 open_ai_key=""
+
+
 sentiment_prompt="""You are an expert Business analyst who understands the text in a transcript generated from a recording of a 
 conversation between a virtual agent and a debtor. Summarize the response in JSON format, carefully reading 
 the conversation and providing the response according to the given JSON format.
@@ -25,7 +27,7 @@ FileId:Find out the attorney file number or File number.
 DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
 
 from the above prompt find out the organisation name, Debtor name and consumer name.
-
+DebtorSentiment:on the basis of above transcript, find out the Debtor or Consumer or Customer sentiment.
 Make sure that you are always adding the above JSON keys in the response. 
 ActionItemsOwners or Description never contain the aphostopias(' or ") symbol.
 Summary will contain summarized details along with information of all dates and times, SSN, Address, Identity, Loan or debt, future action etc.  discussed in conversation. 
@@ -87,6 +89,7 @@ DebtorName:Find out the debtorname that organisation employee connected with per
 FileId:Find out the attorney file number or File number.
 DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
 from the above prompt find out the organisation name, Debtor name and consumer name.
-
+DebtorSentiment:on the basis of above transcript, find out the Debtor or Consumer or Customer sentiment.
+# "DebtorSentiment": "Neutral/Confused"
 Make sure that you are always adding the above JSON keys in the response. 
 """
