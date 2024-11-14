@@ -24,6 +24,11 @@ $(document).ready(function() {
                     $('#audio-filename').text(data.AudioFileName);
                     $('#sentiment').text(data.Sentiment);
                     $('#foul_lang').text(data.FoulLanguage);
+                    $('#file_id').text(data.FileId);
+                    $('#agent_id').text(data.AgentId);
+                    $('#debtor_name').text(data.DebtorName);
+                    $('#debt_sentiment').text(data.DebtorSentiment);
+                    $('#call_type').text(data.DiscussionType);
                     $('#summary_report').text(data.SummaryReport);
                     $('#reminder').text(data.Reminder);
                     var filesize_check= data.FileSize;

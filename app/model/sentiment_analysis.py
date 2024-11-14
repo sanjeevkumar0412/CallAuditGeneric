@@ -383,6 +383,12 @@ class SentimentAnalysisCreation:
 
             audio_file_size = session.query(AudioTranscribe.FileSize).filter(
                 AudioTranscribe.AudioFileName == audio_file).first()[0]
+            file_id = session.query(AudioTranscribe.CaseID).filter(
+                AudioTranscribe.AudioFileName == audio_file).first()[0]
+            agent_id = session.query(AudioTranscribe.AgentID).filter(
+                AudioTranscribe.AudioFileName == audio_file).first()[0]
+            discussion_type = session.query(AudioTranscribe.DiscussionType).filter(
+                AudioTranscribe.AudioFileName == audio_file).first()[0]
             try:
                 if len(check_audio_file_exits) > 0:
                     sentiment_dic={}
@@ -392,7 +398,7 @@ class SentimentAnalysisCreation:
                                           "Created":data[0].Created,"SummaryReport":data[0].Summary,"Topics":data[0].Topics,
                                           "FoulLanguage":data[0].FoulLanguage,
                                           "ActionItemsOwners":data[0].Owners,
-                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder,"FileDuration":audio_file_size})
+                                          "Modified":data[0].Modified,"Sentiment":data[0].Sentiment,"Reminder":data[0].Reminder,"FileDuration":audio_file_size,"DebtorName":data[0].DebtorName,"DebtorSentiment":data[0].DebtorSentiment,"FileId":file_id,"AgentId":agent_id,"DiscussionType":discussion_type})
                     # result = {"sentimentdata": sentiment_dic}
                     if bussiness_model == "cogent":
                         sentiment_dic = sentiment_dic
