@@ -21,9 +21,9 @@ Good bye reminder message: Based on their current discussion a reminder given by
 OrganisationName:Find out the organisation name or Agency name.
 
 #EmployeeName:Get the employee name from the Employer.
-EmployeeName:Find out the employee name that is associated with the organisation.
-DebtorName:Find out the debtorname that organisation employee connected with person.
-FileId:Find out the attorney file number or File number.
+EmployeeName:Find out the employee name that is associated with the organisation if not available then mark it N/A.
+DebtorName:Find out the debtorname that organisation employee connected with person if not available then mark it N/A.
+FileId:Find out the attorney file number or File number if not available then mark it N/A.
 DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
 
 from the above prompt find out the organisation name, Debtor name and consumer name.
@@ -84,12 +84,11 @@ For the JSON response, include the following key-value pairs separately from eac
 
 OrganisationName:Find out the organisation name or Agency name.
 # EmployeeName:Get the employee name from the Employer.
-EmployeeName:Find out the employee name that is associated with the organisation.
-DebtorName:Find out the debtorname that organisation employee connected with person.
-FileId:Find out the attorney file number or File number.
+EmployeeName:Find out the employee name that is associated with the organisation.if not available then mark it N/A
+DebtorName:Find out the debtorname that organisation employee connected with personif not available then mark it N/A.
+FileId:Find out the attorney file number or File number.if not available then mark it N/A
 DiscssionType:You are playing role of an analyst who reads the transcript of discussion that happens between a virtual agent and debtor and figure out whether a call is inbound or outbound call. If virtual agent or a helpdesk of a loan collection agency is calling the debtor than type of call will be outbound and if debtor or any guy who is calling helpdesk or loan collection agency then the type of call will be inbound. if there is any confusion about determining the type of call type will be NA.
 from the above prompt find out the organisation name, Debtor name and consumer name.
-DebtorSentiment:on the basis of above transcript, find out the Debtor or Consumer or Customer sentiment.
-# "DebtorSentiment": "Neutral/Confused"
+DebtorSentiment:on the basis of above transcript, find out the Debtor or Consumer or Customer sentiment.if not available then mark it N/A
 Make sure that you are always adding the above JSON keys in the response. 
 """
