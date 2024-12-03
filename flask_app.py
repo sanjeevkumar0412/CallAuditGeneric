@@ -76,7 +76,7 @@ def check_authorization(func):
     return decorated_function
 
 
-@app.route('/get_all_data', methods=['GET','POST'])
+@app.route('/get_all_data', methods=['GET'])
 def get_record():
     table_name = request.args.get('table_name')
     client_id_val = request.args.get('clientid')
@@ -96,7 +96,7 @@ def get_record():
     return data
 
 
-@app.route('/get_record_by_id', methods=['GET','POST'])
+@app.route('/get_record_by_id', methods=['GET'])
 def get_recordby_id():
     table_name = request.args.get('table_name')
     # client_id = int(request.args.get('clientid'))
@@ -118,7 +118,7 @@ def get_recordby_id():
     return data
 
 
-@app.route('/get_record_by_column_name', methods=['GET','POST'])
+@app.route('/get_record_by_column_name', methods=['GET'])
 @check_authorization
 def get_recordby_column_name():
     table_name = request.args.get('table_name')
@@ -140,7 +140,7 @@ def get_recordby_column_name():
     return data
 
 
-@app.route('/update_record_by_column', methods=['GET','POST'])
+@app.route('/update_record_by_column', methods=['PUT'])
 @check_authorization
 def get_update_by_column_name():
     table_name = request.args.get('table_name')
@@ -194,7 +194,7 @@ def delete_recordby_id():
     return {'data': data}
 
 
-@app.route('/merge_chunk_transcribe_text', methods=['GET','POST'])
+@app.route('/merge_chunk_transcribe_text', methods=['GET'])
 @check_authorization
 def get_transcribe_sentiment():
     client_id_val = request.args.get('clientid')
@@ -215,7 +215,7 @@ def get_transcribe_sentiment():
     return data
 
 
-@app.route('/get_client_master_configurations', methods=['GET','POST'])
+@app.route('/get_client_master_configurations', methods=['GET'])
 def get_client_master_configurations():
     # Done
     client_id_val = request.args.get('clientid')
@@ -233,7 +233,7 @@ def get_client_master_configurations():
     return json_result
 
 
-@app.route('/get_client_configurations', methods=['GET','POST'])
+@app.route('/get_client_configurations', methods=['GET'])
 def get_client_configurations():
     # Done
     client_id_val = request.args.get('clientid')
@@ -251,7 +251,7 @@ def get_client_configurations():
     return json_result
 
 
-@app.route('/get_audio_transcribe_data', methods=['GET','POST'])
+@app.route('/get_audio_transcribe_data', methods=['GET'])
 def get_audio_transcribe_data():
     try:
         # Done
@@ -272,7 +272,7 @@ def get_audio_transcribe_data():
         return get_json_format([], False, e)
 
 
-@app.route('/get_audio_transcribe_tracker_data', methods=['GET','POST'])
+@app.route('/get_audio_transcribe_tracker_data', methods=['GET'])
 def get_audio_transcribe_tracker_data():
     try:
         # Done
@@ -295,7 +295,7 @@ def get_audio_transcribe_tracker_data():
         return get_json_format([],INTERNAL_SERVER_ERROR, False, str(e)),INTERNAL_SERVER_ERROR
 
 
-@app.route('/add_update_transcribe', methods=['GET','POST'])
+@app.route('/add_update_transcribe', methods=['PUT'])
 def add_update_transcribe():
     #  Dev Done, testing pending
     client_id_val = request.args.get('clientid')
@@ -315,7 +315,7 @@ def add_update_transcribe():
     return update_status
 
 
-@app.route('/add_update_transcribe_tracker', methods=['GET','POST'])
+@app.route('/add_update_transcribe_tracker', methods=['POST'])
 def add_update_transcribe_tracker():
     #  Dev Done, testing pending
     client_id_val = request.args.get('clientid')
@@ -335,7 +335,7 @@ def add_update_transcribe_tracker():
                                                           updatevalues)
     return update_status
 
-@app.route('/get_data_from_sentiment_table', methods=['GET','POST'])
+@app.route('/get_data_from_sentiment_table', methods=['GET'])
 @check_authorization
 def get_sentiment_data():
     client_id_val = request.args.get('clientid')
@@ -355,7 +355,7 @@ def get_sentiment_data():
     return data
 
 
-@app.route('/get_all_configurations', methods=['GET','POST'])
+@app.route('/get_all_configurations', methods=['GET'])
 def get_all_configurations():
     #  Dev Done
     client_id_val = request.args.get('clientid')
@@ -374,7 +374,7 @@ def get_all_configurations():
     json_result = get_all_configurations_table(server_name, database_name, client_id)
     return json_result
 
-@app.route('/copy_audio_files', methods=['GET','POST'])
+@app.route('/copy_audio_files', methods=['POST'])
 def copy_audio_files():
     #  Dev Done
     client_id_val = request.args.get('clientid')
@@ -393,7 +393,7 @@ def copy_audio_files():
     json_result = copy_audio_files_process(server_name, database_name, client_id)
     return json_result
 
-@app.route('/transcribe_audio_text', methods=['GET','POST'])
+@app.route('/transcribe_audio_text', methods=['GET'])
 def transcribe_audio_text():
     client_id_val = request.args.get('clientid')
     record_id_val = request.args.get('id')
@@ -414,7 +414,7 @@ def transcribe_audio_text():
 
 
 
-@app.route('/match_file_name_pettern', methods=['GET','POST'])
+@app.route('/match_file_name_pettern', methods=['GET'])
 def match_file_name_pettern():
     #  Dev Done
     client_id_val = request.args.get('clientid')
@@ -430,14 +430,11 @@ def match_file_name_pettern():
         }, RESOURCE_NOT_FOUND
     file_name = request.args.get('filename')
     current_user = os.getlogin()
-    file_name = '24-10003-douglas-21March-AY-Noida-Call-Approva-Ashutosh'
-    file_name = '24-10003_tomous_25April_CTS_Mumbai_Outbound_Ritesh_Manish'
-    # file_name = 'ABC-21March-AY-Noida-Call-Approva'
     print('Current login user:', current_user)
     json_result = get_file_name_pattern(server_name, database_name, client_id,file_name)
     return json_result
 
-@app.route('/dump_data_into_sentiment', methods=['GET','POST'])
+@app.route('/dump_data_into_sentiment', methods=['POST'])
 @check_authorization
 def dump_data_sentiment_table():
     client_id_val = request.args.get('clientid')
@@ -461,7 +458,7 @@ def dump_data_sentiment_table():
         return data,RESOURCE_NOT_FOUND
 
 
-@app.route('/open_ai_transcribe_audio_text', methods=['GET','POST'])
+@app.route('/open_ai_transcribe_audio_text', methods=['GET'])
 def open_ai_transcribe_audio_text():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
@@ -473,7 +470,7 @@ def open_ai_transcribe_audio_text():
         return transcript,status
     return_data = {"text": 'no transcript', 'status': "500"}
     return transcript,status
-@app.route('/open_source_transcribe', methods=['GET','POST'])
+@app.route('/open_source_transcribe', methods=['GET'])
 def open_source_transcribe():
     client_id = int(request.args.get('clientid'))
     audio_file_name = request.args.get('audio_file')
@@ -486,7 +483,7 @@ def open_source_transcribe():
     return transcript,status
 
 
-@app.route('/token_authenticate', methods=['GET','POST'])
+@app.route('/token_authenticate', methods=['POST'])
 def token_authenticate():
     #  Dev Done, testing pending
     # client_id = int(request.args.get('clientid'))
@@ -507,7 +504,7 @@ def token_authenticate():
     result = get_token_based_authentication(server_name, database_name, client_id, user_name)
     return result
 
-@app.route('/ldap_authenticate', methods=['GET','POST'])
+@app.route('/ldap_authenticate', methods=['POST'])
 def ldap_authenticate():
     #  Dev Done, testing pending
     # client_id = int(request.args.get('clientid'))
@@ -527,7 +524,7 @@ def ldap_authenticate():
     result = get_ldap_authentication(server_name, database_name, client_id)
     return result
 
-@app.route('/update_token', methods=['GET','POST'])
+@app.route('/update_token', methods=['PUT'])
 def update_token():
     #  Dev Done, testing pending
     # client_id = int(request.args.get('clientid'))
@@ -548,7 +545,7 @@ def update_token():
     result = update_authentication_token(server_name, database_name, client_id,user_name)
     return result
 
-@app.route('/new_token', methods=['GET','POST'])
+@app.route('/new_token', methods=['POST'])
 def new_token():
     #  Dev Done, testing pending
     # client_id = int(request.args.get('clientid'))
@@ -595,7 +592,7 @@ def get_prohibited_data():
     data = sentiment_instance.get_prohibited_data_from_table(server_name, database_name, client_id)
     return data
 
-@app.route('/dump_data_into_compliance', methods=['GET','POST'])
+@app.route('/dump_data_into_compliance', methods=['POST'])
 @check_authorization
 def dump_data_compliance_table():
     client_id_val = request.args.get('clientid')
@@ -660,7 +657,7 @@ def get_compliance_data():
 def compliance_data():
     return render_template('compliance.html')
 
-@app.route('/sentiment_data_by_report_type', methods=['GET','POST'])
+@app.route('/sentiment_data_by_report_type', methods=['GET'])
 @check_authorization
 def get_sentiment_data_by_report_type():
     client_id_val = request.args.get('clientid')
@@ -690,7 +687,7 @@ def get_sentiment_data_by_report_type():
         }, RESOURCE_NOT_FOUND
     return data
 
-@app.route('/multi_compliance_reports', methods=['GET','POST'])
+@app.route('/multi_compliance_reports', methods=['GET'])
 @check_authorization
 def get_compliance_data_by_column_name():
     client_id_val = request.args.get('clientid')
@@ -720,7 +717,7 @@ def get_compliance_data_by_column_name():
     return data
 
 
-@app.route('/multi_transcribe_text', methods=['GET','POST'])
+@app.route('/multi_transcribe_text', methods=['GET'])
 @check_authorization
 def get_transcribe_multi_data():
     client_id_val = request.args.get('clientid')
@@ -744,7 +741,7 @@ def get_transcribe_multi_data():
     return data
 
 
-BASE_DIRECTORY = "C:/AICogent/ICFiles/Done/"
+BASE_DIRECTORY = os.environ.get("Download_Path")
 
 @app.route('/download/<path:filename>', methods=['GET'])
 @check_authorization
@@ -810,8 +807,8 @@ def get_call_status():
     data = get_job_staus_from_audiotranscribe_table(server_name, database_name, client_id, column_name,column_value, page, per_page,from_date,to_date)
     return data
 
-UPLOAD_FOLDER = 'C:/AICogent/ICFiles/'
-ALLOWED_EXTENSIONS = {'wav','mp3'}
+UPLOAD_FOLDER = os.environ.get("Upload_Path")
+ALLOWED_EXTENSIONS = {'wav','mp3'}  #Mark in env
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 from werkzeug.utils import secure_filename
@@ -846,7 +843,7 @@ def upload_page():
 def uploaded_file(filename):
     return f'File {filename} uploaded successfully!'
 
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['POST'])
 def register():
     ###Through postman Header
     username=request.headers.get('username')
@@ -882,7 +879,7 @@ def register():
         }, RESOURCE_NOT_FOUND
 
 
-@app.route('/login', methods=['GET','POST'])
+@app.route('/login', methods=['POST'])
 def login():
     username = request.headers.get('username')
     password = request.headers.get('password')
@@ -936,7 +933,7 @@ def generate_text():
 
 
 
-@app.route('/client_audio_information', methods=['GET','POST'])
+@app.route('/client_audio_information', methods=['GET'])
 @check_authorization
 def get_client_audio_info():
     client_id_val = request.args.get('clientid')
@@ -955,6 +952,43 @@ def get_client_audio_info():
     transcribe_param = request.args.get('transcribe')#pass False for openAi info
     data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,transcribe_param)
     return data
+
+
+@app.route('/conversational_view_data', methods=['GET'])
+@check_authorization
+def conversastional_view_data():
+    client_id_val = request.args.get('clientid')
+    try:
+        client_id = int(client_id_val)
+    except Exception as e:
+        response_message = 'You were given the wrong parameter by them. Please try again with a valid parameter.'
+        return {
+            "result": [response_message],
+            "message": response_message,
+            "status": 'failed',
+            'status_code': RESOURCE_NOT_FOUND
+        }, RESOURCE_NOT_FOUND
+    # client_id = int(request.args.get('clientid'))
+    audio_file_name = request.args.get('audio_file')
+    transcribe_param = request.args.get('transcribe_param')#Pass "Yes" for the data
+    data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,transcribe_param)
+    return data
+# conversational
+
+@app.route('/conversational',methods=['GET'])
+def conversational_data():
+    return render_template('conversational.html')
+
+@app.route('/get_conversation', methods=['POST'])
+def get_conversation():
+    # Get the parameters sent by the Ajax request
+    client_id = request.json.get('clientid')
+    audio_file_name = request.json.get('filename')
+    transcribe_param = request.json.get('transcribe_param')
+    data = sentiment_instance.get_data_from_transcribe_table(server_name, database_name, client_id,audio_file_name,transcribe_param)
+    conversation_data=data[0]['data']
+    return jsonify(conversation_data)
+
 
 if __name__ == '__main__':
     # app.run(debug=True)

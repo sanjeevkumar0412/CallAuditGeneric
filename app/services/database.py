@@ -10,6 +10,7 @@ import secrets
 from ldap3 import Server, Connection, ALL, SIMPLE
 from db_layer.models import Client, Configurations, Logs, FileTypesInfo, Subscriptions, AudioTranscribeTracker, \
     AudioTranscribe, ClientMaster, AuthTokenManagement,JobStatus,SubscriptionPlan,MasterConnectionString
+import os
 
 
 class DataBaseClass:
@@ -93,7 +94,7 @@ class DataBaseClass:
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
             session = Session()
-            log_info = Logs(ClientId=1, LogSummary='Ldap Error', LogDetails='Ldap Error', LogType='Error',
+            log_info = Logs(ClientId=os.environ.get("CLIENT_ID"), LogSummary='Ldap Error', LogDetails='Ldap Error', LogType='Error',
                             ModulName='Start up process', Severity='Error')
             session.add(log_info)
             session.commit()
@@ -107,8 +108,10 @@ class DataBaseClass:
         try:
             # db_server = self.global_utility.get_database_server_name()
             # db_name = self.global_utility.get_database_name()
-            db_server = 'FLM-VM-COGAIDEV'
-            db_name = 'AudioTrans'
+            # db_server = 'FLM-VM-COGAIDEV'
+            db_server = os.environ.get("SERVER_NAME")
+            db_name = os.environ.get("DB_NAME")
+            # db_name = 'AudioTrans'
             dns = f'mssql+pyodbc://{db_server}/{db_name}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
@@ -435,7 +438,6 @@ class DataBaseClass:
             session.commit()
             self.logger.info(f"Record inserted successfully. ID: {record_model.Id}")
             return record_model
-            print("Generated token:", record_model.Id)
         except Exception as e:
             self.logger.error(f"An error occurred in update_transcribe_text: {e}")
         finally:
@@ -471,7 +473,6 @@ class DataBaseClass:
 
     def get_connection_string(self, server, database, client_id):
         try:
-            dns = f'mssql+pyodbc://FLM-VM-COGAIDEV/AudioTrans?driver=ODBC+Driver+17+for+SQL+Server'
             dns = f'mssql+pyodbc://{server}/{database}?driver=ODBC+Driver+17+for+SQL+Server'
             engine = create_engine(dns)
             Session = sessionmaker(bind=engine)
